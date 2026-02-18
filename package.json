@@ -1,0 +1,21 @@
+{
+  "name": "cinemabooking",
+  "version": "1.0.0",
+  "description": "hello million!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/m-yguy/CInemaBooking.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/m-yguy/CInemaBooking/issues"
+  },
+  "homepage": "https://github.com/m-yguy/CInemaBooking#readme"
+}
