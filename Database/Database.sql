@@ -9,7 +9,12 @@ CREATE TABLE IF NOT EXISTS movieData(
     movie_description TEXT,
     poster_path VARCHAR(150),
     showtimes DATETIME,
-    trailer_link TEXT 
+    trailer_link TEXT,
+    release_status ENUM("Now Playing", "Coming Soon"),
+    mpa_rating ENUM("G", "PG", "PG-13", "R")
+    cast TEXT,
+    Director VARCHAR(25),
+    Producer TEXT
 );
 
 INSERT INTO movieData
@@ -22,6 +27,12 @@ VALUES
         "Database/Movie_Posters/28YearsLater.jpg",
         "2026-05-01 19:30:00",
         "https://www.youtube.com/watch?v=IYGG55qwQZQ"
+        "Now Playing",
+        "R",
+        "Jodie Corner, Alfie Williams, Aaron Taylor-Johnson, Ralph Fiennes"
+        "Danny Boyle",
+        "Danny Boyle, Alex Garland, Andrew Macdonald"
+
     ),
     (
         "A Different Man",
@@ -31,6 +42,11 @@ VALUES
         "Database/Movie_Posters/ADifferentMan.jpg",
         "2026-05-01 12:30:00",
         "https://www.youtube.com/watch?v=_9CmC5Rmsdw"
+        "Coming Soon",
+        "R",
+        "Sebastian Stan, Renate Reinsve, Adam Pearson, Miles G. Jackson"
+        "Aaron Schimberg",
+        "Christine Vachon, Vanessa McDonnell, Pamela Koffler"
     ),
     (
         "Eddington",
@@ -40,6 +56,11 @@ VALUES
         "Database/Movie_Posters/Eddington.jpeg",
         "2026-05-01 14:30:00",
         "https://www.youtube.com/watch?v=oL6jZqExlIk"
+        "Coming Soon",
+        "R",
+        "Joaquin Pheonix, Deirdre O'Connell, Emma Stone"
+        "Ari Aster",
+        "Lars Knudsen, Ari Aster, Ann Ruark"
     ),
     (
         "Goodboy",
@@ -49,6 +70,11 @@ VALUES
         "Database/Movie_Posters/Goodboy.jpeg",
         "2026-06-01 15:30:00",
         "https://www.youtube.com/watch?v=q4-CRkd_74g"
+        "Now Playing",
+        "PG-13",
+        "Indy The Dog, Shane Jensen, Larry Fessenden"
+        "Ben Leonberg",
+        "Kari Fischer, Ben Leonberg, Brian Goodheart"
     ),
     (
         "Good Fortune",
@@ -58,6 +84,11 @@ VALUES
         "Database/Movie_Posters/GoodFortune.jpeg",
         "2026-06-01 11:00:00",
         "https://www.youtube.com/watch?v=ZKWndx83RwQ"
+        "Now Playing",
+        "R",
+        "Keanu Reeves, Aziz Ansari, Seth Rogen, Keke Palmer"
+        "Aziz Ansari",
+        "Anthony Katagas, Alan Yang, Aziz Ansari"
     ),
     (
         "Iron Lung",
@@ -67,6 +98,11 @@ VALUES
         "Database/Movie_Posters/IronLung.jpg",
         "2026-07-01 20:30:00",
         "https://www.youtube.com/watch?v=i4sh-Dw4bzg"
+        "Now Playing",
+        "R",
+        "Markiplier, Caroline Kaplan, Troy Baker"
+        "Markiplier",
+        "Larissa Garcia-Baab, Jeff Guerrero, Will Hyde, Amy Nelson"
     ),
     (
         "Marty Supreme",
@@ -85,6 +121,11 @@ VALUES
         "Database/Movie_Posters/Scarface.jpg",
         "2026-06-01 10:30:00",
         "https://www.youtube.com/watch?v=7pQQHnqBa2E"
+        "Now Playing",
+        "PG-13",
+        "Timothee Chalamet, GWyneth Paltrow, Odessa A'zion"
+        "Josh Safdie",
+        "Eli Bush, Timothee Chalamet, Ronald Bronstein"
     ),
     (
         "Send Help",
@@ -94,6 +135,11 @@ VALUES
         "Database/Movie_Posters/SendHelp.jpg",
         "2026-06-01 10:30:00",
         "https://www.youtube.com/watch?v=R4wiXj9NmEE"
+        "Now Playing",
+        "PG-13",
+        "Rachel McAdams, Dylan O'Brien, Edyll Ismail"
+        "Sam Raimi",
+        "Sam Raimi, Zainab Azizi, Nicholas Simon"
     ),
     (
         "Strangers Chapter 3",
@@ -103,4 +149,9 @@ VALUES
         "Database/Movie_Posters/StrangersChapter3.jpg",
         "2026-06-01 15:30:00",
         "https://www.youtube.com/watch?v=yyAALuRTQ_w"
+        "Coming Soon",
+        "PG-13",
+        "Rachel McAdams, Dylan O'Brien, Edyll Ismail"
+        "Sam Raimi",
+        "Sam Raimi, Zainab Azizi, Nicholas Simon"
     );
