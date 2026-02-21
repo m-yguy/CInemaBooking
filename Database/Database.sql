@@ -112,6 +112,11 @@ VALUES
         "Database/Movie_Posters/MartySupreme.jpg",
         "2026-06-01 12:30:00",
         "https://www.youtube.com/watch?v=s9gSuKaKcqM"
+        "Now Playing",
+        "PG-13",
+        "Timothee Chalamet, GWyneth Paltrow, Odessa A'zion"
+        "Josh Safdie",
+        "Eli Bush, Timothee Chalamet, Ronald Bronstein"
     ),
     (
         "Scareface",
@@ -122,10 +127,10 @@ VALUES
         "2026-06-01 10:30:00",
         "https://www.youtube.com/watch?v=7pQQHnqBa2E"
         "Now Playing",
-        "PG-13",
-        "Timothee Chalamet, GWyneth Paltrow, Odessa A'zion"
-        "Josh Safdie",
-        "Eli Bush, Timothee Chalamet, Ronald Bronstein"
+        "R",
+        "Al Pacino, Steven Bauer, Michelle Pfeiffer"
+        "Brian De Palma",
+        "Martin Bregman, Peter Saphier"
     ),
     (
         "Send Help",
@@ -151,7 +156,7 @@ VALUES
         "https://www.youtube.com/watch?v=yyAALuRTQ_w"
         "Coming Soon",
         "PG-13",
-        "Rachel McAdams, Dylan O'Brien, Edyll Ismail"
-        "Sam Raimi",
-        "Sam Raimi, Zainab Azizi, Nicholas Simon"
+        "Madelaine Petsch, Richard Brake, Ema Horvath"
+        "Renny Harlin",
+        "Courtney Solomon"
     );
