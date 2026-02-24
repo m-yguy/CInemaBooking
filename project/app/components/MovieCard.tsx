@@ -10,6 +10,15 @@ export default function MovieCard({ movieData }: MovieCardProps) {
   const formatRuntime = (min: number) =>
     `${Math.floor(min / 60)}h ${min % 60}m`;
 
+  const checkReleaseDate = (dateString: string) => {
+    const movieDate = new Date(dateString);
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+    movieDate.setHours(0, 0, 0, 0);
+    return movieDate < today;
+  };
+
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -18,19 +27,29 @@ export default function MovieCard({ movieData }: MovieCardProps) {
     });
 
   return (
-    <div className="flex flex-col m-4 min-w-50">
-      <Image
-        src={`${movieData.poster_path}`}
-        alt={`${movieData.title} Poster`}
-        width={200}
-        height={0}
-      />
-      <strong>{movieData.title}</strong>
-      <span>
-        {formatRuntime(movieData.runtime)} | {movieData.mpa_rating}
-      </span>
-      <p>{formatDate(movieData.showtime)}</p>
-      <button className="bg-red-800 rounded-md p-3 mt-5 font-bold max-w-50 text-white uppercase">
+    <div className="flex flex-col justify-between mb-6">
+      <div>
+        <div className="relative w-full aspect-3/4 overflow-hidden">
+          <Image
+            src={`${movieData.poster_path}`}
+            alt={`${movieData.title} Poster`}
+            fill
+            sizes="100vm"
+          />
+        </div>
+        <h2 className="font-bold leading-tight line-clamp-2 text-[clamp(0.5rem,4vw,1.5rem)] ">
+          {movieData.title}
+        </h2>
+        <span className="uppercase text-sm font-semibold">
+          {formatRuntime(movieData.runtime)} | {movieData.mpa_rating}
+        </span>
+        <p className="font-semibold text-sm">
+          {checkReleaseDate(movieData.showtime)
+            ? `Opening ${formatDate(movieData.showtime)}`
+            : `Released ${formatDate(movieData.showtime)}`}
+        </p>
+      </div>
+      <button className="bg-red-700 rounded-4xl mt-6 p-2.5 font-bold text-white uppercase w-full md:max-w-40 hover:bg-black transition duration-100">
         <Link href="#">Get Tickets</Link>
       </button>
     </div>
