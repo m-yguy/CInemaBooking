@@ -16,13 +16,26 @@ export default function Sidebar({ navLinks }: SidebarProps) {
   };
 
   return (
-    <div className={`${isOpen ? "absolute" : "flex"} bg-black left-0 top-0`}>
-      <button className="border-2 border-white" onClick={toggleSidebar}>
-        {isOpen ? "close" : "open"}
+    <div
+      className={`${isOpen ? "fixed z-20 min-w-1/2 top-0 left-0 p-10" : "flex"} bg-black md:hidden h-full`}
+    >
+      {isOpen && (
+        <div className="flex justify-between mb-8">
+          <div className="border-white border-2">logo</div>
+          <button className="border-2 border-white" onClick={toggleSidebar}>
+            close
+          </button>
+        </div>
+      )}
+      <button
+        className={`${isOpen ? "hidden" : "border-2 border-white"}`}
+        onClick={toggleSidebar}
+      >
+        open
       </button>
 
       {isOpen && (
-        <nav className="flex flex-col">
+        <nav className="flex flex-col gap-8">
           {navLinks.map((link) => (
             <Link key={link.label} href={link.href}>
               {link.label}
