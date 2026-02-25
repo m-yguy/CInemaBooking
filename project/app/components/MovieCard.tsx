@@ -13,7 +13,6 @@ export default function MovieCard({ movieData }: MovieCardProps) {
   const checkReleaseDate = (dateString: string) => {
     const movieDate = new Date(dateString);
     const today = new Date();
-
     today.setHours(0, 0, 0, 0);
     movieDate.setHours(0, 0, 0, 0);
     return movieDate < today;
@@ -34,10 +33,10 @@ export default function MovieCard({ movieData }: MovieCardProps) {
             src={`${movieData.poster_path}`}
             alt={`${movieData.title} Poster`}
             fill
-            sizes="100vm"
+            sizes="100vw"
           />
         </div>
-        <h2 className="font-bold leading-tight line-clamp-2 text-[clamp(0.5rem,4vw,1.5rem)] ">
+        <h2 className="font-bold leading-tight line-clamp-2 text-[clamp(0.5rem,4vw,1.5rem)]">
           {movieData.title}
         </h2>
         <span className="uppercase text-sm font-semibold">
