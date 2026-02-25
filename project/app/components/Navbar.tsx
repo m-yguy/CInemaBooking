@@ -1,3 +1,4 @@
+"use client"
 import Link from "next/link";
 import type { NavLinks } from "../types/ui";
 import Sidebar from "./Sidebar";
