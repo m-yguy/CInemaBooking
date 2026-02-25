@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import Link from "next/link";
 import type { NavLinks } from "../types/ui";
 import Sidebar from "./Sidebar";
@@ -41,7 +41,11 @@ export default function Navbar() {
         <div className="hidden md:flex md:flex-row gap-4 items-center">
           {!isSearching &&
             links.map((link) => (
-              <Link key={link.label} href={link.href}>
+              <Link
+                key={link.label}
+                href={link.href}
+                className="hover:underline hover:text-red-500 transition-all duration-300"
+              >
                 {link.label}
               </Link>
             ))}

@@ -26,16 +26,22 @@ export default function Filter({ movieData }: FilterProps) {
         <div className="flex flex-row items-center">
           <button
             onClick={filterPlaying}
-            className={`transition-colors text-lg duration-300 py-2 ${selected === "Now Playing" ? "text-red-500 underline" : "text-black"}`}
+            className={` flex flex-col transition-all text-lg py-2 hover:text-red-500 duration-300 ${selected === "Now Playing" ? "text-red-500" : "text-black"}`}
           >
             Now Playing
+            <span
+              className={`bg-red-500 h-0.5 origin-right transition-all duration-500 ${selected === "Now Playing" ? "scale-x-100" : "scale-x-0"}`}
+            ></span>
           </button>
           <span className="mx-2">|</span>
           <button
             onClick={filterComing}
-            className={`transition-colors text-lg duration-300 py-2 ${selected === "Coming Soon" ? "text-red-500 underline" : "text-black"}`}
+            className={` flex flex-col transition-all text-lg py-2 hover:text-red-500 duration-300 ${selected === "Coming Soon" ? "text-red-500" : "text-black"}`}
           >
             Coming Soon
+            <span
+              className={`bg-red-500 h-0.5 transition-all duration-500 ${selected === "Coming Soon" ? "w-full" : "w-0 "}`}
+            ></span>
           </button>
         </div>
       </div>

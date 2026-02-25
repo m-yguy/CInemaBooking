@@ -27,30 +27,40 @@ export default function MovieCard({ movieData }: MovieCardProps) {
 
   return (
     <div className="flex flex-col justify-between mb-6">
-      <div>
-        <div className="relative w-full aspect-3/4 overflow-hidden">
-          <Image
-            src={`${movieData.poster_path}`}
-            alt={`${movieData.title} Poster`}
-            fill
-            sizes="100vw"
-          />
-        </div>
-        <h2 className="font-bold leading-tight line-clamp-2 text-[clamp(0.5rem,4vw,1.5rem)]">
-          {movieData.title}
-        </h2>
+      <div className="">
+        <Link
+          href={`/movies/${encodeURIComponent(movieData.title)}`}
+          className="block"
+        >
+          <div className="relative w-full aspect-3/4 overflow-hidden">
+            <Image
+              src={movieData.poster_path}
+              alt={`${movieData.title} Poster`}
+              fill
+              sizes="100vw"
+              className="object-cover"
+            />
+          </div>
+
+          <h2 className="font-bold leading-tight line-clamp-2 text-[clamp(0.5rem,4vw,1.5rem)] transition-all duration-200 hover:text-[#c8997c]">
+            {movieData.title}
+          </h2>
+        </Link>
+
         <span className="uppercase text-sm font-semibold">
           {formatRuntime(movieData.runtime)} | {movieData.mpa_rating}
         </span>
+
         <p className="font-semibold text-sm">
           {checkReleaseDate(movieData.showtime)
             ? `Opening ${formatDate(movieData.showtime)}`
             : `Released ${formatDate(movieData.showtime)}`}
         </p>
       </div>
+
       <Link
         href={`/movies/${encodeURIComponent(movieData.title)}`}
-        className="bg-red-700 rounded-4xl mt-6 p-2.5 font-bold text-white uppercase w-full md:max-w-40 hover:bg-black transition duration-100 text-center"
+        className="bg-red-700 rounded-4xl mt-6 p-2.5 font-bold text-white uppercase w-full md:max-w-40 hover:bg-black transition-all duration-200 text-center"
       >
         Get Tickets
       </Link>
