@@ -49,9 +49,12 @@ export default function MovieCard({ movieData }: MovieCardProps) {
             : `Released ${formatDate(movieData.showtime)}`}
         </p>
       </div>
-      <button className="bg-red-700 rounded-4xl mt-6 p-2.5 font-bold text-white uppercase w-full md:max-w-40 hover:bg-black transition duration-100">
-        <Link href="#">Get Tickets</Link>
-      </button>
+      <Link
+        href={`/movies/${encodeURIComponent(movieData.title)}`}
+        className="bg-red-700 rounded-4xl mt-6 p-2.5 font-bold text-white uppercase w-full md:max-w-40 hover:bg-black transition duration-100"
+      >
+        Get Tickets
+      </Link>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 import Navbar from "./components/Navbar";
 import Filter from "./components/Filter";
+import MovieCard from "./components/MovieCard";
 import { useEffect, useState } from "react";
 import { movie } from "./types/movie";
 
