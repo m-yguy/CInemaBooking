@@ -7,8 +7,7 @@ interface MovieCardProps {
 }
 
 export default function MovieCard({ movieData }: MovieCardProps) {
-  const formatRuntime = (min: number) =>
-    `${Math.floor(min / 60)}h ${min % 60}m`;
+  const formatRuntime = (min: number) => `${Math.floor(min / 60)}h ${min % 60}m`;
 
   const checkReleaseDate = (dateString: string) => {
     const movieDate = new Date(dateString);
@@ -26,18 +25,15 @@ export default function MovieCard({ movieData }: MovieCardProps) {
     });
 
   return (
-    <div className="flex flex-col justify-between mb-6">
-      <div className="">
-        <Link
-          href={`/movies/${encodeURIComponent(movieData.title)}`}
-          className="block"
-        >
-          <div className="relative w-full aspect-3/4 overflow-hidden">
+    <div className="flex flex-col justify-between mb-6 w-[200px]">
+      <div>
+        <Link href={`/movies/${encodeURIComponent(movieData.title)}`} className="block">
+          <div className="relative w-full aspect-[2/3] overflow-hidden rounded-lg bg-gray-200">
             <Image
               src={movieData.poster_path}
               alt={`${movieData.title} Poster`}
               fill
-              sizes="100vw"
+              sizes="220px"
               className="object-cover"
             />
           </div>
@@ -52,7 +48,7 @@ export default function MovieCard({ movieData }: MovieCardProps) {
         </span>
 
         <p className="font-semibold text-sm">
-          {checkReleaseDate(movieData.showtime)
+          {movieData.release_status === "Coming Soon"
             ? `Opening ${formatDate(movieData.showtime)}`
             : `Released ${formatDate(movieData.showtime)}`}
         </p>
