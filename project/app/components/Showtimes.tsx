@@ -25,7 +25,7 @@ export default function Showtimes({
             background: "white",
             fontWeight: 600,
           }}
-          onClick={() => {
+          onClick={() => { // CHANGE THIS LINE ONCE BOOKING LOGIC IS COMPLETE
             router.push(
               `/booking?title=${encodeURIComponent(movieTitle)}&time=${encodeURIComponent(
                 t
