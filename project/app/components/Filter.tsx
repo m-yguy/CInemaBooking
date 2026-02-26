@@ -14,7 +14,7 @@ export default function Filter({ movieData }: FilterProps) {
   const [selected, setSelected] = useState<FilterMode>("Now Playing");
 
   const filteredMovies = useMemo(() => {
-    return movieData.filter((m: any) => m.release_status === selected);
+    return movieData.filter((m: movie) => m.release_status === selected);
   }, [movieData, selected]);
 
   return (
@@ -27,13 +27,15 @@ export default function Filter({ movieData }: FilterProps) {
         <div className="flex flex-row items-center">
           <button
             onClick={() => setSelected("Now Playing")}
-            className={`flex flex-col transition-all text-lg py-2 hover:text-red-500 duration-300 ${selected === "Now Playing" ? "text-red-500" : "text-black"
-              }`}
+            className={`flex flex-col transition-all text-lg py-2 hover:text-red-500 duration-300 ${
+              selected === "Now Playing" ? "text-red-500" : "text-black"
+            }`}
           >
             Now Playing
             <span
-              className={`bg-red-500 h-0.5 origin-right transition-all duration-500 ${selected === "Now Playing" ? "scale-x-100" : "scale-x-0"
-                }`}
+              className={`bg-red-500 h-0.5 origin-right transition-all duration-500 ${
+                selected === "Now Playing" ? "scale-x-100" : "scale-x-0"
+              }`}
             />
           </button>
 
@@ -41,13 +43,15 @@ export default function Filter({ movieData }: FilterProps) {
 
           <button
             onClick={() => setSelected("Coming Soon")}
-            className={`flex flex-col transition-all text-lg py-2 hover:text-red-500 duration-300 ${selected === "Coming Soon" ? "text-red-500" : "text-black"
-              }`}
+            className={`flex flex-col transition-all text-lg py-2 hover:text-red-500 duration-300 ${
+              selected === "Coming Soon" ? "text-red-500" : "text-black"
+            }`}
           >
             Coming Soon
             <span
-              className={`bg-red-500 h-0.5 transition-all duration-500 ${selected === "Coming Soon" ? "w-full" : "w-0"
-                }`}
+              className={`bg-red-500 h-0.5 transition-all duration-500 ${
+                selected === "Coming Soon" ? "w-full" : "w-0"
+              }`}
             />
           </button>
         </div>
