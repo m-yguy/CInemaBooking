@@ -10,14 +10,6 @@ export default function MovieCard({ movieData }: MovieCardProps) {
   const formatRuntime = (min: number) =>
     `${Math.floor(min / 60)}h ${min % 60}m`;
 
-  const checkReleaseDate = (dateString: string) => {
-    const movieDate = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    movieDate.setHours(0, 0, 0, 0);
-    return movieDate < today;
-  };
-
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -26,7 +18,7 @@ export default function MovieCard({ movieData }: MovieCardProps) {
     });
 
   return (
-    <div className="flex flex-col justify-between mb-6 w-50">
+    <div className="flex flex-col justify-between mb-6 w-50 hover:scale-101 transition-all duration-200 ease-in-out">
       <div>
         <Link
           href={`/movies/${encodeURIComponent(movieData.title)}`}

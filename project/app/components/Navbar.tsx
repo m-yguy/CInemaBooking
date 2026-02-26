@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import type { NavLinks } from "../types/ui";
 import Sidebar from "./Sidebar";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -75,13 +76,17 @@ export default function Navbar() {
       abortRef.current = controller;
 
       try {
-        const res = await fetch(`/api/test?q=${encodeURIComponent(trimmed)}`, {
-          signal: controller.signal,
-        });
+        const res = await fetch(
+          `/api/movieData?q=${encodeURIComponent(trimmed)}`,
+          {
+            signal: controller.signal,
+          },
+        );
 
         if (!res.ok) throw new Error("Search request failed");
         const data: MovieSearchResult[] = await res.json();
         setResults(data);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         if (err?.name !== "AbortError") setResults([]);
       } finally {
@@ -112,11 +117,16 @@ export default function Navbar() {
 
       <nav className="flex flex-row py-4 text-white items-center gap-4 max-w-6xl mx-auto px-6 w-full">
         <Sidebar navLinks={links} />
-        <p className="border-2">Logo</p>
+        <Link href="/" className="border-2">
+          Logo
+        </Link>
 
         {/* Search */}
-        <div ref={searchRef} className="relative w-full max-w-md z-30">
-          <div className="rounded-sm border-white border-2 bg-black">
+        <div
+          ref={searchRef}
+          className=" relative z-30 w-full md:w-md sm:max-w-md focus-within:max-w-full focus-within:w-full transition-all duration-300 ease-in-out"
+        >
+          <div className="rounded-lg bg-[#1d1d1d] flex p-2 px-4">
             <input
               type="text"
               value={query}
@@ -126,7 +136,14 @@ export default function Navbar() {
               }}
               onFocus={() => setIsSearching(true)}
               placeholder="Search movies..."
-              className="px-2 py-1 bg-transparent outline-none w-full"
+              className=" bg-transparent outline-none w-full"
+            />
+            <Image
+              src="/search.svg"
+              alt="search"
+              width={20}
+              height={20}
+              className="shrink-0"
             />
           </div>
 
@@ -186,14 +203,14 @@ export default function Navbar() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="hover:underline hover:text-red-500 transition-all duration-300"
+                className="hover:underline hover:text-red-500 transition-all duration-300 text-nowrap"
               >
                 {link.label}
               </Link>
             ))}
         </div>
 
-        <div className="flex flex-row shrink-0 ml-auto capitalize gap-2">
+        <div className="sm:flex flex-row shrink-0 ml-auto capitalize gap-2 hidden">
           <button>Log In</button>
           <span>|</span>
           <button>Sign Up</button>

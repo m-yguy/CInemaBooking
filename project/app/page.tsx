@@ -1,14 +1,13 @@
 "use client";
 import Navbar from "./components/Navbar";
 import Filter from "./components/Filter";
-import MovieCard from "./components/MovieCard";
 import { useEffect, useState } from "react";
 import { movie } from "./types/movie";
 
 export default function Home() {
   const [movies, setMovies] = useState<movie[]>([]);
   useEffect(() => {
-    fetch("/api/test")
+    fetch("/api/movieData")
       .then((res) => res.json())
       .then((data) => setMovies(data));
   }, []);
