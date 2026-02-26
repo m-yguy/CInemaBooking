@@ -2,7 +2,7 @@ export type movie = {
   title: string;
   genre: string;
   rating: number;
-  description: string;
+  movie_description: string;
   poster_path: string;
   showtime: string;
   trailer_link: string;
