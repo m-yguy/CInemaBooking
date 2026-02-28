@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 export default function Showtimes({
   movieTitle,
   showtimes,
+  img,
 }: {
   movieTitle: string;
   showtimes: string[];
+  img: string;
 }) {
   const router = useRouter();
 
@@ -17,19 +19,11 @@ export default function Showtimes({
         <button
           key={t}
           type="button"
-          style={{
-            cursor: "pointer",
-            padding: "10px 14px",
-            borderRadius: 10,
-            border: "1px solid rgba(0,0,0,0.2)",
-            background: "white",
-            fontWeight: 600,
-          }}
-          onClick={() => { // CHANGE THIS LINE ONCE BOOKING LOGIC IS COMPLETE
+          className="cursor-pointer py-2 px-4 rounded-md border border-[rgba(0,0,0,0.1)] bg-white font-medium hover:bg-black hover:text-white duration-200 transition-all "
+          onClick={() => {
+            // CHANGE THIS LINE ONCE BOOKING LOGIC IS COMPLETE
             router.push(
-              `/booking?title=${encodeURIComponent(movieTitle)}&time=${encodeURIComponent(
-                t
-              )}`
+              `/booking?title=${encodeURIComponent(movieTitle)}&time=${encodeURIComponent(t)}&poster=${encodeURIComponent(img)}`,
             );
           }}
         >

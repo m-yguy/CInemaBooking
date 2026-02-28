@@ -6,17 +6,16 @@ interface MovieCardProps {
   movieData: movie;
 }
 
+export const formatRuntime = (min: number) =>
+  `${Math.floor(min / 60)}h ${min % 60}m`;
+
+export const formatDate = (dateString: string) =>
+  new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 export default function MovieCard({ movieData }: MovieCardProps) {
-  const formatRuntime = (min: number) =>
-    `${Math.floor(min / 60)}h ${min % 60}m`;
-
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-
   return (
     <div className="flex flex-col justify-between mb-6 w-50 hover:scale-101 transition-all duration-200 ease-in-out">
       <div>
@@ -39,7 +38,7 @@ export default function MovieCard({ movieData }: MovieCardProps) {
           </h2>
         </Link>
 
-        <span className="uppercase text-sm font-semibold">
+        <span className="uppercase text-sm font-semibold tracking-wide">
           {formatRuntime(movieData.runtime)} | {movieData.mpa_rating}
         </span>
 
@@ -51,7 +50,7 @@ export default function MovieCard({ movieData }: MovieCardProps) {
       </div>
 
       <Link
-        href={`/movies/${encodeURIComponent(movieData.title)}`}
+        href={`/movies/showtimes/${encodeURIComponent(movieData.title)}`}
         className="bg-red-700 rounded-4xl mt-6 p-2.5 font-bold text-white uppercase w-full md:max-w-40 hover:bg-black transition-all duration-200 text-center"
       >
         Get Tickets

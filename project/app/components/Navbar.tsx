@@ -19,9 +19,9 @@ export default function Navbar() {
 
   const links: NavLinks[] = [
     { label: "Find a theater", href: "#" },
-    { label: "Movies", href: "#" },
+    { label: "Movies", href: "http://localhost:3000/movies" },
     { label: "Promos & Rewards", href: "#" },
-    { label: "Showtimes", href: "#" },
+    { label: "Showtimes", href: "http://localhost:3000/movies/showtimes" },
   ];
 
   const [isSearching, setIsSearching] = useState(false);
