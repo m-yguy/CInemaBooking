@@ -108,7 +108,7 @@ export default function BookingPage() {
           </div>
         </section>
 
-        {/* Seat Selection FIRST */}
+        {/* Seat Selection */}
         <section className="bg-gray-100 p-6 rounded-xl shadow-sm select-none">
           <h2 className="text-2xl font-semibold mb-4">Select Seats</h2>
 
@@ -149,7 +149,11 @@ export default function BookingPage() {
                       onMouseDown={() => toggleSeat(seatId)}
                       onMouseEnter={() => handleDragSeat(seatId)}
                       className={`w-9 h-9 rounded text-sm font-medium flex items-center justify-center cursor-pointer transition-all
-                        ${selected ? "bg-red-600 text-white" : "bg-gray-400 hover:bg-gray-300"}
+                        ${
+                          selected
+                            ? "bg-red-600 text-white"
+                            : "bg-gray-400 hover:bg-gray-300"
+                        }
                       `}
                     >
                       {seatId}
@@ -164,9 +168,19 @@ export default function BookingPage() {
           <p className="text-lg font-semibold mt-4 text-center">
             Seats selected: {seatCount}
           </p>
+
+          {/* Selected Seats List */}
+          {selectedSeats.length > 0 && (
+            <p className="text-center text-gray-700 mt-2">
+              Selected:{" "}
+              <span className="font-semibold">
+                {selectedSeats.sort().join(", ")}
+              </span>
+            </p>
+          )}
         </section>
 
-        {/* Ticket Selection SECOND */}
+        {/* Ticket Selection */}
         <section className="bg-gray-100 p-6 rounded-xl shadow-sm">
           <h2 className="text-2xl font-semibold mb-4">Select Tickets</h2>
 
@@ -219,6 +233,7 @@ export default function BookingPage() {
 
           <div className="mt-6 text-xl font-bold">Total: ${total}</div>
         </section>
+
         <button className="ml-auto rounded-3xl bg-red-700 px-12 py-4 text-white font-bold ">
           Checkout
         </button>
