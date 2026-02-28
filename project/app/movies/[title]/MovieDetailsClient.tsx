@@ -1,0 +1,174 @@
+"use client";
+
+import { useState } from "react";
+import Navbar from "@/app/components/Navbar";
+import Image from "next/image";
+import Link from "next/link";
+import type { movie } from "@/app/types/movie";
+import { formatRuntime, formatDate } from "@/app/components/MovieCard";
+
+interface MovieDetailsClientProps {
+  movie: movie;
+  decodedTitle: string;
+  trailerEmbed: string | null;
+  youtubeId: string | null;
+}
+
+export default function MovieDetailsClient({
+  movie,
+  decodedTitle,
+  trailerEmbed,
+  youtubeId,
+}: MovieDetailsClientProps) {
+  const [watchingTrailer, setWatchingTrailer] = useState(false);
+
+  const ratingDescriptions: Record<string, string> = {
+    "PG-13":
+      "Parents Strongly Cautioned - Some material may be inappropriate for children under 13.",
+    R: "Restricted - Under 17 requires accompanying parent or adult guardian.",
+  };
+
+  return (
+    <div>
+      <Navbar />
+
+      {/* HERO SECTION */}
+      <div className="relative w-full h-130 overflow-hidden">
+        {/* Background image */}
+        {youtubeId && (
+          <Image
+            src={`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`}
+            alt="Movie Trailer"
+            fill
+            className="object-cover object-[50%_30%] brightness-[0.3] transition-all duration-500"
+          />
+        )}
+
+        <div className="absolute inset-0 bg-linear-to-t from-black via-black/40 to-transparent transition-all duration-500" />
+
+        {/* TRAILER MODE */}
+        <div
+          className={`
+            absolute inset-0 flex flex-col items-center justify-center px-6 pb-10 max-w-6xl mx-auto
+            transition-all duration-500
+            ${watchingTrailer ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}
+          `}
+        >
+          <div className="w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden shadow-xl transition-all duration-500">
+            {trailerEmbed && (
+              <iframe
+                src={trailerEmbed}
+                className="w-full h-full"
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+              />
+            )}
+          </div>
+
+          <button
+            onClick={() => setWatchingTrailer(false)}
+            className="mt-6 text-white border border-white py-2 px-8 rounded-lg hover:bg-white hover:text-black transition-all duration-300"
+          >
+            Back
+          </button>
+        </div>
+
+        {/* NORMAL MODE */}
+        <div
+          className={`
+            absolute inset-0 flex items-end px-6 pb-10 max-w-6xl mx-auto
+            transition-all duration-500
+            ${!watchingTrailer ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}
+          `}
+        >
+          <div className="flex flex-row gap-6 items-end">
+            <div className="relative w-40 aspect-2/3 shrink-0 transition-all duration-500">
+              <Image
+                src={movie.poster_path}
+                alt={`${movie.title} poster`}
+                fill
+                className="object-cover rounded-md"
+              />
+            </div>
+
+            <div className="flex flex-col text-white transition-all duration-500">
+              <span className="uppercase text-sm font-semibold tracking-wider">
+                {movie.mpa_rating} | {formatRuntime(movie.runtime)}
+              </span>
+
+              <h2 className="font-bold uppercase text-4xl mb-4">
+                {decodedTitle}
+              </h2>
+
+              <div className="flex flex-col gap-4">
+                <button
+                  onClick={() => setWatchingTrailer(true)}
+                  className="text-white border border-white py-2 px-8 rounded-lg hover:bg-white hover:text-black transition-all duration-300"
+                >
+                  Watch Trailer
+                </button>
+
+                <Link
+                  href={`/movies/showtimes/${encodeURIComponent(movie.title)}`}
+                  className="bg-red-700 rounded-2xl py-2.5 px-8 font-bold text-white uppercase hover:bg-white hover:text-black transition-all duration-300 text-center"
+                >
+                  Get Tickets
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* DETAILS SECTION */}
+      <main className="flex flex-col gap-6 max-w-6xl mx-auto px-6 w-full mb-8 font-bold text-lg text-[#333333]">
+        <div className="grid grid-cols-[30%_1fr] w-full mt-10">
+          <div>
+            <h2>Release Date</h2>
+            <p className="font-semibold text-sm">
+              {formatDate(movie.showtime)}
+            </p>
+          </div>
+          <div>
+            <h2>Running Time</h2>
+            <p className="font-semibold text-sm">
+              {formatRuntime(movie.runtime)}
+            </p>
+          </div>
+        </div>
+
+        <span className="bg-black border w-full"></span>
+
+        <div>
+          <h2>Synopsis</h2>
+          <p className="font-semibold text-sm">{movie.movie_description}</p>
+        </div>
+
+        <span className="bg-black border w-full"></span>
+
+        <div className="grid grid-cols-[30%_1fr] w-full">
+          <div>
+            <h2>Director</h2>
+            <p className="font-semibold text-sm">{movie.director}</p>
+          </div>
+          <div>
+            <h2>Cast</h2>
+            <p className="font-semibold text-sm">{movie.movie_cast}</p>
+          </div>
+        </div>
+
+        <span className="bg-black border w-full"></span>
+
+        <div>
+          <h2>Age Restrictions</h2>
+          <p className="text-4xl border-3 w-fit px-2 mt-2">
+            {movie.mpa_rating}
+          </p>
+          <p className="text-xs font-bold max-w-40 mt-2">
+            {ratingDescriptions[movie.mpa_rating] || "Rating unavailable"}
+          </p>
+        </div>
+      </main>
+    </div>
+  );
+}
