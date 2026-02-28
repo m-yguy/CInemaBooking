@@ -8,7 +8,7 @@ export type movie = {
   trailer_link: string;
   release_status: string;
   mpa_rating: string;
-  cast: string;
+  movie_cast: string;
   director: string;
   producer: string;
   runtime: number;

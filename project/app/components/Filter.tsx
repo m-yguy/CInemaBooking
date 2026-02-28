@@ -10,7 +10,19 @@ interface FilterProps {
 
 type FilterMode = "Coming Soon" | "Now Playing";
 
-const GENRES = ["All", "Action", "Comedy", "Drama", "Horror", "Sci-fi"];
+const GENRES = [
+  "All",
+  "Action",
+  "Comedy",
+  "Crime",
+  "Drama",
+  "Horror",
+  "Sci-fi",
+  "Sport",
+  "Suspense",
+  "Thriller",
+  "Western",
+];
 
 export default function Filter({ movieData }: FilterProps) {
   const [selected, setSelected] = useState<FilterMode>("Now Playing");
@@ -20,7 +32,13 @@ export default function Filter({ movieData }: FilterProps) {
   const filteredMovies = useMemo(() => {
     return movieData.filter((m: movie) => {
       const statusMatch = m.release_status === selected;
-      const genreMatch = genreFilter === "All" || m.genre === genreFilter;
+
+      const movieGenres = m.genre.split("/").map((g) => g.trim().toLowerCase());
+
+      const genreMatch =
+        genreFilter === "All" ||
+        movieGenres.includes(genreFilter.toLowerCase());
+
       return statusMatch && genreMatch;
     });
   }, [movieData, selected, genreFilter]);
@@ -79,12 +97,19 @@ export default function Filter({ movieData }: FilterProps) {
           >
             {genreFilter === "All" ? "Genre" : genreFilter}
             <svg
-              className={`w-3.5 h-3.5 transition-transform duration-200 ${showGenreDropdown ? "rotate-180" : ""}`}
+              className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                showGenreDropdown ? "rotate-180" : ""
+              }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </button>
 
@@ -98,7 +123,9 @@ export default function Filter({ movieData }: FilterProps) {
                     setShowGenreDropdown(false);
                   }}
                   className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
-                    genreFilter === genre ? "text-red-500 font-semibold" : "font-normal"
+                    genreFilter === genre
+                      ? "text-red-500 font-semibold"
+                      : "font-normal"
                   }`}
                 >
                   {genre}
@@ -108,15 +135,25 @@ export default function Filter({ movieData }: FilterProps) {
           )}
         </div>
 
-        {/* Clear filter badge — only shown when a genre is active */}
+        {/* Clear filter badge */}
         {genreFilter !== "All" && (
           <button
             onClick={() => setGenreFilter("All")}
             className="flex items-center gap-1 text-xs text-red-500 border border-red-300 rounded-full px-3 py-1 hover:bg-red-50 transition-all duration-200"
           >
             Clear
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         )}
@@ -124,13 +161,18 @@ export default function Filter({ movieData }: FilterProps) {
 
       <div className="mt-4">
         {filteredMovies.length === 0 ? (
-          <p className="font-normal opacity-70">
-            No movies found for:{" "}
-            <span className="font-semibold">{selected}</span>
-            {genreFilter !== "All" && (
-              <span> in <span className="font-semibold">{genreFilter}</span></span>
-            )}
-          </p>
+          <div className="flex min-h-100">
+            <p className="font-normal opacity-70">
+              No movies found for:{" "}
+              <span className="font-semibold">{selected}</span>
+              {genreFilter !== "All" && (
+                <span>
+                  {" "}
+                  in <span className="font-semibold">{genreFilter}</span>
+                </span>
+              )}
+            </p>
+          </div>
         ) : (
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {filteredMovies.map((m) => (
