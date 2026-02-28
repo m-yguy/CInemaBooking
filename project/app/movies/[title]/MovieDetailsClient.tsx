@@ -40,7 +40,7 @@ export default function MovieDetailsClient({
             src={`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`}
             alt="Movie Trailer"
             fill
-            className="object-cover object-[50%_30%] brightness-[0.3] transition-all duration-500"
+            className="object-cover object-[50%_30%] brightness-[0.65] transition-all duration-500"
           />
         )}
 
