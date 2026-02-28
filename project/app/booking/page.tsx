@@ -1,27 +1,17 @@
 "use client";
 
-
-// import statments
-
+import Navbar from "@/app/components/Navbar";
 import { useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react"; 
+import { useState, useRef } from "react";
+import Image from "next/image";
 
 export default function BookingPage() {
   const searchParams = useSearchParams();
   const title = searchParams.get("title");
   const time = searchParams.get("time");
+  const posterUrl = searchParams.get("poster");
 
-
-  //ticket prices, lmk if we want to go with something different here
-
-  const prices = {
-    adult: 12,
-    child: 8,
-    senior: 10,
-  };
-
-
-//quanittiees for the tickets
+  const prices = { adult: 12, child: 8, senior: 10 };
 
   const [quantities, setQuantities] = useState({
     adult: 0,
@@ -29,128 +19,210 @@ export default function BookingPage() {
     senior: 0,
   });
 
-  //selected seats
-
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const isDragging = useRef(false);
 
-  const handleQuantityChange = (type: string, value: number) => {
-    setQuantities({ ...quantities, [type]: value });
-  };
+  const seatCount = selectedSeats.length;
+  const totalTickets = quantities.adult + quantities.child + quantities.senior;
 
-  //total number of tickets selected
-  const totalTickets =
-    quantities.adult + quantities.child + quantities.senior;
+  // 8 rows theater
+  const baseRows = [
+    { row: "A", seats: 10 },
+    { row: "B", seats: 12 },
+    { row: "C", seats: 14 },
+    { row: "D", seats: 12 },
+  ];
+
+  const allRows = [
+    ...baseRows,
+    ...baseRows.map((r, i) => ({
+      row: String.fromCharCode(69 + i), // E–H
+      seats: r.seats,
+    })),
+  ];
 
   const toggleSeat = (seatId: string) => {
-    //allow deselecting seats
-    if (selectedSeats.includes(seatId)) {
-      setSelectedSeats(selectedSeats.filter((s) => s !== seatId));
-      return;
-    }
-
-    //prevent selecting more seats than tickets
-    if (selectedSeats.length >= totalTickets) {
-      return;
-    }
-
-    setSelectedSeats([...selectedSeats, seatId]);
+    setSelectedSeats((prev) =>
+      prev.includes(seatId)
+        ? prev.filter((s) => s !== seatId)
+        : [...prev, seatId],
+    );
   };
 
-  //if ticket quantity decreases, trim selected seats
-  useEffect(() => {
-    if (selectedSeats.length > totalTickets) {
-      setSelectedSeats(selectedSeats.slice(0, totalTickets));
-    }
-  }, [totalTickets]);
+  const handleDragSeat = (seatId: string) => {
+    if (!isDragging.current) return;
+    setSelectedSeats((prev) =>
+      prev.includes(seatId) ? prev : [...prev, seatId],
+    );
+  };
 
-  //ticket total pricing logic
+  const changeQuantity = (type: keyof typeof quantities, delta: number) => {
+    setQuantities((prev) => {
+      const newValue = prev[type] + delta;
+
+      if (newValue < 0) return prev;
+
+      // ticket limit
+      if (delta > 0 && totalTickets >= seatCount) return prev;
+
+      return { ...prev, [type]: newValue };
+    });
+  };
+
   const total =
     quantities.adult * prices.adult +
     quantities.child * prices.child +
     quantities.senior * prices.senior;
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
-      <h1 className="text-3xl font-bold mb-4">Booking Page</h1>
+    <div className="flex flex-col min-h-screen bg-white">
+      <Navbar />
 
-      <div className="mb-6">
-        <p className="text-lg">
-          <span className="font-semibold">Movie:</span> {title}
-        </p>
-        <p className="text-lg">
-          <span className="font-semibold">Showtime:</span> {time}
-        </p>
-      </div>
+      <main className="max-w-5xl mx-auto px-6 w-full mt-24 mb-16 flex flex-col gap-10">
+        {/* Title */}
+        <div>
+          <h1 className="text-4xl font-bold">Book Tickets</h1>
+          <span className="block border-b-4 border-black mt-2"></span>
+        </div>
 
-      {/* Ticket section for the selecting portion */}
-
-      <div className="bg-gray-800 p-6 rounded-xl mb-8">
-        <h2 className="text-xl font-semibold mb-4">Select Tickets</h2>
-
-        {Object.keys(prices).map((type) => (
-          <div key={type} className="flex justify-between items-center mb-4">
-            <div>
-              <p className="capitalize font-medium">
-                {type} - ${prices[type as keyof typeof prices]}
-              </p>
+        {/* Movie Info */}
+        <section className="bg-black text-white p-6 rounded-xl shadow-sm flex flex-row">
+          {posterUrl && (
+            <div className="relative w-40 aspect-2/3 rounded-lg overflow-hidden shadow-md">
+              <Image
+                src={posterUrl}
+                alt={`${title} poster`}
+                fill
+                className="object-cover"
+              />
             </div>
-            <input
-              type="number"
-              min="0"
-              value={quantities[type as keyof typeof quantities]}
-              onChange={(e) =>
-                handleQuantityChange(type, Number(e.target.value))
-              }
-              className="w-20 text-black rounded p-1"
-            />
+          )}
+          <div className="mt-auto ml-4">
+            <h2 className="text-2xl font-semibold mb-4">Movie Details</h2>
+            <p className="text-lg">
+              <span className="font-semibold">Movie:</span> {title}
+            </p>
+            <p className="text-lg mt-1">
+              <span className="font-semibold">Showtime:</span> {time}
+            </p>
           </div>
-        ))}
+        </section>
 
-        <div className="mt-4 text-lg font-bold">
-          Total: ${total}
-        </div>
-      </div>
+        {/* Seat Selection FIRST */}
+        <section className="bg-gray-100 p-6 rounded-xl shadow-sm select-none">
+          <h2 className="text-2xl font-semibold mb-4">Select Seats</h2>
 
-      {/* layouts of the seats */}
-      <div className="bg-gray-800 p-6 rounded-xl">
-        <h2 className="text-xl font-semibold mb-4">Select Seats</h2>
-
-        {/* warning message if seat limit reached */}
-        {totalTickets > 0 && selectedSeats.length >= totalTickets && (
-          <p className="text-red-400 mb-3">
-            You cannot select more seats than tickets.
-          </p>
-        )}
-
-        <div className="mb-4 text-center text-gray-400">
-          Screen
-        </div>
-
-        <div className="grid gap-2 justify-center">
-          {Array.from({ length: 6 }).map((_, row) => (
-            <div key={row} className="flex gap-2 justify-center">
-              {Array.from({ length: 8 }).map((_, seat) => {
-                const seatId = `${String.fromCharCode(65 + row)}${seat + 1}`;
-                const selected = selectedSeats.includes(seatId);
-
-                return (
-                  <button
-                    key={seatId}
-                    onClick={() => toggleSeat(seatId)}
-                    className={`w-8 h-8 rounded ${
-                      selected
-                        ? "bg-green-500"
-                        : "bg-gray-500 hover:bg-gray-400"
-                    }`}
-                  >
-                    {seatId}
-                  </button>
-                );
-              })}
+          {/* Curved Screen */}
+          <div className="flex flex-col items-center mb-6">
+            <div
+              className="w-64 h-4 bg-gray-300 rounded-full shadow-inner"
+              style={{
+                borderBottomLeftRadius: "50%",
+                borderBottomRightRadius: "50%",
+              }}
+            ></div>
+            <div className="text-center text-gray-600 font-medium mt-2">
+              Screen
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+
+          {/* Seat Rows */}
+          <div
+            className="flex flex-col items-center gap-4"
+            onMouseDown={() => (isDragging.current = true)}
+            onMouseUp={() => (isDragging.current = false)}
+            onMouseLeave={() => (isDragging.current = false)}
+          >
+            {allRows.map(({ row, seats }) => (
+              <div
+                key={row}
+                className="flex justify-center gap-2"
+                style={{ transform: `scale(${1 + (seats - 10) * 0.03})` }}
+              >
+                {Array.from({ length: seats }).map((_, i) => {
+                  const seatId = `${row}${i + 1}`;
+                  const selected = selectedSeats.includes(seatId);
+
+                  return (
+                    <div
+                      key={seatId}
+                      onMouseDown={() => toggleSeat(seatId)}
+                      onMouseEnter={() => handleDragSeat(seatId)}
+                      className={`w-9 h-9 rounded text-sm font-medium flex items-center justify-center cursor-pointer transition-all
+                        ${selected ? "bg-red-600 text-white" : "bg-gray-400 hover:bg-gray-300"}
+                      `}
+                    >
+                      {seatId}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          {/* Seat Counter */}
+          <p className="text-lg font-semibold mt-4 text-center">
+            Seats selected: {seatCount}
+          </p>
+        </section>
+
+        {/* Ticket Selection SECOND */}
+        <section className="bg-gray-100 p-6 rounded-xl shadow-sm">
+          <h2 className="text-2xl font-semibold mb-4">Select Tickets</h2>
+
+          <p className="text-gray-700 mb-4">
+            Total tickets cannot exceed seats selected.
+          </p>
+
+          <div className="flex flex-col gap-6">
+            {Object.keys(prices).map((type) => (
+              <div key={type} className="flex justify-between items-center">
+                <p className="capitalize font-medium text-lg">
+                  {type} — ${prices[type as keyof typeof prices]}
+                </p>
+
+                <div className="flex items-center gap-3">
+                  {/* Minus Button */}
+                  <button
+                    onClick={() =>
+                      changeQuantity(type as keyof typeof quantities, -1)
+                    }
+                    className="w-8 h-8 rounded-full bg-gray-300 hover:bg-gray-400 text-black flex items-center text-center justify-center text-xl"
+                  >
+                    –
+                  </button>
+
+                  {/* Quantity */}
+                  <span className="text-lg font-semibold w-6 text-center text-black">
+                    {quantities[type as keyof typeof quantities]}
+                  </span>
+
+                  {/* Plus Button */}
+                  <button
+                    onClick={() =>
+                      changeQuantity(type as keyof typeof quantities, 1)
+                    }
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xl
+                      ${
+                        totalTickets < seatCount
+                          ? "bg-gray-300 hover:bg-gray-400 text-black"
+                          : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      }
+                    `}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 text-xl font-bold">Total: ${total}</div>
+        </section>
+        <button className="ml-auto rounded-3xl bg-red-700 px-12 py-4 text-white font-bold ">
+          Checkout
+        </button>
+      </main>
     </div>
   );
 }

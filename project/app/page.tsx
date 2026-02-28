@@ -22,7 +22,7 @@ export default function Home() {
         <Filter movieData={movies} />
       </main>
       <footer className="bg-black p-8 text-white text-center items-center">
-        <span>Footer</span>
+        <span className="text-black">Footer</span>
       </footer>
     </div>
   );
