@@ -15,9 +15,9 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex min-h-screen flex-col">
       <Navbar />
-      <main className="flex flex-col gap-6 max-w-6xl mx-auto px-6 w-full mb-8 mt-20">
+      <main className="flex-1 flex flex-col gap-6 max-w-6xl mx-auto px-6 w-full mb-8 mt-20">
         <h2 className="text-4xl  font-bold">Movies</h2>
         <span className="bg-black border-2"></span>
         <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">

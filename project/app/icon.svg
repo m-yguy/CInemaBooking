@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Cinema icon">
+  <rect width="64" height="64" rx="12" fill="#111111"/>
+  <path d="M16 20h32v24H16z" fill="#b91c1c"/>
+  <circle cx="24" cy="28" r="2" fill="#ffffff"/>
+  <circle cx="32" cy="28" r="2" fill="#ffffff"/>
+  <circle cx="40" cy="28" r="2" fill="#ffffff"/>
+  <circle cx="24" cy="36" r="2" fill="#ffffff"/>
+  <circle cx="32" cy="36" r="2" fill="#ffffff"/>
+  <circle cx="40" cy="36" r="2" fill="#ffffff"/>
+</svg>

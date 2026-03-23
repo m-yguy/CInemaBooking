@@ -28,6 +28,7 @@ export default function MovieCard({ movieData }: MovieCardProps) {
               src={movieData.poster_path}
               alt={`${movieData.title} Poster`}
               fill
+              loading="eager"
               sizes="220px"
               className="object-cover"
             />

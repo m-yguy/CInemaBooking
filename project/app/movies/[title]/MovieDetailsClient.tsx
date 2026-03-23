@@ -29,7 +29,7 @@ export default function MovieDetailsClient({
   };
 
   return (
-    <div>
+    <div className="flex min-h-screen flex-col">
       <Navbar />
 
       {/* HERO SECTION */}
@@ -40,6 +40,8 @@ export default function MovieDetailsClient({
             src={`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`}
             alt="Movie Trailer"
             fill
+            loading="eager"
+            sizes="100vw"
             className="object-cover object-[50%_30%] brightness-[0.65] transition-all duration-500"
           />
         )}
@@ -49,16 +51,18 @@ export default function MovieDetailsClient({
         {/* TRAILER MODE */}
         <div
           className={`
-            absolute inset-0 flex flex-col items-center justify-center px-6 pb-10 max-w-6xl mx-auto
+            absolute inset-0 flex flex-col items-center justify-center px-0 pb-6 max-w-6xl mx-auto
             transition-all duration-500
             ${watchingTrailer ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}
           `}
         >
-          <div className="w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden shadow-xl transition-all duration-500">
-            {trailerEmbed && (
+          <div className="w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden shadow-xl transition-all duration-500 mt-6">
+            {watchingTrailer && trailerEmbed && (
               <iframe
                 src={trailerEmbed}
                 className="w-full h-full"
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
                 allow="autoplay; encrypted-media"
                 allowFullScreen
               />
@@ -67,7 +71,7 @@ export default function MovieDetailsClient({
 
           <button
             onClick={() => setWatchingTrailer(false)}
-            className="mt-6 text-white border border-white py-2 px-8 rounded-lg hover:bg-white hover:text-black transition-all duration-300"
+            className="mt-4 text-white border border-white py-2 px-8 rounded-lg hover:bg-white hover:text-black transition-all duration-300"
           >
             Back
           </button>
@@ -87,6 +91,8 @@ export default function MovieDetailsClient({
                 src={movie.poster_path}
                 alt={`${movie.title} poster`}
                 fill
+                loading="eager"
+                sizes="160px"
                 className="object-cover rounded-md"
               />
             </div>
@@ -94,6 +100,9 @@ export default function MovieDetailsClient({
             <div className="flex flex-col text-white transition-all duration-500">
               <span className="uppercase text-sm font-semibold tracking-wider">
                 {movie.mpa_rating} | {formatRuntime(movie.runtime)}
+              </span>
+              <span className="text-sm font-semibold tracking-wider mt-1">
+                {movie.genre} • ★ {movie.rating}
               </span>
 
               <h2 className="font-bold uppercase text-4xl mb-4">
@@ -169,6 +178,10 @@ export default function MovieDetailsClient({
           </p>
         </div>
       </main>
+
+      <footer className="bg-black p-8 text-white text-center items-center">
+        <span className="text-black">Footer</span>
+      </footer>
     </div>
   );
 }

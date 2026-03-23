@@ -14,12 +14,21 @@ export function toYouTubeEmbed(url?: string | null) {
     const u = new URL(url);
     if (u.hostname.includes("youtu.be")) {
       const id = u.pathname.replace("/", "");
-      return id ? `https://www.youtube.com/embed/${id}` : null;
+      return id
+        ? `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`
+        : null;
     }
     if (u.hostname.includes("youtube.com")) {
       const id = u.searchParams.get("v");
-      if (id) return `https://www.youtube.com/embed/${id}`;
-      if (u.pathname.startsWith("/embed/")) return url;
+      if (id) {
+        return `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`;
+      }
+      if (u.pathname.startsWith("/embed/")) {
+        const embedId = u.pathname.split("/embed/")[1]?.split("/")[0];
+        return embedId
+          ? `https://www.youtube-nocookie.com/embed/${embedId}?rel=0&modestbranding=1`
+          : null;
+      }
     }
   } catch {
     return null;
@@ -114,6 +123,8 @@ export default async function MovieShowtimes({
                   src={posterUrl}
                   alt={`${movie.title} poster`}
                   fill
+                  loading="eager"
+                  sizes="(max-width: 900px) 100vw, 320px"
                   className="object-cover"
                 />
               </div>
