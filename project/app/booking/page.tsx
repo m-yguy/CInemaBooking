@@ -78,7 +78,7 @@ export default function BookingPage() {
     <div className="flex flex-col min-h-screen bg-white">
       <Navbar />
 
-      <main className="max-w-5xl mx-auto px-6 w-full mt-24 mb-16 flex flex-col gap-10">
+      <main className="flex-1 max-w-5xl mx-auto px-6 w-full mt-24 mb-16 flex flex-col gap-10">
         {/* Title */}
         <div>
           <h1 className="text-4xl font-bold">Book Tickets</h1>
@@ -93,6 +93,8 @@ export default function BookingPage() {
                 src={posterUrl}
                 alt={`${title} poster`}
                 fill
+                loading="eager"
+                sizes="160px"
                 className="object-cover"
               />
             </div>
@@ -238,6 +240,10 @@ export default function BookingPage() {
           Checkout
         </button>
       </main>
+
+      <footer className="bg-black p-8 text-white text-center items-center">
+        <span className="text-black">Footer</span>
+      </footer>
     </div>
   );
 }

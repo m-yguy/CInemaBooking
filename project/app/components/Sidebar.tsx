@@ -3,7 +3,6 @@
 import { useState } from "react";
 import type { NavLinks } from "../types/ui";
 import Link from "next/link";
-import Image from "next/image";
 
 interface SidebarProps {
   navLinks: NavLinks[];
@@ -28,7 +27,8 @@ export default function Sidebar({ navLinks }: SidebarProps) {
         <div className="flex justify-between mb-8">
           <div className="border-white border-2">logo</div>
           <button onClick={toggleSidebar}>
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/close.svg"
               width={25}
               height={25}
@@ -42,7 +42,8 @@ export default function Sidebar({ navLinks }: SidebarProps) {
         className={`${isOpen ? "hidden" : "shrink-0 mr-10"}`}
         onClick={toggleSidebar}
       >
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src="/menu.svg"
           width={40}
           height={40}

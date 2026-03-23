@@ -16,9 +16,9 @@ export default async function ShowtimesPage() {
   const movies: movie[] = await response.json();
 
   return (
-    <div>
+    <div className="flex min-h-screen flex-col">
       <Navbar />
-      <main className="max-w-6xl mx-auto px-6 py-10">
+      <main className="flex-1 max-w-6xl mx-auto px-6 py-10 w-full">
         <h1 className="flex flex-col text-4xl font-bold mb-10 mt-10">
           Showtimes
           <span className="bg-black border-2 mt-2"></span>
@@ -36,6 +36,8 @@ export default async function ShowtimesPage() {
                       src={m.poster_path}
                       alt={`${m.title} poster`}
                       fill
+                      loading="eager"
+                      sizes="128px"
                       className="object-cover rounded-md"
                     />
                   </div>

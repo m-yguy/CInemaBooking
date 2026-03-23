@@ -9,6 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ============================================================
 
 CREATE TYPE customer_status AS ENUM ('ACTIVE', 'INACTIVE', 'SUSPENDED');
+CREATE TYPE release_status AS ENUM ('NOW_PLAYING', 'COMING_SOON');
 CREATE TYPE mpaa_rating AS ENUM ('G', 'PG', 'PG-13', 'R', 'NC-17');
 CREATE TYPE ticket_type AS ENUM ('ADULT', 'SENIOR', 'CHILD');
 CREATE TYPE user_type AS ENUM ('ADMIN', 'CUSTOMER');
@@ -91,7 +92,9 @@ CREATE TABLE movies (
     average_rating DOUBLE PRECISION,
     trailer        VARCHAR(300),
     trailer_image  VARCHAR(300),
-    mpaa_us        mpaa_rating
+    mpaa_us        mpaa_rating,
+    release_status release_status NOT NULL,
+    runtime        INT NOT NULL  
 );
 
 CREATE TABLE actors (

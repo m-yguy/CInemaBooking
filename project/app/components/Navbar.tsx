@@ -2,7 +2,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import type { NavLinks } from "../types/ui";
 import Sidebar from "./Sidebar";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -48,8 +47,11 @@ export default function Navbar() {
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("pointerdown", handleClickOutside, {
+      passive: true,
+    });
+    return () =>
+      document.removeEventListener("pointerdown", handleClickOutside);
   }, []);
 
   // Debounced search
@@ -138,7 +140,8 @@ export default function Navbar() {
               placeholder="Search movies..."
               className=" bg-transparent outline-none w-full"
             />
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/search.svg"
               alt="search"
               width={20}
