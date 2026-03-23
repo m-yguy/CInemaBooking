@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 
 export async function GET(
-    request: Request,
-    { params }: { params: Promise<{ id: string }> },
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
 ) {
-    const { id } = await params;
-    const decodedTitle = decodeURIComponent(id);
+  const { id } = await params;
+  const decodedTitle = decodeURIComponent(id);
 
-    const rows = await sql`
+  const rows = await sql`
         SELECT
             m.movie_name AS title,
             m.category AS genre,
@@ -40,9 +40,9 @@ export async function GET(
         LIMIT 1
     `;
 
-    if (rows.length === 0) {
-        return NextResponse.json({ error: "Movie not found" }, { status: 404 });
-    }
+  if (rows.length === 0) {
+    return NextResponse.json({ error: "Movie not found" }, { status: 404 });
+  }
 
-    return NextResponse.json(rows[0]);
+  return NextResponse.json(rows[0]);
 }
