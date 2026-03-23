@@ -1,246 +1,244 @@
 -- ============================================================
--- ENUM TYPES (MySQL ENUMs)
+-- EXTENSIONS
 -- ============================================================
 
--- CustomerStatus: ACTIVE, INACTIVE, SUSPENDED
--- MpaRating: G, PG, PG-13, R, NC-17
--- TicketType: ADULT, SENIOR, CHILD
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ============================================================
--- USER, ADMIN, CUSTOMER
+-- ENUM TYPES
 -- ============================================================
-CREATE TABLE UserTypes (
-    UserTypeID INT PRIMARY KEY,
-    UserTypeName VARCHAR(50) NOT NULL UNIQUE
-);
 
-INSERT INTO UserTypes (UserTypeID, UserTypeName) VALUES
-(1, 'Admin'),
-(2, 'Customer');
+CREATE TYPE customer_status AS ENUM ('ACTIVE', 'INACTIVE', 'SUSPENDED');
+CREATE TYPE mpaa_rating AS ENUM ('G', 'PG', 'PG-13', 'R', 'NC-17');
+CREATE TYPE ticket_type AS ENUM ('ADULT', 'SENIOR', 'CHILD');
+CREATE TYPE user_type AS ENUM ('ADMIN', 'CUSTOMER');
 
-CREATE TABLE User (
-    user_id            VARCHAR(50) PRIMARY KEY,
-    email              VARCHAR(200) NOT NULL UNIQUE,
-    password           VARCHAR(200) NOT NULL,
-    phone_number       VARCHAR(50),
-    receives_promos    BOOLEAN DEFAULT FALSE,
-    user_type          ENUM('ADMIN','CUSTOMER') NOT NULL,
-    -- UserTypeId INT NOT NULL,
+-- ============================================================
+-- USERS (shared table for login/auth)
+-- ============================================================
 
-    -- Customer-specific fields
-    first_name         VARCHAR(100),
-    last_name          VARCHAR(100),
-    status             ENUM('ACTIVE','INACTIVE','SUSPENDED')
-
-    -- FOREIGN KEY (UserTypeID) REFERENCES UserTypes(UserTypeID)
-
+CREATE TABLE users (
+    user_id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username         VARCHAR(50) UNIQUE NOT NULL,
+    email            VARCHAR(200) NOT NULL UNIQUE,
+    password         VARCHAR(200) NOT NULL,
+    phone_number     VARCHAR(50),
+    receives_promos  BOOLEAN DEFAULT FALSE,
+    user_type        user_type NOT NULL
 );
 
 -- ============================================================
--- PAYMENT CARD (Customer 1 --> 0..3 PaymentCards)
+-- CUSTOMERS (customer-only data)
 -- ============================================================
 
-CREATE TABLE PaymentCard (
-    card_id        INT AUTO_INCREMENT PRIMARY KEY,
-    customer_id    VARCHAR(50) NOT NULL,
-    card_num       VARCHAR(30) NOT NULL,
-    expiry_date    VARCHAR(10) NOT NULL,
-    billing_address VARCHAR(200) NOT NULL,
+CREATE TABLE customers (
+    customer_id UUID PRIMARY KEY,
+    first_name  VARCHAR(100),
+    last_name   VARCHAR(100),
+    status      customer_status NOT NULL DEFAULT 'ACTIVE',
 
-    FOREIGN KEY (customer_id) REFERENCES User(user_id)
+    FOREIGN KEY (customer_id) REFERENCES users(user_id)
 );
 
 -- ============================================================
--- MAILING ADDRESS (Customer 1 --> 0..1 MailingAddress)
+-- ADMINS (admin-only data)
 -- ============================================================
 
-CREATE TABLE MailingAddress (
-    address_id     INT AUTO_INCREMENT PRIMARY KEY,
-    customer_id    VARCHAR(50) UNIQUE,
-    address        VARCHAR(200) NOT NULL,
-    zip_code       VARCHAR(20) NOT NULL,
+CREATE TABLE admins (
+    admin_id   UUID PRIMARY KEY,
+    first_name VARCHAR(100),
+    last_name  VARCHAR(100),
 
-    FOREIGN KEY (customer_id) REFERENCES User(user_id)
+    FOREIGN KEY (admin_id) REFERENCES users(user_id)
 );
 
 -- ============================================================
--- MOVIE
+-- PAYMENT CARDS (customers only)
 -- ============================================================
 
+CREATE TABLE payment_cards (
+    card_id          SERIAL PRIMARY KEY,
+    customer_id      UUID NOT NULL,
+    card_num         VARCHAR(30) NOT NULL,
+    expiry_date      VARCHAR(10) NOT NULL,
+    billing_address  VARCHAR(200) NOT NULL,
 
-CREATE TABLE Movie (
-    movie_id       INT AUTO_INCREMENT PRIMARY KEY,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
+
+-- ============================================================
+-- MAILING ADDRESSES (customers only)
+-- ============================================================
+
+CREATE TABLE mailing_addresses (
+    address_id   SERIAL PRIMARY KEY,
+    customer_id  UUID UNIQUE,
+    address      VARCHAR(200) NOT NULL,
+    zip_code     VARCHAR(20) NOT NULL,
+
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
+
+-- ============================================================
+-- MOVIES + PEOPLE
+-- ============================================================
+
+CREATE TABLE movies (
+    movie_id       SERIAL PRIMARY KEY,
     movie_name     VARCHAR(200) NOT NULL,
     category       VARCHAR(100),
-    --cast           TEXT,  -- JSON or comma-separated
-    --director       VARCHAR(100),
-    --producer       VARCHAR(100),
     synopsis       TEXT,
-    average_rating DOUBLE,
+    average_rating DOUBLE PRECISION,
     trailer        VARCHAR(300),
     trailer_image  VARCHAR(300),
-    mpaa_us        ENUM('G','PG','PG-13','R','NC-17')
+    mpaa_us        mpaa_rating
 );
 
-CREATE TABLE Actor (
-    actor_ud INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE actors (
+    actor_id   SERIAL PRIMARY KEY,
     actor_name VARCHAR(200) NOT NULL
-)
-CREATE TABLE Director (
-    director_id   INT AUTO_INCREMENT PRIMARY KEY,
+);
+
+CREATE TABLE directors (
+    director_id   SERIAL PRIMARY KEY,
     director_name VARCHAR(200) NOT NULL
 );
-CREATE TABLE Producer (
-    producer_id   INT AUTO_INCREMENT PRIMARY KEY,
+
+CREATE TABLE producers (
+    producer_id   SERIAL PRIMARY KEY,
     producer_name VARCHAR(200) NOT NULL
 );
 
-
-CREATE Table MovieCast (
+CREATE TABLE movie_casts (
     movie_id INT NOT NULL,
     actor_id INT NOT NULL,
-    --role VARCHAR(150)
-    
+
     PRIMARY KEY (movie_id, actor_id),
-    FOREIGN KEY (movie_id) REFERENCES Movie(movie_id)
-    FOREIGN KEY (actor_id) REFERENCES Actor(actor_id)
+    FOREIGN KEY (movie_id) REFERENCES movies(movie_id),
+    FOREIGN KEY (actor_id) REFERENCES actors(actor_id)
 );
-CREATE TABLE MovieDirector (
+
+CREATE TABLE movie_directors (
     movie_id    INT NOT NULL,
     director_id INT NOT NULL,
 
     PRIMARY KEY (movie_id, director_id),
-
-    FOREIGN KEY (movie_id) REFERENCES Movie(movie_id),
-    FOREIGN KEY (director_id) REFERENCES Director(director_id)
+    FOREIGN KEY (movie_id) REFERENCES movies(movie_id),
+    FOREIGN KEY (director_id) REFERENCES directors(director_id)
 );
-CREATE TABLE MovieProducer (
+
+CREATE TABLE movie_producers (
     movie_id    INT NOT NULL,
     producer_id INT NOT NULL,
 
     PRIMARY KEY (movie_id, producer_id),
-
-    FOREIGN KEY (movie_id) REFERENCES Movie(movie_id),
-    FOREIGN KEY (producer_id) REFERENCES Producer(producer_id)
+    FOREIGN KEY (movie_id) REFERENCES movies(movie_id),
+    FOREIGN KEY (producer_id) REFERENCES producers(producer_id)
 );
 
-
 -- ============================================================
--- CUSTOMER FAVORITE MOVIES (Join Table)
+-- CUSTOMER FAVORITE MOVIES (customers only)
 -- ============================================================
 
-CREATE TABLE CustomerFavoriteMovie (
-    customer_id   VARCHAR(50) NOT NULL,
-    movie_id      INT NOT NULL,
+CREATE TABLE customer_favorite_movies (
+    customer_id UUID NOT NULL,
+    movie_id    INT NOT NULL,
 
     PRIMARY KEY (customer_id, movie_id),
-
-    FOREIGN KEY (customer_id) REFERENCES User(user_id),
-    FOREIGN KEY (movie_id) REFERENCES Movie(movie_id)
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id),
+    FOREIGN KEY (movie_id) REFERENCES movies(movie_id)
 );
 
 -- ============================================================
--- THEATER
+-- THEATERS / SHOWROOMS / SEATS
 -- ============================================================
 
-CREATE TABLE Theater (
-    theater_id   INT AUTO_INCREMENT PRIMARY KEY,
-    name         VARCHAR(200) NOT NULL
+CREATE TABLE theaters (
+    theater_id SERIAL PRIMARY KEY,
+    name       VARCHAR(200) NOT NULL
+);
+
+CREATE TABLE showrooms (
+    showroom_id  SERIAL PRIMARY KEY,
+    theater_id   INT NOT NULL,
+    showroom_num INT NOT NULL,
+    number_seats INT NOT NULL,
+
+    FOREIGN KEY (theater_id) REFERENCES theaters(theater_id)
+);
+
+CREATE TABLE seats (
+    seat_id      SERIAL PRIMARY KEY,
+    showroom_id  INT NOT NULL,
+    seat_number  VARCHAR(10) NOT NULL,
+
+    FOREIGN KEY (showroom_id) REFERENCES showrooms(showroom_id)
 );
 
 -- ============================================================
--- SHOWROOM (Theater 1 --> 1..*)
+-- SHOWTIMES (UUID) / SHOW SEATS
 -- ============================================================
 
-CREATE TABLE ShowRoom (
-    showroom_id   INT AUTO_INCREMENT PRIMARY KEY,
-    theater_id    INT NOT NULL,
-    showroom_num  INT NOT NULL,
-    number_seats  INT NOT NULL,
+CREATE TABLE showtimes (
+    show_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    showroom_id  INT NOT NULL,
+    movie_id     INT NOT NULL,
+    date         TIMESTAMP NOT NULL,
+    time         TIMESTAMP NOT NULL,
+    duration     INT NOT NULL,
 
-    FOREIGN KEY (theater_id) REFERENCES Theater(theater_id)
+    FOREIGN KEY (showroom_id) REFERENCES showrooms(showroom_id),
+    FOREIGN KEY (movie_id) REFERENCES movies(movie_id)
+);
+
+CREATE TABLE show_seats (
+    show_seat_id SERIAL PRIMARY KEY,
+    show_id      UUID NOT NULL,
+    seat_id      INT NOT NULL,
+    is_available BOOLEAN DEFAULT TRUE,
+
+    FOREIGN KEY (show_id) REFERENCES showtimes(show_id),
+    FOREIGN KEY (seat_id) REFERENCES seats(seat_id)
 );
 
 -- ============================================================
--- SEAT (ShowRoom 1 --> 1..*)
+-- PROMOTIONS
 -- ============================================================
 
-CREATE TABLE Seat (
-    seat_id       INT AUTO_INCREMENT PRIMARY KEY,
-    showroom_id   INT NOT NULL,
-    seat_number   VARCHAR(10) NOT NULL,
-
-    FOREIGN KEY (showroom_id) REFERENCES ShowRoom(showroom_id)
-);
-
--- ============================================================
--- SHOW (ShowRoom 1 --> 0..*, Movie 1 <-- 0..*)
--- ============================================================
-
-CREATE TABLE Show (
-    show_id       VARCHAR(50) PRIMARY KEY,
-    showroom_id   INT NOT NULL,
-    movie_id      INT NOT NULL,
-    date          DATETIME NOT NULL,
-    time          DATETIME NOT NULL,
-    duration      INT NOT NULL,
-
-    FOREIGN KEY (showroom_id) REFERENCES ShowRoom(showroom_id),
-    FOREIGN KEY (movie_id) REFERENCES Movie(movie_id)
-);
-
--- ============================================================
--- SHOW SEAT (Seat availability per show)
--- ============================================================
-
-CREATE TABLE ShowSeat (
-    show_seat_id  INT AUTO_INCREMENT PRIMARY KEY,
-    show_id       VARCHAR(50) NOT NULL,
-    seat_id       INT NOT NULL,
-    is_available  BOOLEAN NOT NULL DEFAULT TRUE,
-
-    FOREIGN KEY (show_id) REFERENCES Show(show_id),
-    FOREIGN KEY (seat_id) REFERENCES Seat(seat_id)
-);
-
--- ============================================================
--- PROMOTION
--- ============================================================
-
-CREATE TABLE Promotion (
+CREATE TABLE promotions (
     promo_code       VARCHAR(50) PRIMARY KEY,
-    discount_amount  DOUBLE NOT NULL
+    discount_amount  DOUBLE PRECISION NOT NULL
 );
 
 -- ============================================================
--- BOOKING (Customer 1 --> 0..*, Show 1 --> 1)
+-- BOOKINGS (customers only)
 -- ============================================================
 
-CREATE TABLE Booking (
-    booking_id        VARCHAR(50) PRIMARY KEY,
-    customer_id       VARCHAR(50) NOT NULL,
-    show_id           VARCHAR(50) NOT NULL,
-    booking_fee       DOUBLE,
-    total_price       DOUBLE,
+CREATE TABLE bookings (
+    booking_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    customer_id       UUID NOT NULL,
+    show_id           UUID NOT NULL,
+    booking_fee       DOUBLE PRECISION,
+    total_price       DOUBLE PRECISION,
     payment_reference VARCHAR(100),
     promo_code        VARCHAR(50),
 
-    FOREIGN KEY (customer_id) REFERENCES User(user_id),
-    FOREIGN KEY (show_id) REFERENCES Show(show_id),
-    FOREIGN KEY (promo_code) REFERENCES Promotion(promo_code)
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id),
+    FOREIGN KEY (show_id) REFERENCES showtimes(show_id),
+    FOREIGN KEY (promo_code) REFERENCES promotions(promo_code)
 );
 
 -- ============================================================
--- TICKET (Booking 1 --> 1..*, Ticket 1 --> 1 ShowSeat)
+-- TICKETS
 -- ============================================================
 
-CREATE TABLE Ticket (
-    ticket_number   VARCHAR(50) PRIMARY KEY,
-    booking_id      VARCHAR(50) NOT NULL,
-    show_seat_id    INT NOT NULL,
-    type            ENUM('ADULT','SENIOR','CHILD'),
-    price           DOUBLE NOT NULL,
+CREATE TABLE tickets (
+    ticket_number UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    booking_id    UUID NOT NULL,
+    show_seat_id  INT NOT NULL,
+    type          ticket_type,
+    price         DOUBLE PRECISION NOT NULL,
 
-    FOREIGN KEY (booking_id) REFERENCES Booking(booking_id),
-    FOREIGN KEY (show_seat_id) REFERENCES ShowSeat(show_seat_id)
+    FOREIGN KEY (booking_id) REFERENCES bookings(booking_id),
+    FOREIGN KEY (show_seat_id) REFERENCES show_seats(show_seat_id)
 );
