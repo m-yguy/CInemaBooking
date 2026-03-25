@@ -2,10 +2,10 @@
 
 import Navbar from "@/app/components/Navbar";
 import { useSearchParams } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useRef, Suspense } from "react";
 import Image from "next/image";
 
-export default function BookingPage() {
+function BookingContent() {
   const searchParams = useSearchParams();
   const title = searchParams.get("title");
   const time = searchParams.get("time");
@@ -245,5 +245,19 @@ export default function BookingPage() {
         <span className="text-black">Footer</span>
       </footer>
     </div>
+  );
+}
+
+export default function BookingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
+      <BookingContent />
+    </Suspense>
   );
 }

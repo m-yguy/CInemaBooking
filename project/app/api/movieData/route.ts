@@ -9,6 +9,7 @@ export async function GET(req: Request) {
   if (!q) {
     const rows = await sql`
       SELECT
+        m.movie_id,
         m.movie_name AS title,
         m.category AS genre,
         m.average_rating AS rating,
