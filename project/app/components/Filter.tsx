@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 
 interface FilterProps {
   movieData: movie[];
+  favoriteIds?: number[];
 }
 
 type FilterMode = "Coming Soon" | "Now Playing";
@@ -24,7 +25,7 @@ const GENRES = [
   "Western",
 ];
 
-export default function Filter({ movieData }: FilterProps) {
+export default function Filter({ movieData, favoriteIds = [] }: FilterProps) {
   const [selected, setSelected] = useState<FilterMode>("Now Playing");
   const [genreFilter, setGenreFilter] = useState("All");
   const [showGenreDropdown, setShowGenreDropdown] = useState(false);
@@ -176,7 +177,11 @@ export default function Filter({ movieData }: FilterProps) {
         ) : (
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {filteredMovies.map((m) => (
-              <MovieCard key={m.title} movieData={m} />
+              <MovieCard
+                key={m.title}
+                movieData={m}
+                initialFavorited={favoriteIds.includes(m.movie_id)}
+              />
             ))}
           </div>
         )}
