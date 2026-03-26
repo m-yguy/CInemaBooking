@@ -22,7 +22,7 @@ export default function ShowtimeCard({
             href={`/booking?title=${encodeURIComponent(movieTitle)}
               &time=${encodeURIComponent(time)}
               &poster=${encodeURIComponent(img)}`}
-            className="px-4 py-2 bg-red-700 text-white rounded-lg hover:bg-black transition-all duration-200"
+            className="px-4 py-2 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-150"
           >
             {time}
           </Link>

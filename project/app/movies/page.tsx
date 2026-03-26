@@ -15,21 +15,21 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       <Navbar />
-      <main className="flex-1 flex flex-col gap-6 max-w-6xl mx-auto px-6 w-full mb-8 mt-20">
-        <h2 className="text-4xl  font-bold">Movies</h2>
-        <span className="bg-black border-2"></span>
+      <main className="flex-1 max-w-6xl mx-auto px-6 py-10 w-full">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">
+            Movies
+          </h1>
+          <div className="mt-2 h-1 w-16 bg-gradient-to-r from-red-600 to-red-400 rounded-full" />
+        </div>
         <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">
           {movies.map((m) => (
             <MovieCard key={m.title} movieData={m} />
           ))}
         </div>
       </main>
-
-      <footer className="bg-black p-8 text-white text-center items-center">
-        <span className="text-black">Footer</span>
-      </footer>
     </div>
   );
 }

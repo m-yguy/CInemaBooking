@@ -16,42 +16,45 @@ export default async function ShowtimesPage() {
   const movies: movie[] = await response.json();
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       <Navbar />
-      <main className="flex-1 max-w-6xl mx-auto px-6 py-10 w-full">
-        <h1 className="flex flex-col text-4xl font-bold mb-10 mt-10">
-          Showtimes
-          <span className="bg-black border-2 mt-2"></span>
-        </h1>
-        <div className="flex flex-col gap-12">
+      <main className="flex-1 max-w-4xl mx-auto px-6 py-10 w-full">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">
+            Showtimes
+          </h1>
+          <div className="mt-2 h-1 w-16 bg-gradient-to-r from-red-600 to-red-400 rounded-full" />
+        </div>
+        <div className="flex flex-col gap-6">
           {movies.map((m) => {
             const showtimes = SHOWTIMES_BY_TITLE.DEFAULT;
 
             return (
-              <div className="flex flex-col" key={m.title}>
-                <div className="flex flex-row gap-6 pb-10">
-                  {/* Poster */}
-                  <div className="relative w-32 aspect-2/3 shrink-0">
+              <div
+                className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-xl overflow-hidden"
+                key={m.title}
+              >
+                <div className="h-1 w-full bg-gradient-to-r from-red-600 via-red-500 to-red-600" />
+                <div className="flex flex-row gap-6 p-6">
+                  <div className="relative w-24 aspect-2/3 shrink-0">
                     <Image
                       src={m.poster_path}
                       alt={`${m.title} poster`}
                       fill
                       loading="eager"
-                      sizes="128px"
-                      className="object-cover rounded-md"
+                      sizes="96px"
+                      className="object-cover rounded-lg"
                     />
                   </div>
-                  {/* Movie Info */}
                   <div className="flex flex-col justify-between w-full">
                     <div>
-                      <h2 className="text-2xl font-bold uppercase">
+                      <h2 className="text-xl font-bold text-white uppercase tracking-wide">
                         {m.title}
                       </h2>
-                      <p className="text-sm opacity-80 mt-1">
-                        {m.mpa_rating} • {m.rating}/10
+                      <p className="text-sm text-neutral-400 mt-1">
+                        {m.mpa_rating} &bull; {m.rating}/10
                       </p>
                     </div>
-                    {/* Showtimes */}
                     <ShowtimeCard
                       movieTitle={m.title}
                       showtimes={showtimes}
@@ -59,21 +62,17 @@ export default async function ShowtimesPage() {
                     />
                     <Link
                       href={`/movies/${encodeURIComponent(m.title)}`}
-                      className="mt-4 inline-block text-sm text-red-600 hover:underline"
+                      className="mt-4 inline-block text-sm text-red-400 hover:text-red-300 font-medium transition-colors"
                     >
-                      View Movie Details →
+                      View Movie Details &rarr;
                     </Link>
                   </div>
                 </div>
-                <span className="border-2 bg-blacks"></span>
               </div>
             );
           })}
         </div>
       </main>
-      <footer className="bg-black p-8 text-white text-center items-center">
-        <span className="text-black">Footer</span>
-      </footer>
     </div>
   );
 }
