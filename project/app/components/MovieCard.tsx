@@ -3,9 +3,11 @@
 import type { movie } from "../types/movie";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faStar } from "@fortawesome/free-solid-svg-icons";
 
 interface MovieCardProps {
   movieData: movie;
@@ -26,10 +28,15 @@ export default function MovieCard({
   movieData,
   initialFavorited = false,
 }: MovieCardProps) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
+  const isAdmin = session?.user?.role === "ADMIN";
   const router = useRouter();
   const [favorited, setFavorited] = useState(initialFavorited);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setFavorited(initialFavorited);
+  }, [initialFavorited]);
 
   async function toggleFavorite(e: React.MouseEvent) {
     e.preventDefault();
@@ -71,35 +78,39 @@ export default function MovieCard({
               sizes="220px"
               className="object-cover"
             />
-            {/* Favorite star button */}
-            <button
-              onClick={toggleFavorite}
-              title={
-                status !== "authenticated"
-                  ? "Sign in to favorite"
-                  : favorited
-                    ? "Remove from favorites"
-                    : "Add to favorites"
-              }
-              className={`absolute top-2 right-2 z-10 w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer hover:scale-110
-                ${favorited ? "bg-yellow-400/90" : "bg-black/40"}
-              `}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill={favorited ? "white" : "none"}
-                stroke="white"
-                strokeWidth={1.8}
-                className="w-4 h-4"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"
-                />
-              </svg>
-            </button>
+
+            {!isAdmin && (
+              <div className="absolute top-0 right-0 z-10 w-14 h-14">
+                <svg
+                  className="absolute inset-0 w-full h-full"
+                  viewBox="0 0 56 56"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <polygon points="0,0 56,0 56,56" fill="black" />
+                </svg>
+
+                <button
+                  onClick={toggleFavorite}
+                  title={
+                    status !== "authenticated"
+                      ? "Sign in to favorite"
+                      : favorited
+                        ? "Remove from favorites"
+                        : "Add to favorites"
+                  }
+                  className="absolute top-1 right-1 z-10 w-6 h-6 flex items-center justify-center cursor-pointer"
+                >
+                  <FontAwesomeIcon
+                    icon={faStar}
+                    className={`w-2.5 h-2.5 transition-all duration-300 ease-in-out ${
+                      favorited
+                        ? "text-yellow-300 scale-110"
+                        : "text-white/50 scale-100"
+                    }`}
+                  />
+                </button>
+              </div>
+            )}
           </div>
 
           <h2 className="font-bold leading-tight line-clamp-2 text-[clamp(0.5rem,4vw,1.5rem)] transition-all duration-200 hover:text-[#c8997c]">
