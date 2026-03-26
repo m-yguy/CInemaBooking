@@ -37,6 +37,11 @@ export async function signUp(formData: FormData) {
   const checkUser = await sql`SELECT user_id FROM users WHERE email = ${email}`;
   if (checkUser.length > 0) return { error: "That email is already in use" };
 
+  const checkUsername =
+    await sql`SELECT user_id FROM users WHERE username = ${userName}`;
+  if (checkUsername.length > 0)
+    return { error: "That username is already taken." };
+
   const hashPass = await bcrypt.hash(password, 12);
   const verificationKey = await bcrypt.genSalt(32);
 
@@ -91,4 +96,51 @@ export async function login(formData: FormData) {
 
 export async function logout() {
   await signOut({ redirectTo: "/" });
+}
+
+export async function resendVerification(email: string) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email?.trim() || !emailRegex.test(email.trim())) {
+    return { error: "Please enter a valid email address." };
+  }
+
+  const sql = neon(process.env.DATABASE_URL!);
+
+  const users = await sql`
+    SELECT user_id, username, verified FROM users WHERE email = ${email.trim()}
+  `;
+
+  if (users.length === 0) {
+    return { error: "No account found with that email address." };
+  }
+
+  const user = users[0];
+
+  if (user.verified) {
+    return { error: "This account is already verified. You can sign in." };
+  }
+
+  const verificationKey = await bcrypt.genSalt(32);
+
+  await sql`
+    UPDATE users SET verification_key = ${verificationKey} WHERE user_id = ${user.user_id}
+  `;
+
+  try {
+    await sgMail.send({
+      to: email.trim(),
+      from: "cinemabookingsystemxyz@gmail.com",
+      templateId: "d-ccc0d92738fc40999081974c0dee0aaf",
+      dynamicTemplateData: {
+        verifyUrl: `http://localhost:3000/verificationPage?key=${encodeURIComponent(verificationKey)}`,
+        username: user.username,
+      },
+    });
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : "Failed to send verification email";
+    return { error: `Email error: ${message}` };
+  }
+
+  return { success: "Verification email sent. Please check your inbox." };
 }
