@@ -36,7 +36,7 @@ export default async function VerificationPage({
         <div className="w-full max-w-md">
           <div className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden">
             <div
-              className={`h-1.5 w-full bg-gradient-to-r ${
+              className={`h-1.5 w-full bg-linear-to-r ${
                 isSuccess
                   ? "from-green-600 via-green-500 to-green-600"
                   : "from-red-600 via-red-500 to-red-600"

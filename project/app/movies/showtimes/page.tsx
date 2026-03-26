@@ -23,7 +23,7 @@ export default async function ShowtimesPage() {
           <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">
             Showtimes
           </h1>
-          <div className="mt-2 h-1 w-16 bg-gradient-to-r from-red-600 to-red-400 rounded-full" />
+          <div className="mt-2 h-1 w-16 bg-linear-to-r from-red-600 to-red-400 rounded-full" />
         </div>
         <div className="flex flex-col gap-6">
           {movies.map((m) => {
@@ -34,7 +34,7 @@ export default async function ShowtimesPage() {
                 className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-xl overflow-hidden"
                 key={m.title}
               >
-                <div className="h-1 w-full bg-gradient-to-r from-red-600 via-red-500 to-red-600" />
+                <div className="h-1 w-full bg-linear-to-r from-red-600 via-red-500 to-red-600" />
                 <div className="flex flex-row gap-6 p-6">
                   <div className="relative w-24 aspect-2/3 shrink-0">
                     <Image

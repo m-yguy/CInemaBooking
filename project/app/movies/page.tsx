@@ -22,7 +22,7 @@ export default function Home() {
           <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">
             Movies
           </h1>
-          <div className="mt-2 h-1 w-16 bg-gradient-to-r from-red-600 to-red-400 rounded-full" />
+          <div className="mt-2 h-1 w-16 bg-linear-to-r from-red-600 to-red-400 rounded-full" />
         </div>
         <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">
           {movies.map((m) => (

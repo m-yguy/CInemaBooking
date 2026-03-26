@@ -6,8 +6,14 @@ import type { NavLinks } from "../types/ui";
 import Sidebar from "./Sidebar";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { logout } from "@/auth/actions";
+import { useSession, signOut } from "next-auth/react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faUser,
+  faGear,
+  faRightFromBracket,
+  faShield,
+} from "@fortawesome/free-solid-svg-icons";
 
 type MovieSearchResult = {
   title: string;
@@ -28,6 +34,8 @@ export default function Navbar() {
 
   const [isSearching, setIsSearching] = useState(false);
   const [query, setQuery] = useState("");
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement | null>(null);
 
   const [results, setResults] = useState<MovieSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,7 +49,7 @@ export default function Navbar() {
   const trimmed = useMemo(() => query.trim(), [query]);
   const shouldShowDropdown = isSearching && !!trimmed;
 
-  // Close dropdown when clicking outside the search area
+  // Close search dropdown when clicking outside the search area
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (!searchRef.current) return;
@@ -50,6 +58,21 @@ export default function Navbar() {
       }
     }
 
+    document.addEventListener("pointerdown", handleClickOutside, {
+      passive: true,
+    });
+    return () =>
+      document.removeEventListener("pointerdown", handleClickOutside);
+  }, []);
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (!profileRef.current) return;
+      if (!profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    }
     document.addEventListener("pointerdown", handleClickOutside, {
       passive: true,
     });
@@ -218,15 +241,75 @@ export default function Navbar() {
 
         <div className="sm:flex flex-row shrink-0 ml-auto capitalize gap-2 hidden items-center">
           {status === "authenticated" ? (
-            <>
-              <Link
-                href="/account"
-                className="hover:underline hover:text-red-500 transition-colors"
+            <div ref={profileRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setProfileOpen((prev) => !prev)}
+                className="w-9 h-9 rounded-full bg-neutral-700 flex items-center justify-center hover:bg-neutral-600 transition-colors"
+                aria-label="Account menu"
               >
-                Account
-              </Link>
-            </>
-          ) : (
+                <FontAwesomeIcon
+                  icon={faUser}
+                  className="text-neutral-300 text-sm"
+                />
+              </button>
+
+              {profileOpen && (
+                <div className="absolute right-0 mt-2 w-44 bg-neutral-900 border border-neutral-700 rounded-xl shadow-xl overflow-hidden z-50">
+                  <Link
+                    href="/account"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-neutral-200 hover:bg-neutral-800 transition-colors"
+                  >
+                    <FontAwesomeIcon
+                      icon={faUser}
+                      className="w-4 text-neutral-400"
+                    />
+                    Profile
+                  </Link>
+                  <Link
+                    href="/settings"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-neutral-200 hover:bg-neutral-800 transition-colors"
+                  >
+                    <FontAwesomeIcon
+                      icon={faGear}
+                      className="w-4 text-neutral-400"
+                    />
+                    Settings
+                  </Link>
+                  {session?.user?.role === "ADMIN" && (
+                    <>
+                      <div className="border-t border-neutral-700 my-1" />
+                      <Link
+                        href="/admin"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-neutral-200 hover:bg-neutral-800 transition-colors"
+                      >
+                        <FontAwesomeIcon icon={faShield} className="w-4" />
+                        Admin Portal
+                      </Link>
+                    </>
+                  )}
+                  <div className="border-t border-neutral-700 my-1" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileOpen(false);
+                      signOut({ callbackUrl: "/" });
+                    }}
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-400 hover:bg-neutral-800 transition-colors"
+                  >
+                    <FontAwesomeIcon
+                      icon={faRightFromBracket}
+                      className="w-4"
+                    />
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : status === "unauthenticated" ? (
             <>
               <Link
                 href="/signin"
@@ -242,7 +325,7 @@ export default function Navbar() {
                 Sign Up
               </Link>
             </>
-          )}
+          ) : null}
         </div>
       </nav>
     </div>

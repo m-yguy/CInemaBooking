@@ -3,8 +3,14 @@
 import { useState } from "react";
 import type { NavLinks } from "../types/ui";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { logout } from "@/auth/actions";
+import { useSession, signOut } from "next-auth/react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faUser,
+  faGear,
+  faRightFromBracket,
+  faShield,
+} from "@fortawesome/free-solid-svg-icons";
 
 interface SidebarProps {
   navLinks: NavLinks[];
@@ -12,7 +18,7 @@ interface SidebarProps {
 
 export default function Sidebar({ navLinks }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { status } = useSession();
+  const { status, data: session } = useSession();
 
   const toggleSidebar = () => {
     setIsOpen((prev) => !prev);
@@ -66,23 +72,83 @@ export default function Sidebar({ navLinks }: SidebarProps) {
               {link.label}
             </Link>
           ))}
-          <div className="mt-auto flex flex-row gap-2">
+
+          <div className="mt-auto flex flex-col gap-3">
             {status === "authenticated" ? (
               <>
+                {/* Profile icon + name */}
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-9 h-9 rounded-full bg-neutral-700 flex items-center justify-center shrink-0">
+                    <FontAwesomeIcon
+                      icon={faUser}
+                      className="text-white text-sm"
+                    />
+                  </div>
+                  <span className="text-sm text-neutral-300 truncate">
+                    {session?.user?.name}
+                  </span>
+                </div>
+
                 <Link
                   href="/account"
-                  className="hover:underline hover:text-red-500 transition-colors"
+                  onClick={toggleSidebar}
+                  className="flex items-center gap-3 text-sm text-neutral-200 hover:text-white transition-colors"
                 >
-                  Account
+                  <FontAwesomeIcon
+                    icon={faUser}
+                    className="w-4 text-neutral-400"
+                  />
+                  Profile
                 </Link>
+
+                <Link
+                  href="/settings"
+                  onClick={toggleSidebar}
+                  className="flex items-center gap-3 text-sm text-neutral-200 hover:text-white transition-colors"
+                >
+                  <FontAwesomeIcon
+                    icon={faGear}
+                    className="w-4 text-neutral-400"
+                  />
+                  Settings
+                </Link>
+
+                {session?.user?.role === "ADMIN" && (
+                  <Link
+                    href="/admin"
+                    onClick={toggleSidebar}
+                    className="flex items-center gap-3 text-sm text-neutral-200 hover:text-white transition-colors"
+                  >
+                    <FontAwesomeIcon icon={faShield} className="w-4" />
+                    Admin Portal
+                  </Link>
+                )}
+
+                <div className="border-t border-neutral-700 my-1" />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    toggleSidebar();
+                    signOut({ callbackUrl: "/" });
+                  }}
+                  className="flex items-center gap-3 text-sm text-red-400 hover:text-red-300 transition-colors"
+                >
+                  <FontAwesomeIcon icon={faRightFromBracket} className="w-4" />
+                  Sign Out
+                </button>
               </>
-            ) : (
-              <>
-                <Link href="/signin">Log In</Link>
+            ) : status === "unauthenticated" ? (
+              <div className="flex flex-row gap-2">
+                <Link href="/signin" onClick={toggleSidebar}>
+                  Log In
+                </Link>
                 <span>|</span>
-                <Link href="/signup">Sign Up</Link>
-              </>
-            )}
+                <Link href="/signup" onClick={toggleSidebar}>
+                  Sign Up
+                </Link>
+              </div>
+            ) : null}
           </div>
         </div>
       )}
