@@ -53,7 +53,7 @@ export async function signUp(formData: FormData) {
       RETURNING user_id
     )
     INSERT INTO customers(customer_id, status)
-    SELECT user_id, 'ACTIVE' FROM new_user
+    SELECT user_id, 'INACTIVE' FROM new_user
     RETURNING customer_id
   `;
 

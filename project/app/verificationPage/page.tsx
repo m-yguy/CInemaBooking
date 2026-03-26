@@ -29,11 +29,17 @@ export default async function VerificationPage({
         DELETE FROM email_verifications
         WHERE token = ${decodedKey} AND expires_at > NOW()
         RETURNING user_id
+      ),
+      activated_user AS (
+        UPDATE users
+        SET verified = true
+        WHERE user_id = (SELECT user_id FROM deleted)
+        RETURNING user_id
       )
-      UPDATE users
-      SET verified = true
-      WHERE user_id = (SELECT user_id FROM deleted)
-      RETURNING user_id
+      UPDATE customers
+      SET status = 'ACTIVE'
+      WHERE customer_id = (SELECT user_id FROM activated_user)
+      RETURNING customer_id AS user_id
     `;
 
     status = result.length > 0 ? "success" : "invalid";
