@@ -214,9 +214,9 @@ export default function Navbar() {
         </div>
 
         <div className="sm:flex flex-row shrink-0 ml-auto capitalize gap-2 hidden">
-          <button>Log In</button>
+          <button>Log in</button>
           <span>|</span>
-          <button>Sign Up</button>
+          <Link href={"http://localhost:3000/signup"} className="hover:underline hover:text-red-500 transition-all duration-300 text-nowrap">Sign up</Link>
         </div>
       </nav>
     </div>

@@ -26,6 +26,8 @@ CREATE TABLE users (
     phone_number     VARCHAR(50),
     receives_promos  BOOLEAN DEFAULT FALSE,
     user_type        user_type NOT NULL
+    verified         BOOLEAN DEFAULT FALSE NOT NULL,
+    verification_key        TEXT UNIQUE NULL
 );
 
 -- ============================================================

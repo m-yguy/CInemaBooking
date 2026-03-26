@@ -1,36 +1,55 @@
 "use server"
 import { neon } from '@neondatabase/serverless'
+import sgMail from '@sendgrid/mail'
 import bcrypt from "bcrypt"
+import crypto from "crypto"
 
+sgMail.setApiKey(process.env.SENDGRID_API_KEY!)
 
 export async function signUp(formData: FormData) {
-    console.log("signup called")
-    const email = formData.get("email")
-    const userName = formData.get("username")
-    const password = formData.get("password")
-    const confirmPassword = formData.get("confirmPassword")
+    const sqlManager = neon(process.env.DATABASE_URL!)
+    const email = String(formData.get("email"))
+    const userName = String(formData.get("username"))
+    const password = String(formData.get("password"))
+    const confirmPassword = String(formData.get("confirmPassword"))
+    const verificiationKey = await bcrypt.genSalt(32)
 
-    //Check to see if form is working
-    //console.log(`The email is ${email} the username is ${userName} the password is ${password} the confirmPassword is ${confirmPassword}`)
-
-    
-
-    const sql = neon(process.env.DATABASE_URL!)
+    if (!email || !userName || !password || !confirmPassword)
+        return { error: "Please fill out all sections of the form" }
 
     // validation process
     if (password !== confirmPassword)
         return { error: "Passwords don't match" }
 
-    const checkUser = await sql`SELECT * FROM users WHERE email = ${email}`
+    const checkUser = await sqlManager`SELECT * FROM users WHERE email = ${email}`
     if (checkUser.length > 0)
-        return{error: "The Email is already in use"}
+        return { error: "The email is already in use" }
 
     // hash + enter into database
-     const hashPass = await bcrypt.hash(password, 15)
-    await sql`
-    INSERT INTO users(username, email, password, user_type)
-    VALUES (${userName}, ${email}, ${hashPass}, 'CUSTOMER')
+    const hashPass = await crypto.randomBytes(32).toString("hex")
+
+    await sqlManager`
+    INSERT INTO users(username, email, password, user_type,verified, verification_key)
+    VALUES (${userName}, ${email}, ${hashPass}, 'CUSTOMER', false, ${verificiationKey})
     `
 
-    console.log("Email inserted")
+    // Sending out verification email
+    await sgMail.send({
+        to: email,
+        from: "cinemabookingsystemxyz@gmail.com",
+        templateId: `d-ccc0d92738fc40999081974c0dee0aaf`,
+        dynamicTemplateData: {
+            verifyUrl: `http://localhost:3000/verificationPage?key=${verificiationKey}`,
+            username: userName,
+        },
+    })
+    return{success: "Verification email sent"}
+}
+
+export async function verifyEmail(key: string) {
+    const sqlManager = neon(process.env.DATABASE_URL!)
+    
+    await sqlManager`UPDATE users SET verified = true, verification_key = NULL WHERE verification_key = ${key}`
+    
+    return { success: "Email verified! You can now log in." }
 }
