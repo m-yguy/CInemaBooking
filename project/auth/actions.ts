@@ -1,6 +1,7 @@
 "use server";
 import { neon } from "@neondatabase/serverless";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import sgMail from "@sendgrid/mail";
 import { signIn, signOut } from "@/auth";
 import { AuthError } from "next-auth";
@@ -43,16 +44,24 @@ export async function signUp(formData: FormData) {
     return { error: "That username is already taken." };
 
   const hashPass = await bcrypt.hash(password, 12);
-  const verificationKey = await bcrypt.genSalt(32);
+  const token = crypto.randomBytes(32).toString("hex");
 
-  await sql`
+  const newUser = await sql`
     WITH new_user AS (
-      INSERT INTO users(username, email, password, user_type, verified, verification_key)
-      VALUES (${userName}, ${email}, ${hashPass}, 'CUSTOMER', false, ${verificationKey})
+      INSERT INTO users(username, email, password, user_type, verified)
+      VALUES (${userName}, ${email}, ${hashPass}, 'CUSTOMER', false)
       RETURNING user_id
     )
     INSERT INTO customers(customer_id, status)
     SELECT user_id, 'ACTIVE' FROM new_user
+    RETURNING customer_id
+  `;
+
+  const userId = newUser[0].customer_id;
+
+  await sql`
+    INSERT INTO email_verifications(user_id, token, expires_at)
+    VALUES (${userId}, ${token}, NOW() + INTERVAL '24 hours')
   `;
 
   try {
@@ -61,7 +70,7 @@ export async function signUp(formData: FormData) {
       from: "cinemabookingsystemxyz@gmail.com",
       templateId: "d-ccc0d92738fc40999081974c0dee0aaf",
       dynamicTemplateData: {
-        verifyUrl: `http://localhost:3000/verificationPage?key=${encodeURIComponent(verificationKey)}`,
+        verifyUrl: `http://localhost:3000/verificationPage?key=${encodeURIComponent(token)}`,
         username: userName,
       },
     });
@@ -120,10 +129,13 @@ export async function resendVerification(email: string) {
     return { error: "This account is already verified. You can sign in." };
   }
 
-  const verificationKey = await bcrypt.genSalt(32);
+  const token = crypto.randomBytes(32).toString("hex");
 
   await sql`
-    UPDATE users SET verification_key = ${verificationKey} WHERE user_id = ${user.user_id}
+    INSERT INTO email_verifications(user_id, token, expires_at)
+    VALUES (${user.user_id}, ${token}, NOW() + INTERVAL '24 hours')
+    ON CONFLICT (user_id)
+    DO UPDATE SET token = ${token}, expires_at = NOW() + INTERVAL '24 hours'
   `;
 
   try {
@@ -132,7 +144,7 @@ export async function resendVerification(email: string) {
       from: "cinemabookingsystemxyz@gmail.com",
       templateId: "d-ccc0d92738fc40999081974c0dee0aaf",
       dynamicTemplateData: {
-        verifyUrl: `http://localhost:3000/verificationPage?key=${encodeURIComponent(verificationKey)}`,
+        verifyUrl: `http://localhost:3000/verificationPage?key=${encodeURIComponent(token)}`,
         username: user.username,
       },
     });

@@ -25,9 +25,14 @@ export default async function VerificationPage({
     const decodedKey = decodeURIComponent(key);
 
     const result = await sql`
+      WITH deleted AS (
+        DELETE FROM email_verifications
+        WHERE token = ${decodedKey} AND expires_at > NOW()
+        RETURNING user_id
+      )
       UPDATE users
-      SET verified = true, verification_key = null
-      WHERE verification_key = ${decodedKey} AND verified = false
+      SET verified = true
+      WHERE user_id = (SELECT user_id FROM deleted)
       RETURNING user_id
     `;
 
@@ -44,16 +49,6 @@ export default async function VerificationPage({
       <div className="flex flex-1 items-center justify-center px-4 py-8">
         <div className="w-full max-w-md">
           <div className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden">
-            <div
-              className={`h-1.5 w-full bg-linear-to-r ${
-                isSuccess
-                  ? "from-green-600 via-green-500 to-green-600"
-                  : isResend
-                    ? "from-yellow-600 via-yellow-500 to-yellow-600"
-                    : "from-red-600 via-red-500 to-red-600"
-              }`}
-            />
-
             <div className="px-8 py-8 flex flex-col items-center text-center">
               {isSuccess ? (
                 <>
