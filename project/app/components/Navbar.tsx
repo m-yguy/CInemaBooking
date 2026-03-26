@@ -6,6 +6,8 @@ import type { NavLinks } from "../types/ui";
 import Sidebar from "./Sidebar";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { logout } from "@/auth/actions";
 
 type MovieSearchResult = {
   title: string;
@@ -15,6 +17,7 @@ type MovieSearchResult = {
 
 export default function Navbar() {
   const router = useRouter();
+  const { data: session, status } = useSession();
 
   const links: NavLinks[] = [
     { label: "Find a theater", href: "#" },
@@ -213,10 +216,33 @@ export default function Navbar() {
             ))}
         </div>
 
-        <div className="sm:flex flex-row shrink-0 ml-auto capitalize gap-2 hidden">
-          <button>Log in</button>
-          <span>|</span>
-          <Link href={"http://localhost:3000/signup"} className="hover:underline hover:text-red-500 transition-all duration-300 text-nowrap">Sign up</Link>
+        <div className="sm:flex flex-row shrink-0 ml-auto capitalize gap-2 hidden items-center">
+          {status === "authenticated" ? (
+            <>
+              <Link
+                href="/account"
+                className="hover:underline hover:text-red-500 transition-colors"
+              >
+                Account
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/sign-in"
+                className="hover:underline hover:text-red-500 transition-colors"
+              >
+                Log In
+              </Link>
+              <span>|</span>
+              <Link
+                href="/signup"
+                className="hover:underline hover:text-red-500 transition-colors"
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
       </nav>
     </div>

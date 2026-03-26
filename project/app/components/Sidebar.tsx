@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { NavLinks } from "../types/ui";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { logout } from "@/auth/actions";
 
 interface SidebarProps {
   navLinks: NavLinks[];
@@ -10,6 +12,7 @@ interface SidebarProps {
 
 export default function Sidebar({ navLinks }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { status } = useSession();
 
   const toggleSidebar = () => {
     setIsOpen((prev) => !prev);
@@ -64,9 +67,22 @@ export default function Sidebar({ navLinks }: SidebarProps) {
             </Link>
           ))}
           <div className="mt-auto flex flex-row gap-2">
-            <button>Log In</button>
-            <span>|</span>
-            <button>Sign Up</button>
+            {status === "authenticated" ? (
+              <>
+                <Link
+                  href="/account"
+                  className="hover:underline hover:text-red-500 transition-colors"
+                >
+                  Account
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/sign-in">Log In</Link>
+                <span>|</span>
+                <Link href="/signup">Sign Up</Link>
+              </>
+            )}
           </div>
         </div>
       )}

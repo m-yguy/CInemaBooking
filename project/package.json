@@ -14,6 +14,10 @@
     "bcrypt": "^6.0.0",
     "next": "16.1.6",
     "nodemailer": "^8.0.4",
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0",
+    "next": "16.1.6",
+    "next-auth": "^5.0.0-beta.30",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
