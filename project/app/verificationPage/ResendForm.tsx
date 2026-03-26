@@ -5,8 +5,12 @@ import { resendVerification } from "@/auth/actions";
 
 const COOLDOWN_SECONDS = 60;
 
-export default function ResendForm() {
-  const [email, setEmail] = useState("");
+export default function ResendForm({
+  defaultEmail = "",
+}: {
+  defaultEmail?: string;
+}) {
+  const [email, setEmail] = useState(defaultEmail);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
