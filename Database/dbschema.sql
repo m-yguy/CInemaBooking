@@ -20,7 +20,8 @@ CREATE TYPE user_type AS ENUM ('ADMIN', 'CUSTOMER');
 
 CREATE TABLE users (
     user_id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    username         VARCHAR(50) UNIQUE NOT NULL,
+    first_name       TEXT,
+    last_name        TEXT,
     email            VARCHAR(200) NOT NULL UNIQUE,
     password         VARCHAR(200) NOT NULL,
     phone_number     VARCHAR(50),

@@ -15,16 +15,6 @@ export default function SignUpForm() {
     setSuccess(null);
     const formData = new FormData(e.currentTarget);
 
-    const email = (formData.get("email") as string)?.trim();
-    const username = (formData.get("username") as string)?.trim();
-    const password = formData.get("password") as string;
-    const confirmPassword = formData.get("confirmPassword") as string;
-
-    if (!email || !username || !password || !confirmPassword) {
-      setError("All fields are required. Please fill in every field.");
-      return;
-    }
-
     startTransition(async () => {
       try {
         const result = await signUp(formData);
@@ -117,10 +107,10 @@ export default function SignUpForm() {
 
                 <div className="flex flex-col gap-1.5">
                   <label
-                    htmlFor="username"
+                    htmlFor="firstName"
                     className="text-sm font-medium text-neutral-300"
                   >
-                    Username{" "}
+                    First Name{" "}
                     <span className="relative group cursor-default text-red-500">
                       *
                       <span className="absolute left-4 -top-1 hidden group-hover:block bg-neutral-700 text-neutral-200 text-xs rounded px-2 py-1 whitespace-nowrap shadow-lg z-10">
@@ -130,10 +120,34 @@ export default function SignUpForm() {
                   </label>
                   <input
                     type="text"
-                    name="username"
-                    id="username"
-                    autoComplete="username"
-                    placeholder="your_username"
+                    name="firstName"
+                    id="firstName"
+                    autoComplete="given-name"
+                    placeholder="John"
+                    className="bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/60 focus:border-red-500/60 transition"
+                    onFocus={() => setError(null)}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    htmlFor="lastName"
+                    className="text-sm font-medium text-neutral-300"
+                  >
+                    Last Name{" "}
+                    <span className="relative group cursor-default text-red-500">
+                      *
+                      <span className="absolute left-4 -top-1 hidden group-hover:block bg-neutral-700 text-neutral-200 text-xs rounded px-2 py-1 whitespace-nowrap shadow-lg z-10">
+                        Required
+                      </span>
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    id="lastName"
+                    autoComplete="family-name"
+                    placeholder="Doe"
                     className="bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/60 focus:border-red-500/60 transition"
                     onFocus={() => setError(null)}
                   />
@@ -185,6 +199,21 @@ export default function SignUpForm() {
                     className="bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/60 focus:border-red-500/60 transition"
                     onFocus={() => setError(null)}
                   />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="receivesPromos"
+                    id="receivesPromos"
+                    className="w-4 h-4 accent-red-500 cursor-pointer"
+                  />
+                  <label
+                    htmlFor="receivesPromos"
+                    className="text-sm font-medium text-neutral-300 cursor-pointer"
+                  >
+                    I would like to receive promotions for upcoming movies!
+                  </label>
                 </div>
 
                 <button
