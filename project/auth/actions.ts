@@ -1,41 +1,72 @@
 "use server";
 import { neon } from "@neondatabase/serverless";
 import bcrypt from "bcrypt";
+import sgMail from "@sendgrid/mail";
 import { signIn, signOut } from "@/auth";
 import { AuthError } from "next-auth";
 
+sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
+
 export async function signUp(formData: FormData) {
-  const email = formData.get("email") as string;
-  const userName = formData.get("username") as string;
+  const email = (formData.get("email") as string)?.trim();
+  const userName = (formData.get("username") as string)?.trim();
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
 
-  //Check to see if form is working
-  //console.log(`The email is ${email} the username is ${userName} the password is ${password} the confirmPassword is ${confirmPassword}`)
+  // Field presence validation
+  if (!email || !userName || !password || !confirmPassword)
+    return { error: "Please fill out all sections of the form" };
+
+  // Email format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email))
+    return { error: "Please enter a valid email address" };
+
+  // Username length validation
+  if (userName.length < 3 || userName.length > 32)
+    return { error: "Username must be between 3 and 32 characters" };
+
+  // Password strength validation
+  if (password.length < 8)
+    return { error: "Password must be at least 8 characters" };
+
+  if (password !== confirmPassword) return { error: "Passwords don't match" };
 
   const sql = neon(process.env.DATABASE_URL!);
 
-  // validation process
-  if (password !== confirmPassword) return { error: "Passwords don't match" };
-
   const checkUser = await sql`SELECT user_id FROM users WHERE email = ${email}`;
-  if (checkUser.length > 0) return { error: "The Email is already in use" };
+  if (checkUser.length > 0) return { error: "That email is already in use" };
 
-  // hash + enter into database
   const hashPass = await bcrypt.hash(password, 12);
+  const verificationKey = await bcrypt.genSalt(32);
 
-  // Insert into users and customers in a single transaction
   await sql`
-        WITH new_user AS (
-            INSERT INTO users(username, email, password, user_type)
-            VALUES (${userName}, ${email}, ${hashPass}, 'CUSTOMER')
-            RETURNING user_id
-        )
-        INSERT INTO customers(customer_id, status)
-        SELECT user_id, 'ACTIVE' FROM new_user
-    `;
+    WITH new_user AS (
+      INSERT INTO users(username, email, password, user_type, verified, verification_key)
+      VALUES (${userName}, ${email}, ${hashPass}, 'CUSTOMER', false, ${verificationKey})
+      RETURNING user_id
+    )
+    INSERT INTO customers(customer_id, status)
+    SELECT user_id, 'ACTIVE' FROM new_user
+  `;
 
-  return { success: true };
+  try {
+    await sgMail.send({
+      to: email,
+      from: "cinemabookingsystemxyz@gmail.com",
+      templateId: "d-ccc0d92738fc40999081974c0dee0aaf",
+      dynamicTemplateData: {
+        verifyUrl: `http://localhost:3000/verificationPage?key=${encodeURIComponent(verificationKey)}`,
+        username: userName,
+      },
+    });
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : "Failed to send verification email";
+    return { error: `Email error: ${message}` };
+  }
+
+  return { success: "Verification email sent. Please check your inbox." };
 }
 
 export async function login(formData: FormData) {
