@@ -3,20 +3,29 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { checkEmailVerified } from "@/auth/actions";
 import Navbar from "./Navbar";
 
 export default function SignInForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setUnverifiedEmail(null);
     const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
     startTransition(async () => {
+      const verifyResult = await checkEmailVerified(email);
+      if (verifyResult !== null && !verifyResult.verified) {
+        setUnverifiedEmail(email);
+        return;
+      }
       const result = await signIn("credentials", {
-        email: formData.get("email"),
+        email,
         password: formData.get("password"),
         redirect: false,
       });
@@ -47,6 +56,31 @@ export default function SignInForm() {
                   Sign in to your account to continue
                 </p>
               </div>
+
+              {unverifiedEmail && (
+                <div className="mb-6 flex flex-col gap-2 bg-yellow-950/60 border border-yellow-700/60 text-yellow-300 text-sm rounded-lg px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Please verify your email before signing in.
+                  </div>
+                  <a
+                    href={`/verificationPage?resend=${encodeURIComponent(unverifiedEmail)}`}
+                    className="underline text-yellow-200 hover:text-white transition-colors"
+                  >
+                    Resend verification email →
+                  </a>
+                </div>
+              )}
 
               {error && (
                 <div className="mb-6 flex items-center gap-2 bg-red-950/60 border border-red-800/60 text-red-400 text-sm rounded-lg px-4 py-3">

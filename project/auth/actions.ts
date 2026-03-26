@@ -144,3 +144,14 @@ export async function resendVerification(email: string) {
 
   return { success: "Verification email sent. Please check your inbox." };
 }
+
+export async function checkEmailVerified(
+  email: string,
+): Promise<{ verified: boolean } | null> {
+  if (!email?.trim()) return null;
+  const sql = neon(process.env.DATABASE_URL!);
+  const users =
+    await sql`SELECT verified FROM users WHERE email = ${email.trim()}`;
+  if (users.length === 0) return null;
+  return { verified: !!users[0].verified };
+}

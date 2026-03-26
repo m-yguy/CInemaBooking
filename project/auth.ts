@@ -14,7 +14,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!credentials?.email || !credentials?.password) return null;
 
         const users = await sql`
-          SELECT user_id, username, email, password, user_type
+          SELECT user_id, username, email, password, user_type, verified
           FROM users
           WHERE email = ${credentials.email as string}
         `;
@@ -28,6 +28,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
 
         if (!passwordMatch) return null;
+
+        if (!user.verified) return null;
 
         return {
           id: user.user_id as string,
