@@ -46,8 +46,6 @@ export default function SignUpForm() {
       <div className="flex flex-1 items-center justify-center px-4 py-8">
         <div className="w-full max-w-md">
           <div className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden">
-            <div className="h-1.5 w-full bg-linear-to-r from-red-600 via-red-500 to-red-600" />
-
             <div className="px-8 py-8">
               <div className="flex flex-col items-center mb-6 gap-1.5">
                 <h1 className="text-2xl font-bold text-white tracking-tight">
