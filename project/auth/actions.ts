@@ -10,12 +10,14 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
 export async function signUp(formData: FormData) {
   const email = (formData.get("email") as string)?.trim();
-  const userName = (formData.get("username") as string)?.trim();
+  const firstName = (formData.get("firstName") as string)?.trim();
+  const lastName = (formData.get("lastName") as string)?.trim();
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
+  const receivesPromos = formData.get("receivesPromos") === "on";
 
   // Field presence validation
-  if (!email || !userName || !password || !confirmPassword)
+  if (!email || !firstName || !lastName || !password || !confirmPassword)
     return { error: "Please fill out all sections of the form" };
 
   // Email format validation
@@ -23,9 +25,7 @@ export async function signUp(formData: FormData) {
   if (!emailRegex.test(email))
     return { error: "Please enter a valid email address" };
 
-  // Username length validation
-  if (userName.length < 3 || userName.length > 32)
-    return { error: "Username must be between 3 and 32 characters" };
+
 
   // Password strength validation
   if (password.length < 8)
@@ -38,18 +38,14 @@ export async function signUp(formData: FormData) {
   const checkUser = await sql`SELECT user_id FROM users WHERE email = ${email}`;
   if (checkUser.length > 0) return { error: "That email is already in use" };
 
-  const checkUsername =
-    await sql`SELECT user_id FROM users WHERE username = ${userName}`;
-  if (checkUsername.length > 0)
-    return { error: "That username is already taken." };
 
   const hashPass = await bcrypt.hash(password, 12);
   const token = crypto.randomBytes(32).toString("hex");
 
   const newUser = await sql`
     WITH new_user AS (
-      INSERT INTO users(username, email, password, user_type, verified)
-      VALUES (${userName}, ${email}, ${hashPass}, 'CUSTOMER', false)
+      INSERT INTO users( first_name, last_name, email, password, user_type, verified, receives_promos)
+      VALUES (${firstName}, ${lastName}, ${email}, ${hashPass}, 'CUSTOMER', false, ${receivesPromos})
       RETURNING user_id
     )
     INSERT INTO customers(customer_id, status)
@@ -70,8 +66,9 @@ export async function signUp(formData: FormData) {
       from: "cinemabookingsystemxyz@gmail.com",
       templateId: "d-ccc0d92738fc40999081974c0dee0aaf",
       dynamicTemplateData: {
+        firstName: `${firstName}`,
+        lastName: `${lastName}`,
         verifyUrl: `http://localhost:3000/verificationPage?key=${encodeURIComponent(token)}`,
-        username: userName,
       },
     });
   } catch (err: unknown) {
