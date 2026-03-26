@@ -4,15 +4,29 @@ import { useEffect, useState } from "react";
 import type { movie } from "../types/movie";
 import Navbar from "../components/Navbar";
 import MovieCard from "../components/MovieCard";
+import { useSession } from "next-auth/react";
 
 export default function Home() {
+  const { data: session } = useSession();
   const [movies, setMovies] = useState<movie[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
 
   useEffect(() => {
     fetch("/api/movieData")
       .then((res) => res.json())
       .then((data: movie[]) => setMovies(data));
   }, []);
+
+  useEffect(() => {
+    if (!session) {
+      setFavoriteIds([]);
+      return;
+    }
+    fetch("/api/favorites")
+      .then((res) => res.json())
+      .then((data: number[]) => setFavoriteIds(data))
+      .catch(() => setFavoriteIds([]));
+  }, [session]);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -26,7 +40,11 @@ export default function Home() {
         </div>
         <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">
           {movies.map((m) => (
-            <MovieCard key={m.title} movieData={m} />
+            <MovieCard
+              key={m.title}
+              movieData={m}
+              initialFavorited={favoriteIds.includes(m.movie_id)}
+            />
           ))}
         </div>
       </main>
