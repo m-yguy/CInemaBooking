@@ -36,7 +36,7 @@ export default function MovieCard({
     e.stopPropagation();
     if (loading) return;
     if (status !== "authenticated") {
-      router.push("/sign-in");
+      router.push("/signin");
       return;
     }
     setLoading(true);

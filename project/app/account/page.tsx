@@ -6,7 +6,7 @@ import SignOutButton from "../components/SignOutButton";
 export default async function AccountPage() {
   const session = await auth();
 
-  if (!session) redirect("/sign-in");
+  if (!session) redirect("/signin");
 
   return (
     <div className="flex flex-col min-h-screen">

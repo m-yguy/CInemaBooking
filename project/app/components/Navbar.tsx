@@ -229,7 +229,7 @@ export default function Navbar() {
           ) : (
             <>
               <Link
-                href="/sign-in"
+                href="/signin"
                 className="hover:underline hover:text-red-500 transition-colors"
               >
                 Log In

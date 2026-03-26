@@ -78,7 +78,7 @@ export default function Sidebar({ navLinks }: SidebarProps) {
               </>
             ) : (
               <>
-                <Link href="/sign-in">Log In</Link>
+                <Link href="/signin">Log In</Link>
                 <span>|</span>
                 <Link href="/signup">Sign Up</Link>
               </>
