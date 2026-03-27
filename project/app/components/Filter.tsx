@@ -115,7 +115,7 @@ export default function Filter({ movieData, favoriteIds = [] }: FilterProps) {
           </button>
 
           {showGenreDropdown && (
-            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-32 overflow-hidden">
+            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-32 overflow-hidden">
               {GENRES.map((genre) => (
                 <button
                   key={genre}

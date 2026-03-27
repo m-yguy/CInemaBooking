@@ -8,25 +8,35 @@ import { useSession } from "next-auth/react";
 
 export default function Home() {
   const { data: session } = useSession();
+  const userEmail = session?.user?.email;
   const [movies, setMovies] = useState<movie[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/movieData")
-      .then((res) => res.json())
-      .then((data: movie[]) => setMovies(data));
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch movies");
+        return res.json();
+      })
+      .then((data: movie[]) => setMovies(data))
+      .catch(() => setError("Failed to load movies. Please try again."))
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
-    if (!session) {
+    if (!userEmail) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFavoriteIds([]);
       return;
     }
+
     fetch("/api/favorites")
       .then((res) => res.json())
       .then((data: number[]) => setFavoriteIds(data))
       .catch(() => setFavoriteIds([]));
-  }, [session]);
+  }, [userEmail]);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -38,15 +48,36 @@ export default function Home() {
           </h1>
           <div className="mt-2 h-1 w-16 bg-linear-to-r from-red-600 to-red-400 rounded-full" />
         </div>
-        <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">
-          {movies.map((m) => (
-            <MovieCard
-              key={m.title}
-              movieData={m}
-              initialFavorited={favoriteIds.includes(m.movie_id)}
-            />
-          ))}
-        </div>
+
+        {loading && (
+          <div className="flex items-center justify-center py-20 text-neutral-500">
+            Loading movies...
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="flex items-center justify-center py-20 text-red-500">
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && movies.length === 0 && (
+          <div className="flex items-center justify-center py-20 text-neutral-500">
+            No movies found.
+          </div>
+        )}
+
+        {!loading && !error && movies.length > 0 && (
+          <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">
+            {movies.map((m) => (
+              <MovieCard
+                key={m.movie_id}
+                movieData={m}
+                initialFavorited={favoriteIds.includes(m.movie_id)}
+              />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

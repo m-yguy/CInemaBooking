@@ -25,8 +25,6 @@ export async function signUp(formData: FormData) {
   if (!emailRegex.test(email))
     return { error: "Please enter a valid email address" };
 
-
-
   // Password strength validation
   if (password.length < 8)
     return { error: "Password must be at least 8 characters" };
@@ -37,7 +35,6 @@ export async function signUp(formData: FormData) {
 
   const checkUser = await sql`SELECT user_id FROM users WHERE email = ${email}`;
   if (checkUser.length > 0) return { error: "That email is already in use" };
-
 
   const hashPass = await bcrypt.hash(password, 12);
   const token = crypto.randomBytes(32).toString("hex");
@@ -113,7 +110,7 @@ export async function resendVerification(email: string) {
   const sql = neon(process.env.DATABASE_URL!);
 
   const users = await sql`
-    SELECT user_id, username, verified FROM users WHERE email = ${email.trim()}
+    SELECT user_id, first_name, last_name, verified FROM users WHERE email = ${email.trim()}
   `;
 
   if (users.length === 0) {
@@ -142,7 +139,8 @@ export async function resendVerification(email: string) {
       templateId: "d-ccc0d92738fc40999081974c0dee0aaf",
       dynamicTemplateData: {
         verifyUrl: `http://localhost:3000/verificationPage?key=${encodeURIComponent(token)}`,
-        username: user.username,
+        firstName: user.first_name,
+        lastName: user.last_name,
       },
     });
   } catch (err: unknown) {

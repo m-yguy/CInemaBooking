@@ -615,9 +615,11 @@ ALTER TABLE public.tickets OWNER TO neondb_owner;
 -- Name: users; Type: TABLE; Schema: public; Owner: neondb_owner
 --
 
+
 CREATE TABLE public.users (
     user_id uuid DEFAULT gen_random_uuid() NOT NULL,
-    username character varying(50) NOT NULL,
+    first_name character varying(50) NOT NULL,
+    last_name character varying(50) NOT NULL,
     email character varying(200) NOT NULL,
     password character varying(200) NOT NULL,
     phone_number character varying(50),
@@ -1016,9 +1018,9 @@ COPY public.tickets (ticket_number, booking_id, show_seat_id, type, price) FROM 
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: neondb_owner
 --
 
-COPY public.users (user_id, username, email, password, phone_number, receives_promos, user_type) FROM stdin;
-d655606c-1192-4637-9266-35f21eb79f18	user1	user@email.com	userpassword123	+44 7355244340	t	CUSTOMER
-a7f90616-24cd-46f5-95ff-ea6d3c9342b5	admin1	admin@email.com	adminpassword123	+1 2836427310	f	ADMIN
+COPY public.users (user_id, first_name, last_name, email, password, phone_number, receives_promos, user_type) FROM stdin;
+d655606c-1192-4637-9266-35f21eb79f18	John	Doe	user@email.com	userpassword123	+44 7355244340	t	CUSTOMER
+a7f90616-24cd-46f5-95ff-ea6d3c9342b5	Admin	User	admin@email.com	adminpassword123	+1 2836427310	f	ADMIN
 \.
 
 
@@ -1280,8 +1282,9 @@ ALTER TABLE ONLY public.users
 -- Name: users users_username_key; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_username_key UNIQUE (username);
+-- Username constraint removed; add unique constraint for (first_name, last_name, email) if needed
+-- ALTER TABLE ONLY public.users
+--     ADD CONSTRAINT users_username_key UNIQUE (username);
 
 
 --

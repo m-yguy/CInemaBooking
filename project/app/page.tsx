@@ -1,7 +1,7 @@
 "use client";
 import Navbar from "./components/Navbar";
 import Filter from "./components/Filter";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { movie } from "./types/movie";
 import { useSession } from "next-auth/react";
 
@@ -9,6 +9,7 @@ export default function Home() {
   const { data: session } = useSession();
   const [movies, setMovies] = useState<movie[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
+  const prevFavoriteIds = useRef<number[]>([]);
 
   useEffect(() => {
     fetch("/api/movieData")
@@ -17,27 +18,51 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!session) {
-      setFavoriteIds([]);
-      return;
-    }
-    fetch("/api/favorites")
-      .then((res) => res.json())
-      .then((data: number[]) => setFavoriteIds(data))
-      .catch(() => setFavoriteIds([]));
+    let isMounted = true;
+    const fetchFavorites = async () => {
+      if (!session) {
+        if (prevFavoriteIds.current.length !== 0) {
+          prevFavoriteIds.current = [];
+          setFavoriteIds([]);
+        }
+        return;
+      }
+      try {
+        const res = await fetch("/api/favorites");
+        const data: number[] = await res.json();
+        const prev = prevFavoriteIds.current;
+        if (
+          isMounted &&
+          (data.length !== prev.length ||
+            !data.every((id, i) => id === prev[i]))
+        ) {
+          prevFavoriteIds.current = data;
+          setFavoriteIds(data);
+        }
+      } catch {
+        if (isMounted && prevFavoriteIds.current.length !== 0) {
+          prevFavoriteIds.current = [];
+          setFavoriteIds([]);
+        }
+      }
+    };
+    fetchFavorites();
+    return () => {
+      isMounted = false;
+    };
   }, [session]);
 
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
       <main className="flex-1 flex flex-col gap-6 max-w-6xl mx-auto px-6 w-full mb-8">
-        <div className="bg-black text-white rounded-3xl min-h-80 mt-20 text-center items-center">
+        <div className="flex bg-black text-white rounded-3xl min-h-80 mt-20 text-center items-center justify-center">
           hero
         </div>
         <Filter movieData={movies} favoriteIds={favoriteIds} />
       </main>
       <footer className="bg-black p-8 text-white text-center items-center">
-        <span className="text-black">Footer</span>
+        <span>Footer</span>
       </footer>
     </div>
   );

@@ -17,7 +17,7 @@ export default async function AccountPage() {
 
         <div className="bg-gray-100 rounded-xl p-6 flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <span className="text-sm text-gray-500">Username</span>
+            <span className="text-sm text-gray-500">Name</span>
             <span className="font-medium">{session.user.name}</span>
           </div>
           <div className="flex flex-col gap-1">
