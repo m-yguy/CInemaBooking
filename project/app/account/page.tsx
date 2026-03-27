@@ -2,11 +2,41 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
 import SignOutButton from "../components/SignOutButton";
+import UpdateProfileForm from "../components/UpdateProfileForm";
+import { sql } from "@/lib/db";
+import { revalidatePath } from "next/cache";
 
 export default async function AccountPage() {
   const session = await auth();
 
   if (!session) redirect("/signin");
+
+  const userId = session.user.id;
+
+  const users = await sql`
+    SELECT first_name, last_name, email
+    FROM users
+    WHERE user_id = ${userId}
+    LIMIT 1
+  `;
+
+  const user = users[0];
+
+  async function updateProfile(formData: FormData) {
+    "use server";
+
+    const firstName = (formData.get("firstName") as string)?.trim();
+    const lastName = (formData.get("lastName") as string)?.trim();
+
+    await sql`
+      UPDATE users
+      SET first_name = ${firstName},
+          last_name = ${lastName}
+      WHERE user_id = ${userId}
+    `;
+
+    revalidatePath("/account");
+  }
 
   return (
     <div className="min-h-screen bg-white text-black">
@@ -16,58 +46,17 @@ export default async function AccountPage() {
         <h1 className="mb-10 text-4xl font-bold">Account</h1>
 
         <div className="space-y-12">
-          {/* General Info */}
           <section className="border-b border-gray-200 pb-12">
             <h2 className="mb-6 text-2xl font-bold">General Info</h2>
 
-            <div className="space-y-6">
-              {/* Email */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={session.user.email ?? ""}
-                  readOnly
-                  className="w-full cursor-not-allowed rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500 outline-none"
-                />
-              </div>
-
-              {/* Username */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  defaultValue={session.user.name ?? ""}
-                  className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 outline-none focus:border-black"
-                />
-              </div>
-
-              {/* Phone */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold">
-                  Phone Number
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter phone number"
-                  className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 outline-none focus:border-black"
-                />
-              </div>
-
-              {/* Save */}
-              <div className="pt-2">
-                <button className="rounded-full bg-black px-6 py-3 font-semibold text-white transition hover:bg-gray-800">
-                  Save Changes
-                </button>
-              </div>
-            </div>
+            <UpdateProfileForm
+              firstName={user?.first_name ?? ""}
+              lastName={user?.last_name ?? ""}
+              email={user?.email ?? session.user.email ?? ""}
+              action={updateProfile}
+            />
           </section>
 
-          {/* Change Password */}
           <section>
             <h2 className="mb-6 text-2xl font-bold">Change Password</h2>
 

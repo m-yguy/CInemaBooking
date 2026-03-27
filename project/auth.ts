@@ -28,11 +28,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
 
         if (!passwordMatch) return null;
-
         if (!user.verified) return null;
 
         return {
           id: user.user_id as string,
+          first_name: user.first_name as string,
+          last_name: user.last_name as string,
           name: `${user.first_name} ${user.last_name}`,
           email: user.email as string,
           role: user.user_type as string,
@@ -45,12 +46,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = (user as { role: string }).role;
+        token.first_name = (user as { first_name: string }).first_name;
+        token.last_name = (user as { last_name: string }).last_name;
       }
       return token;
     },
     session({ session, token }) {
       session.user.id = token.id as string;
       session.user.role = token.role as string;
+      session.user.first_name = token.first_name as string;
+      session.user.last_name = token.last_name as string;
+      session.user.name = `${token.first_name ?? ""} ${token.last_name ?? ""}`.trim();
       return session;
     },
   },
