@@ -5,8 +5,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUsers,
   faFilm,
-  faCalendarCheck,
-  faChartBar,
+  faTags,
+  faClock,
 } from "@fortawesome/free-solid-svg-icons";
 
 export default async function AdminPortalPage() {
@@ -18,27 +18,27 @@ export default async function AdminPortalPage() {
 
   const sections = [
     {
-      label: "Manage Users",
-      description: "View and manage user accounts",
-      icon: faUsers,
-      href: "#",
-    },
-    {
       label: "Manage Movies",
       description: "Add, edit, or remove movies",
       icon: faFilm,
       href: "#",
     },
     {
-      label: "Manage Bookings",
-      description: "View and manage bookings",
-      icon: faCalendarCheck,
+      label: "Manage Promotions",
+      description: "Create and manage promotions",
+      icon: faTags,
       href: "#",
     },
     {
-      label: "Analytics",
-      description: "View site statistics and reports",
-      icon: faChartBar,
+      label: "Manage Users",
+      description: "View and manage user accounts",
+      icon: faUsers,
+      href: "#",
+    },
+    {
+      label: "Manage Showtimes",
+      description: "Manage movie showtimes",
+      icon: faClock,
       href: "#",
     },
   ];
