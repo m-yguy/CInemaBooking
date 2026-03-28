@@ -50,11 +50,8 @@ export async function sendPasswordResetEmail(
   await sgMail.send({
     to: toEmail,
     from: FROM_EMAIL,
-    templateId: process.env.SENDGRID_RESET_TEMPLATE_ID!,
-    dynamicTemplateData: {
-      firstName,
-      lastName,
-      resetUrl,
-    },
+    subject: "Reset Your Password",
+    text: `Hello ${firstName} ${lastName},\n\nClick the link below to reset your Cinema Booking password. This link expires in 1 hour.\n\n${resetUrl}\n\nIf you did not request this, you can safely ignore this email.`,
+    html: `<p>Hello ${firstName} ${lastName},</p><p>Click the link below to reset your Cinema Booking password. This link expires in <strong>1 hour</strong>.</p><p><a href="${resetUrl}">Reset Password</a></p><p>If you did not request this, you can safely ignore this email.</p>`,
   });
 }
