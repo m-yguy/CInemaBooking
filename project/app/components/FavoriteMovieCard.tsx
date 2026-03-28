@@ -16,7 +16,10 @@ export default function FavoriteMovieCard({
   return (
     <div className="group flex flex-col gap-2">
       <div className="relative aspect-2/3 w-full overflow-hidden rounded-lg bg-gray-200">
-        <a href={`/movies/${encodeURIComponent(title)}`} className="block w-full h-full">
+        <a
+          href={`/movies/${encodeURIComponent(title)}`}
+          className="block w-full h-full"
+        >
           <Image
             src={posterPath}
             alt={`${title} poster`}
@@ -26,7 +29,10 @@ export default function FavoriteMovieCard({
           />
         </a>
         {removeAction && (
-          <form action={removeAction} className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          <form
+            action={removeAction}
+            className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+          >
             <input type="hidden" name="movieId" value={String(movieId)} />
             <button
               type="submit"
