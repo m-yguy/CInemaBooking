@@ -175,6 +175,18 @@ export default async function AccountPage() {
     );
   }
 
+  async function removeFavorite(formData: FormData) {
+    "use server";
+    if (!isCustomer) return;
+    const movieId = formData.get("movieId") as string;
+    if (!movieId) return;
+    await sql`
+      DELETE FROM customer_favorite_movies
+      WHERE customer_id = ${userId} AND movie_id = ${parseInt(movieId)}
+    `;
+    revalidatePath("/account");
+  }
+
   return (
     <div className="min-h-screen bg-white text-black">
       <Navbar />
@@ -231,6 +243,7 @@ export default async function AccountPage() {
                         movieId={movie.movie_id}
                         title={movie.title}
                         posterPath={movie.poster_path}
+                        removeAction={removeFavorite}
                       />
                     </div>
                   ))}

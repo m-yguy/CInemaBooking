@@ -14,6 +14,18 @@ export default async function FavoritesPage() {
 
   if (!isCustomer) redirect("/account");
 
+  async function removeFavorite(formData: FormData) {
+    "use server";
+    const movieId = formData.get("movieId") as string;
+    if (!movieId) return;
+    await sql`
+      DELETE FROM customer_favorite_movies
+      WHERE customer_id = ${userId} AND movie_id = ${parseInt(movieId)}
+    `;
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/account/favorites");
+  }
+
   const favoriteMovies = await sql`
     SELECT
       m.movie_id,
@@ -48,6 +60,7 @@ export default async function FavoritesPage() {
                 movieId={movie.movie_id}
                 title={movie.title}
                 posterPath={movie.poster_path}
+                removeAction={removeFavorite}
               />
             ))}
           </div>
