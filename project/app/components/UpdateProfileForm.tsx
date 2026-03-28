@@ -2,12 +2,21 @@
 
 import { useState, useTransition, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 
 export default function UpdateProfileForm({
   firstName,
   lastName,
   email,
   phone = "",
+  addressLine1 = "",
+  addressLine2 = "",
+  city = "",
+  state = "",
+  postalCode = "",
+  country = "",
+  isCustomer = false,
   action,
   notifyAction,
 }: {
@@ -15,7 +24,14 @@ export default function UpdateProfileForm({
   lastName: string;
   email: string;
   phone?: string;
-  action: (formData: FormData) => Promise<void>;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  isCustomer?: boolean;
+  action: (formData: FormData) => Promise<{ error?: string } | void>;
   notifyAction: (changes: string[]) => Promise<void>;
 }) {
   const [success, setSuccess] = useState(false);
@@ -48,18 +64,34 @@ export default function UpdateProfileForm({
 
   // Only allow up to 10 digits
   const [localPhone, setLocalPhone] = useState(formatPhoneInput(phone));
+  const [localAddressLine1, setLocalAddressLine1] = useState(addressLine1);
+  const [localAddressLine2, setLocalAddressLine2] = useState(addressLine2);
+  const [localCity, setLocalCity] = useState(city);
+  const [localState, setLocalState] = useState(state);
+  const [localPostalCode, setLocalPostalCode] = useState(postalCode);
+  const [localCountry, setLocalCountry] = useState(country);
 
   const [editing, setEditing] = useState(false);
+  const [addressOpen, setAddressOpen] = useState(false);
 
   useEffect(() => {
     if (!editing) {
-      setLocalPhone(formatPhoneInput(phone));
       setError("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editing]);
 
-  const prevValuesRef = useRef({ firstName, lastName, phone });
+  const prevValuesRef = useRef({
+    firstName,
+    lastName,
+    phone,
+    addressLine1,
+    addressLine2,
+    city,
+    state,
+    postalCode,
+    country,
+  });
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -74,24 +106,40 @@ export default function UpdateProfileForm({
     setSuccess(false);
     setError("");
     const phoneDigits = localPhone.replace(/-/g, "");
-    if (phoneDigits.length !== 10) {
+    if (phoneDigits.length > 0 && phoneDigits.length !== 10) {
       setError("Enter valid phone number");
       return;
     }
     formData.set("firstName", localFirstName);
     formData.set("lastName", localLastName);
     formData.set("phone", phoneDigits);
+    if (isCustomer) {
+      formData.set("addressLine1", localAddressLine1);
+      formData.set("addressLine2", localAddressLine2);
+      formData.set("city", localCity);
+      formData.set("state", localState);
+      formData.set("postalCode", localPostalCode);
+      formData.set("country", localCountry);
+    }
     const prevValues = { ...prevValuesRef.current };
-    const savedFirstName = localFirstName;
-    const savedLastName = localLastName;
-    const savedPhone = phoneDigits;
+    const newValues = {
+      firstName: localFirstName,
+      lastName: localLastName,
+      phone: phoneDigits,
+      addressLine1: localAddressLine1,
+      addressLine2: localAddressLine2,
+      city: localCity,
+      state: localState,
+      postalCode: localPostalCode,
+      country: localCountry,
+    };
     startTransition(async () => {
-      await action(formData);
-      prevValuesRef.current = {
-        firstName: savedFirstName,
-        lastName: savedLastName,
-        phone: savedPhone,
-      };
+      const result = await action(formData);
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+      prevValuesRef.current = { ...newValues };
       setEditing(false);
       setSuccess(true);
       router.refresh();
@@ -100,10 +148,19 @@ export default function UpdateProfileForm({
       timerRef.current = setTimeout(
         async () => {
           const changes: string[] = [];
-          if (savedFirstName !== prevValues.firstName)
+          if (newValues.firstName !== prevValues.firstName)
             changes.push("First name");
-          if (savedLastName !== prevValues.lastName) changes.push("Last name");
-          if (savedPhone !== prevValues.phone) changes.push("Phone number");
+          if (newValues.lastName !== prevValues.lastName)
+            changes.push("Last name");
+          if (newValues.phone !== prevValues.phone)
+            changes.push("Phone number");
+          if (newValues.addressLine1 !== prevValues.addressLine1)
+            changes.push("Address");
+          if (newValues.city !== prevValues.city) changes.push("City");
+          if (newValues.state !== prevValues.state) changes.push("State");
+          if (newValues.postalCode !== prevValues.postalCode)
+            changes.push("Postal code");
+          if (newValues.country !== prevValues.country) changes.push("Country");
           if (changes.length > 0) await notifyAction(changes);
         },
         10 * 60 * 1000,
@@ -158,6 +215,99 @@ export default function UpdateProfileForm({
             )}
           </div>
         </div>
+        {isCustomer && (
+          <div className="rounded-md border border-gray-200 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setAddressOpen(!addressOpen)}
+              className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold bg-gray-50 hover:bg-gray-100"
+            >
+              Mailing Address
+              <FontAwesomeIcon
+                icon={faChevronDown}
+                className={`w-4 h-4 transition-transform duration-300 ${addressOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+            <div
+              className={`grid transition-all duration-300 ${addressOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+            >
+              <div className="overflow-hidden">
+                <div className="space-y-6 px-4 pb-4 pt-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold">
+                      Address line 1
+                    </label>
+                    <input
+                      readOnly
+                      value={localAddressLine1}
+                      placeholder="Address"
+                      className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold">
+                      Address line 2
+                    </label>
+                    <input
+                      readOnly
+                      value={localAddressLine2}
+                      placeholder="Apt, suite, etc. (optional)"
+                      className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold">
+                        City
+                      </label>
+                      <input
+                        readOnly
+                        value={localCity}
+                        placeholder="City"
+                        className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold">
+                        State
+                      </label>
+                      <input
+                        readOnly
+                        value={localState}
+                        placeholder="State"
+                        className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-6">
+                    <div className="w-40">
+                      <label className="mb-2 block text-sm font-semibold">
+                        Postal code
+                      </label>
+                      <input
+                        readOnly
+                        value={localPostalCode}
+                        placeholder="Postal code"
+                        className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500"
+                      />
+                    </div>
+                    <div className="w-28">
+                      <label className="mb-2 block text-sm font-semibold">
+                        Country
+                      </label>
+                      <input
+                        readOnly
+                        value={localCountry}
+                        placeholder="Country"
+                        className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500 uppercase"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <button
           type="button"
           className="rounded-full bg-black px-6 py-3 font-semibold text-white hover:bg-gray-800"
@@ -224,13 +374,128 @@ export default function UpdateProfileForm({
           <p className="text-red-600 text-sm font-medium mt-2">{error}</p>
         )}
       </div>
+      {isCustomer && (
+        <div className="rounded-md border border-gray-200 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setAddressOpen(!addressOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold bg-gray-50 hover:bg-gray-100"
+          >
+            Mailing Address
+            <FontAwesomeIcon
+              icon={faChevronDown}
+              className={`w-4 h-4 transition-transform duration-300 ${addressOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+          <div
+            className={`grid transition-all duration-300 ${addressOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+          >
+            <div className="overflow-hidden">
+              <div className="space-y-6 px-4 pb-4 pt-4">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold">
+                    Address line 1
+                  </label>
+                  <input
+                    name="addressLine1"
+                    value={localAddressLine1}
+                    onChange={(e) => setLocalAddressLine1(e.target.value)}
+                    placeholder="123 Main St"
+                    maxLength={255}
+                    className="w-full rounded-md border border-gray-300 px-4 py-3"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold">
+                    Address line 2
+                  </label>
+                  <input
+                    name="addressLine2"
+                    value={localAddressLine2}
+                    onChange={(e) => setLocalAddressLine2(e.target.value)}
+                    placeholder="Apt, suite, etc. (optional)"
+                    maxLength={255}
+                    className="w-full rounded-md border border-gray-300 px-4 py-3"
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold">
+                      City
+                    </label>
+                    <input
+                      name="city"
+                      value={localCity}
+                      onChange={(e) => setLocalCity(e.target.value)}
+                      placeholder="City"
+                      maxLength={100}
+                      className="w-full rounded-md border border-gray-300 px-4 py-3"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold">
+                      State
+                    </label>
+                    <input
+                      name="state"
+                      value={localState}
+                      onChange={(e) => setLocalState(e.target.value)}
+                      placeholder="State"
+                      maxLength={100}
+                      className="w-full rounded-md border border-gray-300 px-4 py-3"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-6">
+                  <div className="w-40">
+                    <label className="mb-2 block text-sm font-semibold">
+                      Postal code
+                    </label>
+                    <input
+                      name="postalCode"
+                      value={localPostalCode}
+                      onChange={(e) => setLocalPostalCode(e.target.value)}
+                      placeholder="Postal Code"
+                      maxLength={20}
+                      className="w-full rounded-md border border-gray-300 px-4 py-3"
+                    />
+                  </div>
+                  <div className="w-28">
+                    <label className="mb-2 block text-sm font-semibold">
+                      Country
+                    </label>
+                    <input
+                      name="country"
+                      value={localCountry}
+                      onChange={(e) =>
+                        setLocalCountry(
+                          e.target.value.toUpperCase().slice(0, 2),
+                        )
+                      }
+                      placeholder="US"
+                      maxLength={2}
+                      className="w-full rounded-md border border-gray-300 px-4 py-3 uppercase"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex gap-4">
         <button
           type="button"
           className="rounded-full bg-gray-300 px-6 py-3 font-semibold text-black hover:bg-gray-400"
           onClick={() => {
-            setError(""); // Clear error when cancel is clicked
+            setError("");
             setLocalPhone(formatPhoneInput(phone));
+            setLocalAddressLine1(addressLine1);
+            setLocalAddressLine2(addressLine2);
+            setLocalCity(city);
+            setLocalState(state);
+            setLocalPostalCode(postalCode);
+            setLocalCountry(country);
             setEditing(false);
           }}
         >

@@ -13,6 +13,7 @@ import {
   faGear,
   faRightFromBracket,
   faShield,
+  faHeart,
 } from "@fortawesome/free-solid-svg-icons";
 
 type MovieSearchResult = {
@@ -267,6 +268,19 @@ export default function Navbar() {
                     />
                     Profile
                   </Link>
+                  {session?.user?.role === "CUSTOMER" && (
+                    <Link
+                      href="/account/favorites"
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-neutral-200 hover:bg-neutral-800 transition-colors"
+                    >
+                      <FontAwesomeIcon
+                        icon={faHeart}
+                        className="w-4 text-neutral-400"
+                      />
+                      Favorites
+                    </Link>
+                  )}
                   <Link
                     href="/settings"
                     onClick={() => setProfileOpen(false)}
