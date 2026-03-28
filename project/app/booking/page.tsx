@@ -203,7 +203,7 @@ function BookingContent() {
                     onClick={() =>
                       changeQuantity(type as keyof typeof quantities, -1)
                     }
-                    className="w-8 h-8 rounded-full bg-gray-300 hover:bg-gray-400 text-black flex items-center text-center justify-center text-xl"
+                    className="w-8 h-8 rounded-full bg-gray-300 hover:bg-gray-400 text-black flex items-center justify-center text-xl leading-0"
                   >
                     –
                   </button>
@@ -218,7 +218,7 @@ function BookingContent() {
                     onClick={() =>
                       changeQuantity(type as keyof typeof quantities, 1)
                     }
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xl
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xl leading-0
                       ${
                         totalTickets < seatCount
                           ? "bg-gray-300 hover:bg-gray-400 text-black"

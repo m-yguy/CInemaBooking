@@ -40,3 +40,21 @@ export async function sendProfileUpdatedEmail(
     console.error("Failed to send profile updated email:", error);
   }
 }
+
+export async function sendPasswordResetEmail(
+  toEmail: string,
+  firstName: string,
+  lastName: string,
+  resetUrl: string,
+) {
+  await sgMail.send({
+    to: toEmail,
+    from: FROM_EMAIL,
+    templateId: process.env.SENDGRID_RESET_TEMPLATE_ID!,
+    dynamicTemplateData: {
+      firstName,
+      lastName,
+      resetUrl,
+    },
+  });
+}

@@ -4,6 +4,16 @@ import { useState, useTransition, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
+import PaymentCardsSection from "./PaymentCardsSection";
+import AddCardModal from "./AddCardModal";
+
+type SavedCard = {
+  id: string;
+  cardBrand: string | null;
+  cardLastFour: string;
+  cardExpMonth: number;
+  cardExpYear: number;
+};
 
 export default function UpdateProfileForm({
   firstName,
@@ -17,6 +27,8 @@ export default function UpdateProfileForm({
   postalCode = "",
   country = "",
   isCustomer = false,
+  mailingAddressId = null,
+  savedCards = [],
   action,
   notifyAction,
 }: {
@@ -31,6 +43,8 @@ export default function UpdateProfileForm({
   postalCode?: string;
   country?: string;
   isCustomer?: boolean;
+  mailingAddressId?: number | null;
+  savedCards?: SavedCard[];
   action: (formData: FormData) => Promise<{ error?: string } | void>;
   notifyAction: (changes: string[]) => Promise<void>;
 }) {
@@ -73,6 +87,8 @@ export default function UpdateProfileForm({
 
   const [editing, setEditing] = useState(false);
   const [addressOpen, setAddressOpen] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [addingCard, setAddingCard] = useState(false);
 
   useEffect(() => {
     if (!editing) {
@@ -170,6 +186,7 @@ export default function UpdateProfileForm({
 
   if (!editing) {
     return (
+      <>
       <div className="space-y-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
@@ -308,6 +325,14 @@ export default function UpdateProfileForm({
             </div>
           </div>
         )}
+        {isCustomer && (
+          <PaymentCardsSection
+            savedCards={savedCards}
+            isOpen={paymentOpen}
+            onToggle={() => setPaymentOpen(!paymentOpen)}
+            onAddCard={() => setAddingCard(true)}
+          />
+        )}
         <button
           type="button"
           className="rounded-full bg-black px-6 py-3 font-semibold text-white hover:bg-gray-800"
@@ -321,6 +346,19 @@ export default function UpdateProfileForm({
           </p>
         )}
       </div>
+      {addingCard && (
+        <AddCardModal
+          addressLine1={localAddressLine1}
+          addressLine2={localAddressLine2}
+          city={localCity}
+          state={localState}
+          postalCode={localPostalCode}
+          country={localCountry}
+          mailingAddressId={mailingAddressId}
+          onClose={() => setAddingCard(false)}
+        />
+      )}
+      </>
     );
   }
 
@@ -483,6 +521,14 @@ export default function UpdateProfileForm({
           </div>
         </div>
       )}
+      {isCustomer && (
+        <PaymentCardsSection
+          savedCards={savedCards}
+          isOpen={paymentOpen}
+          onToggle={() => setPaymentOpen(!paymentOpen)}
+          onAddCard={() => setAddingCard(true)}
+        />
+      )}
       <div className="flex gap-4">
         <button
           type="button"
@@ -513,6 +559,18 @@ export default function UpdateProfileForm({
         <p className="text-green-600 text-sm font-medium mt-2">
           Changes saved successfully
         </p>
+      )}
+      {addingCard && (
+        <AddCardModal
+          addressLine1={localAddressLine1}
+          addressLine2={localAddressLine2}
+          city={localCity}
+          state={localState}
+          postalCode={localPostalCode}
+          country={localCountry}
+          mailingAddressId={mailingAddressId}
+          onClose={() => setAddingCard(false)}
+        />
       )}
     </form>
   );

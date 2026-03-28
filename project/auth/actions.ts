@@ -5,6 +5,7 @@ import crypto from "crypto";
 import sgMail from "@sendgrid/mail";
 import { signIn, signOut } from "@/auth";
 import { AuthError } from "next-auth";
+import { sendPasswordResetEmail, sendPasswordChangedEmail } from "@/lib/mail";
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
@@ -161,4 +162,90 @@ export async function checkEmailVerified(
     await sql`SELECT verified FROM users WHERE email = ${email.trim()}`;
   if (users.length === 0) return null;
   return { verified: !!users[0].verified };
+}
+
+export async function requestPasswordReset(
+  email: string,
+): Promise<{ error?: string; success?: string }> {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email?.trim() || !emailRegex.test(email.trim())) {
+    return { error: "Please enter a valid email address." };
+  }
+
+  const sql = neon(process.env.DATABASE_URL!);
+  const users = await sql`
+    SELECT user_id, first_name, last_name, verified FROM users WHERE email = ${email.trim()}
+  `;
+
+  // Always return the same message to avoid user enumeration
+  const genericSuccess = {
+    success:
+      "If that email is registered and verified, a reset link has been sent.",
+  };
+
+  if (users.length === 0 || !users[0].verified) return genericSuccess;
+
+  const user = users[0];
+  const token = crypto.randomBytes(32).toString("hex");
+
+  await sql`
+    INSERT INTO password_reset_tokens(user_id, token, expires_at)
+    VALUES (${user.user_id}, ${token}, NOW() + INTERVAL '1 hour')
+    ON CONFLICT (user_id)
+    DO UPDATE SET token = ${token}, expires_at = NOW() + INTERVAL '1 hour'
+  `;
+
+  const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  const resetUrl = `${baseUrl}/resetPassword?token=${encodeURIComponent(token)}`;
+
+  try {
+    await sendPasswordResetEmail(
+      email.trim(),
+      user.first_name,
+      user.last_name,
+      resetUrl,
+    );
+  } catch {
+    return { error: "Failed to send reset email. Please try again." };
+  }
+
+  return genericSuccess;
+}
+
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+  confirmPassword: string,
+): Promise<{ error?: string; success?: string }> {
+  if (!token) return { error: "Invalid or missing reset token." };
+  if (!newPassword || newPassword.length < 8)
+    return { error: "Password must be at least 8 characters." };
+  if (newPassword !== confirmPassword)
+    return { error: "Passwords don't match." };
+
+  const sql = neon(process.env.DATABASE_URL!);
+  const tokens = await sql`
+    SELECT user_id FROM password_reset_tokens
+    WHERE token = ${token} AND expires_at > NOW()
+  `;
+
+  if (tokens.length === 0) {
+    return {
+      error: "Reset link is invalid or has expired. Please request a new one.",
+    };
+  }
+
+  const userId = tokens[0].user_id;
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+  await sql`UPDATE users SET password = ${hashedPassword} WHERE user_id = ${userId}`;
+  await sql`DELETE FROM password_reset_tokens WHERE user_id = ${userId}`;
+
+  const users =
+    await sql`SELECT email, first_name FROM users WHERE user_id = ${userId}`;
+  if (users.length > 0) {
+    await sendPasswordChangedEmail(users[0].email, users[0].first_name);
+  }
+
+  return { success: "Password reset successfully. You can now sign in." };
 }

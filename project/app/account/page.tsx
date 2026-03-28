@@ -31,7 +31,7 @@ export default async function AccountPage() {
 
   const addressRows = isCustomer
     ? await sql`
-        SELECT address_line_1, address_line_2, city, state, postal_code, country
+        SELECT id, address_line_1, address_line_2, city, state, postal_code, country
         FROM public.mailing_address
         WHERE customer_id = ${userId}
         LIMIT 1
@@ -39,6 +39,22 @@ export default async function AccountPage() {
     : [];
 
   const addressRow = addressRows[0] ?? null;
+
+  const savedCardsRows = isCustomer
+    ? await sql`
+        SELECT id, card_brand, card_last_four, card_exp_month, card_exp_year
+        FROM public.payment_method
+        WHERE customer_id = ${userId}
+        ORDER BY created_at ASC
+      `
+    : [];
+  const savedCards = savedCardsRows.map((r) => ({
+    id: String(r.id),
+    cardBrand: (r.card_brand as string | null) ?? null,
+    cardLastFour: String(r.card_last_four).trim(),
+    cardExpMonth: Number(r.card_exp_month),
+    cardExpYear: Number(r.card_exp_year),
+  }));
 
   const favoriteMovies = isCustomer
     ? await sql`
@@ -215,6 +231,8 @@ export default async function AccountPage() {
               postalCode={addressRow?.postal_code ?? ""}
               country={addressRow?.country?.trim() ?? ""}
               isCustomer={isCustomer}
+              mailingAddressId={addressRow?.id ?? null}
+              savedCards={savedCards}
               action={updateProfile}
               notifyAction={notifyProfileChange}
             />
