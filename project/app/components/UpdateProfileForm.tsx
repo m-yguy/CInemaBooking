@@ -89,7 +89,9 @@ export default function UpdateProfileForm({
   const [addressOpen, setAddressOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [addingCard, setAddingCard] = useState(false);
-  const [pendingRemovals, setPendingRemovals] = useState<Set<string>>(new Set());
+  const [pendingRemovals, setPendingRemovals] = useState<Set<string>>(
+    new Set(),
+  );
   const visibleCards = savedCards.filter((c) => !pendingRemovals.has(c.id));
 
   async function handleRemoveCard(id: string) {
@@ -205,178 +207,178 @@ export default function UpdateProfileForm({
   if (!editing) {
     return (
       <>
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-semibold">
+                First name
+              </label>
+              <div className="px-4 py-3 border border-gray-300 rounded-md bg-white text-black text-base font-normal">
+                {localFirstName ? (
+                  localFirstName
+                ) : (
+                  <span className="text-gray-400">Add first name</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold">
+                Last name
+              </label>
+              <div className="px-4 py-3 border border-gray-300 rounded-md bg-white text-black text-base font-normal">
+                {localLastName ? (
+                  localLastName
+                ) : (
+                  <span className="text-gray-400">Add last name</span>
+                )}
+              </div>
+            </div>
+          </div>
           <div>
-            <label className="mb-2 block text-sm font-semibold">
-              First name
-            </label>
-            <div className="px-4 py-3 border border-gray-300 rounded-md bg-white text-black text-base font-normal">
-              {localFirstName ? (
-                localFirstName
-              ) : (
-                <span className="text-gray-400">Add first name</span>
-              )}
+            <label className="mb-2 block text-sm font-semibold">Email</label>
+            <div className="px-4 py-3 border border-gray-300 rounded-md bg-gray-100 text-gray-500 text-base font-normal">
+              {email}
             </div>
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold">
-              Last name
+              Phone number
             </label>
             <div className="px-4 py-3 border border-gray-300 rounded-md bg-white text-black text-base font-normal">
-              {localLastName ? (
-                localLastName
+              {localPhone ? (
+                localPhone
               ) : (
-                <span className="text-gray-400">Add last name</span>
+                <span className="text-gray-400">Add phone number</span>
               )}
             </div>
           </div>
-        </div>
-        <div>
-          <label className="mb-2 block text-sm font-semibold">Email</label>
-          <div className="px-4 py-3 border border-gray-300 rounded-md bg-gray-100 text-gray-500 text-base font-normal">
-            {email}
-          </div>
-        </div>
-        <div>
-          <label className="mb-2 block text-sm font-semibold">
-            Phone number
-          </label>
-          <div className="px-4 py-3 border border-gray-300 rounded-md bg-white text-black text-base font-normal">
-            {localPhone ? (
-              localPhone
-            ) : (
-              <span className="text-gray-400">Add phone number</span>
-            )}
-          </div>
-        </div>
-        {isCustomer && (
-          <div className="rounded-md border border-gray-200 overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setAddressOpen(!addressOpen)}
-              className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold bg-gray-50 hover:bg-gray-100"
-            >
-              Mailing Address
-              <FontAwesomeIcon
-                icon={faChevronDown}
-                className={`w-4 h-4 transition-transform duration-300 ${addressOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-            <div
-              className={`grid transition-all duration-300 ${addressOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-            >
-              <div className="overflow-hidden">
-                <div className="space-y-6 px-4 pb-4 pt-4">
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">
-                      Address line 1
-                    </label>
-                    <input
-                      readOnly
-                      value={localAddressLine1}
-                      placeholder="Address"
-                      className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold">
-                      Address line 2
-                    </label>
-                    <input
-                      readOnly
-                      value={localAddressLine2}
-                      placeholder="Apt, suite, etc. (optional)"
-                      className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {isCustomer && (
+            <div className="rounded-md border border-gray-200 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setAddressOpen(!addressOpen)}
+                className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold bg-gray-50 hover:bg-gray-100"
+              >
+                Mailing Address
+                <FontAwesomeIcon
+                  icon={faChevronDown}
+                  className={`w-4 h-4 transition-transform duration-300 ${addressOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+              <div
+                className={`grid transition-all duration-300 ${addressOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+              >
+                <div className="overflow-hidden">
+                  <div className="space-y-6 px-4 pb-4 pt-4">
                     <div>
                       <label className="mb-2 block text-sm font-semibold">
-                        City
+                        Address line 1
                       </label>
                       <input
                         readOnly
-                        value={localCity}
-                        placeholder="City"
+                        value={localAddressLine1}
+                        placeholder="Address"
                         className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500"
                       />
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-semibold">
-                        State
+                        Address line 2
                       </label>
                       <input
                         readOnly
-                        value={localState}
-                        placeholder="State"
+                        value={localAddressLine2}
+                        placeholder="Apt, suite, etc. (optional)"
                         className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500"
                       />
                     </div>
-                  </div>
-                  <div className="flex gap-6">
-                    <div className="w-40">
-                      <label className="mb-2 block text-sm font-semibold">
-                        Postal code
-                      </label>
-                      <input
-                        readOnly
-                        value={localPostalCode}
-                        placeholder="Postal code"
-                        className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500"
-                      />
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold">
+                          City
+                        </label>
+                        <input
+                          readOnly
+                          value={localCity}
+                          placeholder="City"
+                          className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold">
+                          State
+                        </label>
+                        <input
+                          readOnly
+                          value={localState}
+                          placeholder="State"
+                          className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500"
+                        />
+                      </div>
                     </div>
-                    <div className="w-28">
-                      <label className="mb-2 block text-sm font-semibold">
-                        Country
-                      </label>
-                      <input
-                        readOnly
-                        value={localCountry}
-                        placeholder="Country"
-                        className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500 uppercase"
-                      />
+                    <div className="flex gap-6">
+                      <div className="w-40">
+                        <label className="mb-2 block text-sm font-semibold">
+                          Postal code
+                        </label>
+                        <input
+                          readOnly
+                          value={localPostalCode}
+                          placeholder="Postal code"
+                          className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500"
+                        />
+                      </div>
+                      <div className="w-28">
+                        <label className="mb-2 block text-sm font-semibold">
+                          Country
+                        </label>
+                        <input
+                          readOnly
+                          value={localCountry}
+                          placeholder="Country"
+                          className="w-full pointer-events-none select-none rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500 uppercase"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-        {isCustomer && (
-          <PaymentCardsSection
-            savedCards={visibleCards}
-            isOpen={paymentOpen}
-            onToggle={() => setPaymentOpen(!paymentOpen)}
-            onAddCard={() => setAddingCard(true)}
-            onRemoveCard={handleRemoveCard}
+          )}
+          {isCustomer && (
+            <PaymentCardsSection
+              savedCards={visibleCards}
+              isOpen={paymentOpen}
+              onToggle={() => setPaymentOpen(!paymentOpen)}
+              onAddCard={() => setAddingCard(true)}
+              onRemoveCard={handleRemoveCard}
+            />
+          )}
+          <button
+            type="button"
+            className="rounded-full bg-black px-6 py-3 font-semibold text-white hover:bg-gray-800"
+            onClick={() => setEditing(true)}
+          >
+            Edit Profile
+          </button>
+          {success && (
+            <p className="text-green-600 text-sm font-medium mt-2">
+              Changes saved successfully
+            </p>
+          )}
+        </div>
+        {addingCard && (
+          <AddCardModal
+            addressLine1={localAddressLine1}
+            addressLine2={localAddressLine2}
+            city={localCity}
+            state={localState}
+            postalCode={localPostalCode}
+            country={localCountry}
+            mailingAddressId={mailingAddressId}
+            onClose={() => setAddingCard(false)}
           />
         )}
-        <button
-          type="button"
-          className="rounded-full bg-black px-6 py-3 font-semibold text-white hover:bg-gray-800"
-          onClick={() => setEditing(true)}
-        >
-          Edit Profile
-        </button>
-        {success && (
-          <p className="text-green-600 text-sm font-medium mt-2">
-            Changes saved successfully
-          </p>
-        )}
-      </div>
-      {addingCard && (
-        <AddCardModal
-          addressLine1={localAddressLine1}
-          addressLine2={localAddressLine2}
-          city={localCity}
-          state={localState}
-          postalCode={localPostalCode}
-          country={localCountry}
-          mailingAddressId={mailingAddressId}
-          onClose={() => setAddingCard(false)}
-        />
-      )}
       </>
     );
   }

@@ -1,7 +1,11 @@
 "use client";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faCreditCard, faXmark } from "@fortawesome/free-solid-svg-icons";
+import {
+  faChevronDown,
+  faCreditCard,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
 
 type SavedCard = {
   id: string;
