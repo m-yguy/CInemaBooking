@@ -89,6 +89,24 @@ export default function UpdateProfileForm({
   const [addressOpen, setAddressOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [addingCard, setAddingCard] = useState(false);
+  const [pendingRemovals, setPendingRemovals] = useState<Set<string>>(new Set());
+  const visibleCards = savedCards.filter((c) => !pendingRemovals.has(c.id));
+
+  async function handleRemoveCard(id: string) {
+    setPendingRemovals((prev) => new Set(prev).add(id));
+    const res = await fetch("/api/paymentCards", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (!res.ok) {
+      setPendingRemovals((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  }
 
   useEffect(() => {
     if (!editing) {
@@ -327,10 +345,11 @@ export default function UpdateProfileForm({
         )}
         {isCustomer && (
           <PaymentCardsSection
-            savedCards={savedCards}
+            savedCards={visibleCards}
             isOpen={paymentOpen}
             onToggle={() => setPaymentOpen(!paymentOpen)}
             onAddCard={() => setAddingCard(true)}
+            onRemoveCard={handleRemoveCard}
           />
         )}
         <button
@@ -523,10 +542,11 @@ export default function UpdateProfileForm({
       )}
       {isCustomer && (
         <PaymentCardsSection
-          savedCards={savedCards}
+          savedCards={visibleCards}
           isOpen={paymentOpen}
           onToggle={() => setPaymentOpen(!paymentOpen)}
           onAddCard={() => setAddingCard(true)}
+          onRemoveCard={handleRemoveCard}
         />
       )}
       <div className="flex gap-4">
