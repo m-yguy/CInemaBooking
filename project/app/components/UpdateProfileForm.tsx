@@ -199,7 +199,8 @@ export default function UpdateProfileForm({
           if (newValues.country !== prevValues.country) changes.push("Country");
           if (changes.length > 0) await notifyAction(changes);
         },
-        10 * 60 * 1000,
+        // 10 * 60 * 1000,  this is a cooldown of 10 minutes for account changes
+        0, // I'm chaing this to 0 for the demo so we can get the email faster
       );
     });
   }

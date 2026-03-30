@@ -42,3 +42,4 @@ next-env.d.ts
 
 data.sql
 migrations
+backup.sql
