@@ -61,7 +61,7 @@ export default async function AccountPage() {
         SELECT
           m.movie_id,
           m.movie_name AS title,
-          m.category AS genre,
+          COALESCE(string_agg(DISTINCT g.name, '/'), '') AS genre,
           m.average_rating AS rating,
           m.synopsis AS movie_description,
           m.trailer_image AS poster_path,
@@ -79,6 +79,8 @@ export default async function AccountPage() {
           m.runtime
         FROM movies m
         JOIN customer_favorite_movies f ON f.movie_id = m.movie_id
+        LEFT JOIN movie_genres mg ON mg.movie_id = m.movie_id
+        LEFT JOIN genres g ON g.genre_id = mg.genre_id
         LEFT JOIN showtimes s ON s.movie_id = m.movie_id
         LEFT JOIN movie_casts mc ON mc.movie_id = m.movie_id
         LEFT JOIN actors a ON a.actor_id = mc.actor_id
