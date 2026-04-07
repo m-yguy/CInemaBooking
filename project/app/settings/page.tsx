@@ -1,23 +1,15 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
-import { sql } from "@/lib/db";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear } from "@fortawesome/free-solid-svg-icons";
 import DeleteAccountButton from "../components/DeleteAccountButton";
+import { deleteAccount } from "@/app/actions/accountActions";
 
 export default async function SettingsPage() {
   const session = await auth();
 
   if (!session) redirect("/signin");
-
-  const userId = session.user.id;
-
-  async function deleteAccount() {
-    "use server";
-    await sql`DELETE FROM customers WHERE customer_id = ${userId}`;
-    await sql`DELETE FROM users WHERE user_id = ${userId}`;
-  }
 
   return (
     <div className="min-h-screen bg-white text-black">

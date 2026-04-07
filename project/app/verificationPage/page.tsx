@@ -1,4 +1,3 @@
-import { neon } from "@neondatabase/serverless";
 import Navbar from "../components/Navbar";
 import Link from "next/link";
 import ResendCard from "./ResendCard";
@@ -8,6 +7,7 @@ import {
   faEnvelope,
   faCircleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
+import { verifyEmailToken } from "@/lib/repositories/userRepository";
 
 export default async function VerificationPage({
   searchParams,
@@ -21,28 +21,8 @@ export default async function VerificationPage({
   if (resend && !key) {
     status = "resend";
   } else if (key) {
-    const sql = neon(process.env.DATABASE_URL!);
-    const decodedKey = decodeURIComponent(key);
-
-    const result = await sql`
-      WITH deleted AS (
-        DELETE FROM email_verifications
-        WHERE token = ${decodedKey} AND expires_at > NOW()
-        RETURNING user_id
-      ),
-      activated_user AS (
-        UPDATE users
-        SET verified = true
-        WHERE user_id = (SELECT user_id FROM deleted)
-        RETURNING user_id
-      )
-      UPDATE customers
-      SET status = 'ACTIVE'
-      WHERE customer_id = (SELECT user_id FROM activated_user)
-      RETURNING customer_id AS user_id
-    `;
-
-    status = result.length > 0 ? "success" : "invalid";
+    const verified = await verifyEmailToken(decodeURIComponent(key));
+    status = verified ? "success" : "invalid";
   }
 
   const isSuccess = status === "success";

@@ -1,16 +1,17 @@
 import { auth } from "@/auth";
-import { sql } from "@/lib/db";
+import {
+  getFavoriteMovieIds,
+  addFavorite,
+  removeFavorite,
+} from "@/lib/repositories/favoriteRepository";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json([], { status: 200 });
 
-  const rows = await sql`
-        SELECT movie_id FROM customer_favorite_movies
-        WHERE customer_id = ${session.user.id}
-    `;
-  return NextResponse.json(rows.map((r) => r.movie_id));
+  const movieIds = await getFavoriteMovieIds(session.user.id);
+  return NextResponse.json(movieIds);
 }
 
 export async function POST(req: Request) {
@@ -22,19 +23,10 @@ export async function POST(req: Request) {
   if (!movieId)
     return NextResponse.json({ error: "Missing movieId" }, { status: 400 });
 
-  const customerId = session.user.id;
-
   if (favorited) {
-    await sql`
-            INSERT INTO customer_favorite_movies (customer_id, movie_id)
-            VALUES (${customerId}, ${movieId})
-            ON CONFLICT DO NOTHING
-        `;
+    await addFavorite(session.user.id, movieId);
   } else {
-    await sql`
-            DELETE FROM customer_favorite_movies
-            WHERE customer_id = ${customerId} AND movie_id = ${movieId}
-        `;
+    await removeFavorite(session.user.id, movieId);
   }
 
   return NextResponse.json({ ok: true });
