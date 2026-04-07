@@ -42,3 +42,7 @@ next-env.d.ts
 
 data.sql
 migrations
+# # Testing
+# jest.config.ts
+# test/
+# **/__tests__/
