@@ -1,7 +1,11 @@
 "use client";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faCreditCard } from "@fortawesome/free-solid-svg-icons";
+import {
+  faChevronDown,
+  faCreditCard,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
 
 type SavedCard = {
   id: string;
@@ -16,11 +20,13 @@ export default function PaymentCardsSection({
   isOpen,
   onToggle,
   onAddCard,
+  onRemoveCard,
 }: {
   savedCards: SavedCard[];
   isOpen: boolean;
   onToggle: () => void;
   onAddCard: () => void;
+  onRemoveCard?: (id: string) => void;
 }) {
   return (
     <div className="rounded-md border border-gray-200 overflow-hidden">
@@ -49,7 +55,7 @@ export default function PaymentCardsSection({
                   icon={faCreditCard}
                   className="w-5 h-5 text-gray-400 shrink-0"
                 />
-                <div>
+                <div className="flex-1">
                   <p className="text-sm font-semibold">
                     {card.cardBrand || "Card"} &bull;&bull;&bull;&bull;{" "}
                     {card.cardLastFour}
@@ -58,6 +64,16 @@ export default function PaymentCardsSection({
                     Expires {card.cardExpMonth}/{card.cardExpYear}
                   </p>
                 </div>
+                {onRemoveCard && (
+                  <button
+                    type="button"
+                    onClick={() => onRemoveCard(card.id)}
+                    className="text-gray-400 hover:text-gray-800 transition-colors shrink-0 p-1"
+                    aria-label="Remove card"
+                  >
+                    <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             ))}
             {savedCards.length < 3 && (

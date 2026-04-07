@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { checkEmailVerified, requestPasswordReset } from "@/auth/actions";
 import Navbar from "./Navbar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -62,7 +62,12 @@ export default function SignInForm() {
       if (result?.error) {
         setError("Invalid email or password");
       } else {
-        router.push("/");
+        const session = await getSession();
+        if (session?.user?.role === "ADMIN") {
+          router.push("/admin");
+        } else {
+          router.push("/");
+        }
         router.refresh();
       }
     });

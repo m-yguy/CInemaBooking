@@ -114,3 +114,35 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ success: true });
 }
+
+export async function DELETE(request: Request) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = session.user.id;
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 },
+    );
+  }
+
+  const { id } = body as Record<string, unknown>;
+
+  if (typeof id !== "string" || !id.trim()) {
+    return NextResponse.json({ error: "Invalid card id" }, { status: 400 });
+  }
+
+  await sql`
+    DELETE FROM public.payment_method
+    WHERE id = ${id} AND customer_id = ${userId}
+  `;
+
+  return NextResponse.json({ success: true });
+}

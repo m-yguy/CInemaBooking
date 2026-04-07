@@ -72,11 +72,18 @@ export async function signUp(formData: FormData) {
 }
 
 export async function login(formData: FormData) {
+  const email = formData.get("email") as string;
+
+  const sqlClient = neon(process.env.DATABASE_URL!);
+  const users =
+    await sqlClient`SELECT user_type FROM users WHERE email = ${email} LIMIT 1`;
+  const redirectTo = users[0]?.user_type === "ADMIN" ? "/admin" : "/";
+
   try {
     await signIn("credentials", {
-      email: formData.get("email"),
+      email,
       password: formData.get("password"),
-      redirectTo: "/",
+      redirectTo,
     });
   } catch (error) {
     if (error instanceof AuthError) {
