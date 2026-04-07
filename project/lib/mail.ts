@@ -41,6 +41,20 @@ export async function sendProfileUpdatedEmail(
   }
 }
 
+export async function sendVerificationEmail(
+  toEmail: string,
+  firstName: string,
+  lastName: string,
+  verifyUrl: string,
+) {
+  await sgMail.send({
+    to: toEmail,
+    from: FROM_EMAIL,
+    templateId: "d-ccc0d92738fc40999081974c0dee0aaf",
+    dynamicTemplateData: { firstName, lastName, verifyUrl },
+  });
+}
+
 export async function sendPasswordResetEmail(
   toEmail: string,
   firstName: string,

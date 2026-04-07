@@ -1,8 +1,14 @@
 import { auth } from "@/auth";
-import { sql } from "@/lib/db";
 import { encryptCard } from "@/lib/security";
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
+import { getUserType } from "@/lib/repositories/userRepository";
+import {
+  countPaymentCards,
+  verifyAddressOwnership,
+  insertBillingAddress,
+  insertPaymentCard,
+} from "@/lib/repositories/paymentRepository";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -58,18 +64,14 @@ export async function POST(request: Request) {
   }
 
   // Verify the user is a customer
-  const userRows = await sql`
-    SELECT user_type FROM users WHERE user_id = ${userId} LIMIT 1
-  `;
-  if (userRows[0]?.user_type !== "CUSTOMER") {
+  const userType = await getUserType(userId);
+  if (userType !== "CUSTOMER") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   // Enforce 3-card limit
-  const countRows = await sql`
-    SELECT COUNT(*) AS count FROM public.payment_method WHERE customer_id = ${userId}
-  `;
-  if (Number(countRows[0]?.count) >= 3) {
+  const cardCount = await countPaymentCards(userId);
+  if (cardCount >= 3) {
     return NextResponse.json(
       { error: "You can save a maximum of 3 payment cards" },
       { status: 422 },
@@ -79,51 +81,36 @@ export async function POST(request: Request) {
   let billingAddressId: number | null = null;
 
   if (typeof existingBillingAddressId === "number") {
-    // Verify the address belongs to this customer before linking
-    const addrRows = await sql`
-      SELECT id FROM public.mailing_address
-      WHERE id = ${existingBillingAddressId} AND customer_id = ${userId}
-      LIMIT 1
-    `;
-    if (addrRows.length > 0) billingAddressId = existingBillingAddressId;
+    const owns = await verifyAddressOwnership(existingBillingAddressId, userId);
+    if (owns) billingAddressId = existingBillingAddressId;
   } else if (typeof billingLine1 === "string" && billingLine1.trim()) {
     const country =
       typeof billingCountry === "string"
         ? billingCountry.toUpperCase().slice(0, 2) || "US"
         : "US";
-    const [row] = await sql`
-      INSERT INTO public.mailing_address
-        (customer_id, address_line_1, address_line_2, city, state, postal_code, country)
-      VALUES (
-        ${userId},
-        ${billingLine1.trim()},
-        ${typeof billingLine2 === "string" && billingLine2.trim() ? billingLine2.trim() : null},
-        ${typeof billingCity === "string" ? billingCity.trim() : ""},
-        ${typeof billingState === "string" ? billingState.trim() : ""},
-        ${typeof billingPostal === "string" ? billingPostal.trim() : ""},
-        ${country}
-      )
-      RETURNING id
-    `;
-    billingAddressId = row.id;
+    billingAddressId = await insertBillingAddress(userId, {
+      line1: billingLine1.trim(),
+      line2:
+        typeof billingLine2 === "string" && billingLine2.trim()
+          ? billingLine2.trim()
+          : null,
+      city: typeof billingCity === "string" ? billingCity.trim() : "",
+      state: typeof billingState === "string" ? billingState.trim() : "",
+      postal: typeof billingPostal === "string" ? billingPostal.trim() : "",
+      country,
+    });
   }
 
-  const id = randomUUID();
-  const encryptedCardNumber = encryptCard(cardNumber);
-  await sql`
-    INSERT INTO public.payment_method
-      (id, customer_id, billing_address_id, card_last_four, card_brand, card_exp_month, card_exp_year, card_number_encrypted)
-    VALUES (
-      ${id},
-      ${userId},
-      ${billingAddressId},
-      ${cardLastFour},
-      ${typeof cardBrand === "string" && cardBrand ? cardBrand : null},
-      ${month},
-      ${year},
-      ${encryptedCardNumber}
-    )
-  `;
+  await insertPaymentCard({
+    id: randomUUID(),
+    userId,
+    billingAddressId,
+    cardLastFour: cardLastFour as string,
+    cardBrand: typeof cardBrand === "string" && cardBrand ? cardBrand : null,
+    cardExpMonth: month,
+    cardExpYear: year,
+    encryptedCardNumber: encryptCard(cardNumber),
+  });
 
   return NextResponse.json({ success: true });
 }

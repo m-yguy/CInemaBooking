@@ -1,13 +1,24 @@
 "use server";
-import { neon } from "@neondatabase/serverless";
-import bcrypt from "bcrypt";
 import crypto from "crypto";
-import sgMail from "@sendgrid/mail";
 import { signIn, signOut } from "@/auth";
 import { AuthError } from "next-auth";
-import { sendPasswordResetEmail, sendPasswordChangedEmail } from "@/lib/mail";
-
-sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendPasswordChangedEmail,
+} from "@/lib/mail";
+import { hashPassword } from "@/lib/security";
+import {
+  getUserByEmail,
+  getUserById,
+  createCustomerUser,
+  insertEmailVerificationToken,
+  upsertEmailVerificationToken,
+  upsertPasswordResetToken,
+  getPasswordResetToken,
+  deletePasswordResetToken,
+  updateUserPassword,
+} from "@/lib/repositories/userRepository";
 
 export async function signUp(formData: FormData) {
   const email = (formData.get("email") as string)?.trim();
@@ -32,43 +43,25 @@ export async function signUp(formData: FormData) {
 
   if (password !== confirmPassword) return { error: "Passwords don't match" };
 
-  const sql = neon(process.env.DATABASE_URL!);
+  const existingUser = await getUserByEmail(email);
+  if (existingUser) return { error: "That email is already in use" };
 
-  const checkUser = await sql`SELECT user_id FROM users WHERE email = ${email}`;
-  if (checkUser.length > 0) return { error: "That email is already in use" };
-
-  const hashPass = await bcrypt.hash(password, 12);
+  const hashedPassword = await hashPassword(password);
   const token = crypto.randomBytes(32).toString("hex");
 
-  const newUser = await sql`
-    WITH new_user AS (
-      INSERT INTO users( first_name, last_name, email, password, user_type, verified, receives_promos)
-      VALUES (${firstName}, ${lastName}, ${email}, ${hashPass}, 'CUSTOMER', false, ${receivesPromos})
-      RETURNING user_id
-    )
-    INSERT INTO customers(customer_id, status)
-    SELECT user_id, 'INACTIVE' FROM new_user
-    RETURNING customer_id
-  `;
+  const userId = await createCustomerUser({
+    firstName,
+    lastName,
+    email,
+    hashedPassword,
+    receivesPromos,
+  });
 
-  const userId = newUser[0].customer_id;
+  await insertEmailVerificationToken(userId, token);
 
-  await sql`
-    INSERT INTO email_verifications(user_id, token, expires_at)
-    VALUES (${userId}, ${token}, NOW() + INTERVAL '24 hours')
-  `;
-
+  const verifyUrl = `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/verificationPage?key=${encodeURIComponent(token)}`;
   try {
-    await sgMail.send({
-      to: email,
-      from: "cinemabookingsystemxyz@gmail.com",
-      templateId: "d-ccc0d92738fc40999081974c0dee0aaf",
-      dynamicTemplateData: {
-        firstName: `${firstName}`,
-        lastName: `${lastName}`,
-        verifyUrl: `http://localhost:3000/verificationPage?key=${encodeURIComponent(token)}`,
-      },
-    });
+    await sendVerificationEmail(email, firstName, lastName, verifyUrl);
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Failed to send verification email";
@@ -108,42 +101,27 @@ export async function resendVerification(email: string) {
     return { error: "Please enter a valid email address." };
   }
 
-  const sql = neon(process.env.DATABASE_URL!);
+  const user = await getUserByEmail(email.trim());
 
-  const users = await sql`
-    SELECT user_id, first_name, last_name, verified FROM users WHERE email = ${email.trim()}
-  `;
-
-  if (users.length === 0) {
+  if (!user) {
     return { error: "No account found with that email address." };
   }
-
-  const user = users[0];
 
   if (user.verified) {
     return { error: "This account is already verified. You can sign in." };
   }
 
   const token = crypto.randomBytes(32).toString("hex");
+  await upsertEmailVerificationToken(user.user_id as string, token);
 
-  await sql`
-    INSERT INTO email_verifications(user_id, token, expires_at)
-    VALUES (${user.user_id}, ${token}, NOW() + INTERVAL '24 hours')
-    ON CONFLICT (user_id)
-    DO UPDATE SET token = ${token}, expires_at = NOW() + INTERVAL '24 hours'
-  `;
-
+  const verifyUrl = `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/verificationPage?key=${encodeURIComponent(token)}`;
   try {
-    await sgMail.send({
-      to: email.trim(),
-      from: "cinemabookingsystemxyz@gmail.com",
-      templateId: "d-ccc0d92738fc40999081974c0dee0aaf",
-      dynamicTemplateData: {
-        verifyUrl: `http://localhost:3000/verificationPage?key=${encodeURIComponent(token)}`,
-        firstName: user.first_name,
-        lastName: user.last_name,
-      },
-    });
+    await sendVerificationEmail(
+      email.trim(),
+      user.first_name as string,
+      user.last_name as string,
+      verifyUrl,
+    );
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Failed to send verification email";
@@ -157,11 +135,9 @@ export async function checkEmailVerified(
   email: string,
 ): Promise<{ verified: boolean } | null> {
   if (!email?.trim()) return null;
-  const sql = neon(process.env.DATABASE_URL!);
-  const users =
-    await sql`SELECT verified FROM users WHERE email = ${email.trim()}`;
-  if (users.length === 0) return null;
-  return { verified: !!users[0].verified };
+  const user = await getUserByEmail(email.trim());
+  if (!user) return null;
+  return { verified: !!user.verified };
 }
 
 export async function requestPasswordReset(
@@ -172,28 +148,17 @@ export async function requestPasswordReset(
     return { error: "Please enter a valid email address." };
   }
 
-  const sql = neon(process.env.DATABASE_URL!);
-  const users = await sql`
-    SELECT user_id, first_name, last_name, verified FROM users WHERE email = ${email.trim()}
-  `;
-
   // Always return the same message to avoid user enumeration
   const genericSuccess = {
     success:
       "If that email is registered and verified, a reset link has been sent.",
   };
 
-  if (users.length === 0 || !users[0].verified) return genericSuccess;
+  const user = await getUserByEmail(email.trim());
+  if (!user || !user.verified) return genericSuccess;
 
-  const user = users[0];
   const token = crypto.randomBytes(32).toString("hex");
-
-  await sql`
-    INSERT INTO password_reset_tokens(user_id, token, expires_at)
-    VALUES (${user.user_id}, ${token}, NOW() + INTERVAL '1 hour')
-    ON CONFLICT (user_id)
-    DO UPDATE SET token = ${token}, expires_at = NOW() + INTERVAL '1 hour'
-  `;
+  await upsertPasswordResetToken(user.user_id as string, token);
 
   const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
   const resetUrl = `${baseUrl}/resetPassword?token=${encodeURIComponent(token)}`;
@@ -201,8 +166,8 @@ export async function requestPasswordReset(
   try {
     await sendPasswordResetEmail(
       email.trim(),
-      user.first_name,
-      user.last_name,
+      user.first_name as string,
+      user.last_name as string,
       resetUrl,
     );
   } catch {
@@ -223,28 +188,25 @@ export async function resetPassword(
   if (newPassword !== confirmPassword)
     return { error: "Passwords don't match." };
 
-  const sql = neon(process.env.DATABASE_URL!);
-  const tokens = await sql`
-    SELECT user_id FROM password_reset_tokens
-    WHERE token = ${token} AND expires_at > NOW()
-  `;
-
-  if (tokens.length === 0) {
+  const tokenRow = await getPasswordResetToken(token);
+  if (!tokenRow) {
     return {
       error: "Reset link is invalid or has expired. Please request a new one.",
     };
   }
 
-  const userId = tokens[0].user_id;
-  const hashedPassword = await bcrypt.hash(newPassword, 12);
+  const userId = tokenRow.user_id as string;
+  const hashedPassword = await hashPassword(newPassword);
 
-  await sql`UPDATE users SET password = ${hashedPassword} WHERE user_id = ${userId}`;
-  await sql`DELETE FROM password_reset_tokens WHERE user_id = ${userId}`;
+  await updateUserPassword(userId, hashedPassword);
+  await deletePasswordResetToken(userId);
 
-  const users =
-    await sql`SELECT email, first_name FROM users WHERE user_id = ${userId}`;
-  if (users.length > 0) {
-    await sendPasswordChangedEmail(users[0].email, users[0].first_name);
+  const user = await getUserById(userId);
+  if (user) {
+    await sendPasswordChangedEmail(
+      user.email as string,
+      user.first_name as string,
+    );
   }
 
   return { success: "Password reset successfully. You can now sign in." };

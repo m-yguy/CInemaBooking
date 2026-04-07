@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { sql } from "@/lib/db";
-import bcrypt from "bcrypt";
+import { getUserByEmail } from "@/lib/repositories/userRepository";
+import { comparePassword } from "@/lib/security";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -13,16 +13,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const users = await sql`
-          SELECT user_id, first_name, last_name, email, password, user_type, verified
-          FROM users
-          WHERE email = ${credentials.email as string}
-        `;
+        const user = await getUserByEmail(credentials.email as string);
+        if (!user) return null;
 
-        if (users.length === 0) return null;
-
-        const user = users[0];
-        const passwordMatch = await bcrypt.compare(
+        const passwordMatch = await comparePassword(
           credentials.password as string,
           user.password as string,
         );
@@ -56,7 +50,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.role = token.role as string;
       session.user.first_name = token.first_name as string;
       session.user.last_name = token.last_name as string;
-      session.user.name = `${token.first_name ?? ""} ${token.last_name ?? ""}`.trim();
+      session.user.name =
+        `${token.first_name ?? ""} ${token.last_name ?? ""}`.trim();
       return session;
     },
   },
