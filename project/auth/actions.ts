@@ -19,6 +19,7 @@ import {
   deletePasswordResetToken,
   updateUserPassword,
 } from "@/lib/repositories/userRepository";
+import { neon } from "@neondatabase/serverless";
 
 export async function signUp(formData: FormData) {
   const email = (formData.get("email") as string)?.trim();
