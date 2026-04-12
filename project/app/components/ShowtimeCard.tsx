@@ -2,9 +2,14 @@
 
 import Link from "next/link";
 
+type Showtime = {
+  show_id: string;
+  time: string;
+};
+
 interface ShowtimeCardProps {
   movieTitle: string;
-  showtimes: string[];
+  showtimes: Showtime[];
   img: string;
 }
 
@@ -16,15 +21,13 @@ export default function ShowtimeCard({
   return (
     <div className="flex flex-wrap gap-3 mt-2">
       {showtimes.length > 0 ? (
-        showtimes.map((time) => (
+        showtimes.map((showtime) => (
           <Link
-            key={time}
-            href={`/booking?title=${encodeURIComponent(movieTitle)}
-              &time=${encodeURIComponent(time)}
-              &poster=${encodeURIComponent(img)}`}
+            key={showtime.show_id}
+            href={`/booking?title=${encodeURIComponent(movieTitle)}&time=${encodeURIComponent(showtime.time)}&poster=${encodeURIComponent(img)}&showId=${showtime.show_id}`}
             className="px-4 py-2 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-150"
           >
-            {time}
+            {showtime.time}
           </Link>
         ))
       ) : (

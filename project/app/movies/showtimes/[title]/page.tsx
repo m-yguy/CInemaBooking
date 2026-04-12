@@ -1,12 +1,13 @@
 import Navbar from "@/app/components/Navbar";
 import type { movie } from "../../../types/movie";
-import Showtimes from "@/app/components/Showtimes";
+import ShowtimeCard from "@/app/components/ShowtimeCard";
 import Link from "next/link";
 import Image from "next/image";
 
-const SHOWTIMES_BY_TITLE: Record<string, string[]> = {
-  DEFAULT: ["2:00 PM", "5:00 PM", "8:00 PM"],
-};
+const showtimesResponse = await fetch("http://localhost:3000/api/showtimes", {
+  cache: "no-store",
+});
+const showtimesByTitle = await showtimesResponse.json();
 
 export function toYouTubeEmbed(url?: string | null) {
   if (!url) return null;
@@ -74,8 +75,7 @@ export default async function MovieShowtimes({
   const trailerLink = (movie as movie).trailer_link as string | undefined;
   const trailerEmbed = toYouTubeEmbed(trailerLink);
 
-  const showtimes =
-    SHOWTIMES_BY_TITLE[decodedTitle] || SHOWTIMES_BY_TITLE.DEFAULT;
+  const showtimes = showtimesByTitle[decodedTitle] ?? [];
 
   return (
     <div>
@@ -166,15 +166,11 @@ export default async function MovieShowtimes({
           <div>
             <h2 style={{ margin: "8px 0" }}>Available showtimes</h2>
 
-            <Showtimes
+            <ShowtimeCard
               movieTitle={movie.title}
               showtimes={showtimes}
               img={movie.poster_path}
             />
-
-            <p style={{ marginTop: 8, opacity: 0.7, fontSize: 13 }}>
-              * Showtimes are hardcoded for the assignment.
-            </p>
           </div>
 
           <div>
