@@ -1,15 +1,53 @@
 "use client";
 
 import Navbar from "@/app/components/Navbar";
-import { useSearchParams } from "next/navigation";
-import { useState, useRef, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useRef, useEffect, Suspense } from "react";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
+
+type Seat = {
+  show_seat_id: number;
+  seat_number: string;
+  is_available: boolean;
+};
 
 function BookingContent() {
+  const { data: session } = useSession();
   const searchParams = useSearchParams();
+  const router = useRouter();
+
   const title = searchParams.get("title");
   const time = searchParams.get("time");
   const posterUrl = searchParams.get("poster");
+  const showId = searchParams.get("showId");
+
+  const [seats, setSeats] = useState<Seat[]>([]);
+  const [loadingSeats, setLoadingSeats] = useState(true);
+
+  useEffect(() => {
+    if (!showId) {
+      setLoadingSeats(false)
+      return;
+    }
+
+    fetch(`/api/seats?showId=${showId}`)
+      .then((response) => response.json())
+      .then((data) => {
+        setSeats(data);
+        setLoadingSeats(false);
+      });
+  }, [showId]);
+
+
+  const seatsByRow: Record<string, Seat[]> = {};
+  for (const seat of seats) {
+    const rowLetter = seat.seat_number.charAt(0);
+    if (!seatsByRow[rowLetter]) {
+      seatsByRow[rowLetter] = [];
+    }
+    seatsByRow[rowLetter].push(seat);
+  }
 
   const prices = { adult: 12, child: 8, senior: 10 };
 
@@ -74,6 +112,30 @@ function BookingContent() {
     quantities.child * prices.child +
     quantities.senior * prices.senior;
 
+  let buttonColor = "bg-gray-400 cursor-not-allowed";
+  if (seatCount > 0 && totalTickets === seatCount) buttonColor = "bg-red-700 hover:bg-red-600 cursor-pointer";
+
+  function goToCheckout() {
+    const checkoutData = {
+      title,
+      time,
+      posterUrl,
+      showId,
+      selectedSeats: selectedSeats.sort(),
+      quantities,
+      total,
+    };
+    const encoded = encodeURIComponent(JSON.stringify(checkoutData));
+
+    // If not logged in, redirect to sign in page and come back after
+    if (!session) {
+      router.push(`/signin?callbackUrl=/checkout?data=${encoded}`);
+      return;
+    }
+
+    router.push(`/checkout?data=${encoded}`);
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <Navbar />
@@ -135,35 +197,32 @@ function BookingContent() {
             onMouseUp={() => (isDragging.current = false)}
             onMouseLeave={() => (isDragging.current = false)}
           >
-            {allRows.map(({ row, seats }) => (
-              <div
-                key={row}
-                className="flex justify-center gap-2"
-                style={{ transform: `scale(${1 + (seats - 10) * 0.03})` }}
-              >
-                {Array.from({ length: seats }).map((_, i) => {
-                  const seatId = `${row}${i + 1}`;
-                  const selected = selectedSeats.includes(seatId);
+            {loadingSeats ? (
+              <p className="text-center text-gray-500">Loading seats...</p>
+            ) : (
+              Object.keys(seatsByRow).sort().map((rowLetter) => (
+                <div key={rowLetter} className="flex justify-center gap-2">
+                  {seatsByRow[rowLetter].map((seat) => {
+                    const selected = selectedSeats.includes(seat.seat_number);
 
-                  return (
-                    <div
-                      key={seatId}
-                      onMouseDown={() => toggleSeat(seatId)}
-                      onMouseEnter={() => handleDragSeat(seatId)}
-                      className={`w-9 h-9 rounded text-sm font-medium flex items-center justify-center cursor-pointer transition-all
-                        ${
-                          selected
-                            ? "bg-red-600 text-white"
-                            : "bg-gray-400 hover:bg-gray-300"
-                        }
-                      `}
-                    >
-                      {seatId}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+                    let seatColor = "bg-gray-400 hover:bg-gray-300";
+                    if (!seat.is_available) seatColor = "bg-gray-700 text-gray-500 cursor-not-allowed";
+                    if (selected) seatColor = "bg-red-600 text-white";
+
+                    return (
+                      <div
+                        key={seat.show_seat_id}
+                        onMouseDown={() => { if (seat.is_available) toggleSeat(seat.seat_number); }}
+                        onMouseEnter={() => { if (seat.is_available) handleDragSeat(seat.seat_number); }}
+                        className={`w-9 h-9 rounded text-sm font-medium flex items-center justify-center cursor-pointer transition-all ${seatColor}`}
+                      >
+                        {seat.seat_number}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))
+            )}
           </div>
 
           {/* Seat Counter */}
@@ -219,10 +278,9 @@ function BookingContent() {
                       changeQuantity(type as keyof typeof quantities, 1)
                     }
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-xl leading-0
-                      ${
-                        totalTickets < seatCount
-                          ? "bg-gray-300 hover:bg-gray-400 text-black"
-                          : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      ${totalTickets < seatCount
+                        ? "bg-gray-300 hover:bg-gray-400 text-black"
+                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
                       }
                     `}
                   >
@@ -236,9 +294,14 @@ function BookingContent() {
           <div className="mt-6 text-xl font-bold">Total: ${total}</div>
         </section>
 
-        <button className="ml-auto rounded-3xl bg-red-700 px-12 py-4 text-white font-bold ">
-          Checkout
+        <button
+          onClick={goToCheckout}
+          disabled={seatCount === 0 || totalTickets !== seatCount}
+          className={`ml-auto rounded-3xl px-12 py-4 text-white font-bold ${buttonColor}`}
+        >
+          Proceed to Checkout
         </button>
+
       </main>
 
       <footer className="bg-black p-8 text-white text-center items-center">

@@ -4,16 +4,22 @@ import Link from "next/link";
 import type { movie } from "@/app/types/movie";
 import ShowtimeCard from "@/app/components/ShowtimeCard";
 
-const SHOWTIMES_BY_TITLE: Record<string, string[]> = {
-  DEFAULT: ["2:00 PM", "5:00 PM", "8:00 PM"],
+type Showtime = {
+  show_id: string;
+  time: string;
 };
 
 export default async function ShowtimesPage() {
-  const response = await fetch("http://localhost:3000/api/movieData", {
+  const moviesResponse = await fetch("http://localhost:3000/api/movieData", {
     cache: "no-store",
   });
+  const movies: movie[] = await moviesResponse.json();
 
-  const movies: movie[] = await response.json();
+  const showtimesResponse = await fetch("http://localhost:3000/api/showtimes", {
+    cache: "no-store",
+  });
+  const showtimesByTitle: Record<string, Showtime[]> = await showtimesResponse.json();
+
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -27,8 +33,9 @@ export default async function ShowtimesPage() {
         </div>
         <div className="flex flex-col gap-6">
           {movies.map((m) => {
-            const showtimes = SHOWTIMES_BY_TITLE.DEFAULT;
+            const showtimes = showtimesByTitle[m.title] ?? [];
 
+            console.log("Showtimes for", m.title, showtimes);
             return (
               <div
                 className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-xl overflow-hidden"
