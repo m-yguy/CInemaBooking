@@ -13,6 +13,7 @@ import {
   faEye,
   faEyeSlash,
 } from "@fortawesome/free-solid-svg-icons";
+import { useSearchParams } from "next/navigation";
 
 export default function SignInForm() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function SignInForm() {
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [showPassword, setShowPassword] = useState(false);
+  const searchParams = useSearchParams();
 
   // Forgot password state
   const [showForgot, setShowForgot] = useState(false);
@@ -66,7 +68,8 @@ export default function SignInForm() {
         if (session?.user?.role === "ADMIN") {
           router.push("/admin");
         } else {
-          router.push("/");
+          const callbackUrl = searchParams.get("callbackUrl");
+          router.push(callbackUrl ?? "/");
         }
         router.refresh();
       }
