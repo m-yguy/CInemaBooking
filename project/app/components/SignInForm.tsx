@@ -71,7 +71,6 @@ export default function SignInForm() {
           const callbackUrl = searchParams.get("callbackUrl");
           router.push(callbackUrl ?? "/");
         }
-        router.refresh();
       }
     });
   }

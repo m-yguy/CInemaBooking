@@ -99,10 +99,13 @@ export default function MovieDetailsClient({
 
             <div className="flex flex-col text-white transition-all duration-500">
               <span className="uppercase text-sm font-semibold tracking-wider">
-                {movie.mpa_rating} | {formatRuntime(movie.runtime)}
+                {movie.mpa_rating || "N/A"} |{" "}
+                {movie.runtime != null
+                  ? formatRuntime(movie.runtime)
+                  : "Unavailable"}
               </span>
               <span className="text-sm font-semibold tracking-wider mt-1">
-                {movie.genre} • ★ {movie.rating}
+                {movie.genre || "Unavailable"} • ★ {movie.rating || "N/A"}
               </span>
 
               <h2 className="font-bold uppercase text-4xl mb-4">
@@ -135,13 +138,15 @@ export default function MovieDetailsClient({
           <div>
             <h2>Release Date</h2>
             <p className="font-semibold text-sm">
-              {formatDate(movie.showtime)}
+              {movie.showtime ? formatDate(movie.showtime) : "Unavailable"}
             </p>
           </div>
           <div>
             <h2>Running Time</h2>
             <p className="font-semibold text-sm">
-              {formatRuntime(movie.runtime)}
+              {movie.runtime != null
+                ? formatRuntime(movie.runtime)
+                : "Unavailable"}
             </p>
           </div>
         </div>
@@ -150,7 +155,9 @@ export default function MovieDetailsClient({
 
         <div>
           <h2>Synopsis</h2>
-          <p className="font-semibold text-sm">{movie.movie_description}</p>
+          <p className="font-semibold text-sm">
+            {movie.movie_description || "Unavailable"}
+          </p>
         </div>
 
         <span className="bg-black border w-full"></span>
@@ -158,11 +165,11 @@ export default function MovieDetailsClient({
         <div className="grid grid-cols-[30%_1fr] w-full">
           <div>
             <h2>Director</h2>
-            <p className="font-semibold text-sm">{movie.director}</p>
+            <p className="font-semibold text-sm">{movie.director || "N/A"}</p>
           </div>
           <div>
             <h2>Cast</h2>
-            <p className="font-semibold text-sm">{movie.movie_cast}</p>
+            <p className="font-semibold text-sm">{movie.movie_cast || "N/A"}</p>
           </div>
         </div>
 
@@ -171,7 +178,7 @@ export default function MovieDetailsClient({
         <div>
           <h2>Age Restrictions</h2>
           <p className="text-4xl border-3 w-fit px-2 mt-2">
-            {movie.mpa_rating}
+            {movie.mpa_rating || "N/A"}
           </p>
           <p className="text-xs font-bold max-w-40 mt-2">
             {ratingDescriptions[movie.mpa_rating] || "Rating unavailable"}

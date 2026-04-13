@@ -69,3 +69,52 @@ export async function sendPasswordResetEmail(
     html: `<p>Hello ${firstName} ${lastName},</p><p>Click the link below to reset your Cinema Booking password. This link expires in <strong>1 hour</strong>.</p><p><a href="${resetUrl}">Reset Password</a></p><p>If you did not request this, you can safely ignore this email.</p>`,
   });
 }
+
+export async function sendPromotionEmail(
+  toEmail: string,
+  firstName: string,
+  promotion: {
+    title: string;
+    description: string;
+    promoCode: string;
+    discountType: "PERCENTAGE" | "FLAT";
+    discountAmount: number;
+    startDate: string;
+    endDate: string;
+  },
+) {
+  const discountLabel =
+    promotion.discountType === "PERCENTAGE"
+      ? `${promotion.discountAmount}% off`
+      : `$${promotion.discountAmount.toFixed(2)} off`;
+
+  const subject = `🎬 Exclusive Offer: ${promotion.title}`;
+
+  const text =
+    `Hello ${firstName},\n\n` +
+    `We have an exclusive promotion just for you!\n\n` +
+    `${promotion.title}\n` +
+    `${promotion.description ? promotion.description + "\n\n" : ""}` +
+    `Discount: ${discountLabel}\n` +
+    `Promo Code: ${promotion.promoCode}\n` +
+    `Valid: ${promotion.startDate} – ${promotion.endDate}\n\n` +
+    `Use this code at checkout and enjoy the savings. See you at the movies!`;
+
+  const html =
+    `<p>Hello ${firstName},</p>` +
+    `<p>We have an exclusive promotion just for you!</p>` +
+    `<h2 style="color:#e50914">${promotion.title}</h2>` +
+    (promotion.description ? `<p>${promotion.description}</p>` : "") +
+    `<table style="border-collapse:collapse;margin:16px 0">` +
+    `<tr><td style="padding:4px 12px 4px 0;font-weight:bold">Discount</td><td>${discountLabel}</td></tr>` +
+    `<tr><td style="padding:4px 12px 4px 0;font-weight:bold">Promo Code</td><td><strong style="font-size:1.1em;letter-spacing:2px">${promotion.promoCode}</strong></td></tr>` +
+    `<tr><td style="padding:4px 12px 4px 0;font-weight:bold">Valid</td><td>${promotion.startDate} – ${promotion.endDate}</td></tr>` +
+    `</table>` +
+    `<p>Use this code at checkout and enjoy the savings. See you at the movies!</p>`;
+
+  try {
+    await sgMail.send({ to: toEmail, from: FROM_EMAIL, subject, text, html });
+  } catch (error) {
+    console.error(`Failed to send promotion email to ${toEmail}:`, error);
+  }
+}

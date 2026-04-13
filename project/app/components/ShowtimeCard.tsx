@@ -5,6 +5,7 @@ import Link from "next/link";
 type Showtime = {
   show_id: string;
   time: string;
+  showroom: number;
 };
 
 interface ShowtimeCardProps {
@@ -25,9 +26,12 @@ export default function ShowtimeCard({
           <Link
             key={showtime.show_id}
             href={`/booking?title=${encodeURIComponent(movieTitle)}&time=${encodeURIComponent(showtime.time)}&poster=${encodeURIComponent(img)}&showId=${showtime.show_id}`}
-            className="px-4 py-2 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-150"
+            className="flex flex-col items-center px-4 py-2 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-150"
           >
-            {showtime.time}
+            <span>{showtime.time}</span>
+            <span className="text-xs font-normal opacity-80">
+              Room {showtime.showroom}
+            </span>
           </Link>
         ))
       ) : (
