@@ -79,14 +79,20 @@ export async function editShowtimeAction(
     showroomId: number;
     datetime: string;
     duration: number;
-  }
+  },
 ): Promise<{ error: string } | { success: true }> {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") {
     return { error: "Forbidden" };
   }
 
-  if (!showId || !data.movieId || !data.showroomId || !data.datetime || !data.duration) {
+  if (
+    !showId ||
+    !data.movieId ||
+    !data.showroomId ||
+    !data.datetime ||
+    !data.duration
+  ) {
     return { error: "All fields are required." };
   }
 
@@ -102,7 +108,8 @@ export async function editShowtimeAction(
   const endTime = new Date(startTime.getTime() + data.duration * 60_000);
 
   try {
-    const existing = await sql`SELECT showroom_id FROM showtimes WHERE show_id = ${showId}::uuid`;
+    const existing =
+      await sql`SELECT showroom_id FROM showtimes WHERE show_id = ${showId}::uuid`;
     if (existing.length === 0) {
       return { error: "Showtime not found." };
     }
@@ -153,7 +160,7 @@ export async function editShowtimeAction(
 }
 
 export async function deleteShowtimeAction(
-  showId: string
+  showId: string,
 ): Promise<{ error: string } | { success: true }> {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") {
@@ -163,7 +170,8 @@ export async function deleteShowtimeAction(
   if (!showId) return { error: "Showtime ID is required." };
 
   try {
-    const existing = await sql`SELECT show_id FROM showtimes WHERE show_id = ${showId}::uuid`;
+    const existing =
+      await sql`SELECT show_id FROM showtimes WHERE show_id = ${showId}::uuid`;
     if (existing.length === 0) return { error: "Showtime not found." };
 
     await sql`

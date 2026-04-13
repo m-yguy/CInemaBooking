@@ -17,12 +17,12 @@ export default function AdminShowtimesCard() {
       >
         <FontAwesomeIcon icon={faClock} className="text-2xl w-6 h-6" />
         <span className="font-semibold text-lg">Manage Showtimes</span>
-        <span className="text-neutral-400 text-sm">
-          Manage movie showtimes
-        </span>
+        <span className="text-neutral-400 text-sm">Manage movie showtimes</span>
       </button>
 
-      {showModal && <ManageShowtimesModal onClose={() => setShowModal(false)} />}
+      {showModal && (
+        <ManageShowtimesModal onClose={() => setShowModal(false)} />
+      )}
     </>
   );
 }
