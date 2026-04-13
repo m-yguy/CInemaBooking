@@ -27,7 +27,7 @@ function BookingContent() {
 
   useEffect(() => {
     if (!showId) {
-      setLoadingSeats(false)
+      setLoadingSeats(false);
       return;
     }
 
@@ -38,7 +38,6 @@ function BookingContent() {
         setLoadingSeats(false);
       });
   }, [showId]);
-
 
   const seatsByRow: Record<string, Seat[]> = {};
   for (const seat of seats) {
@@ -59,6 +58,7 @@ function BookingContent() {
 
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const isDragging = useRef(false);
+  const dragMode = useRef<"select" | "deselect">("select");
 
   const seatCount = selectedSeats.length;
   const totalTickets = quantities.adult + quantities.child + quantities.senior;
@@ -89,9 +89,12 @@ function BookingContent() {
 
   const handleDragSeat = (seatId: string) => {
     if (!isDragging.current) return;
-    setSelectedSeats((prev) =>
-      prev.includes(seatId) ? prev : [...prev, seatId],
-    );
+    setSelectedSeats((prev) => {
+      if (dragMode.current === "deselect") {
+        return prev.filter((s) => s !== seatId);
+      }
+      return prev.includes(seatId) ? prev : [...prev, seatId];
+    });
   };
 
   const changeQuantity = (type: keyof typeof quantities, delta: number) => {
@@ -113,7 +116,8 @@ function BookingContent() {
     quantities.senior * prices.senior;
 
   let buttonColor = "bg-gray-400 cursor-not-allowed";
-  if (seatCount > 0 && totalTickets === seatCount) buttonColor = "bg-red-700 hover:bg-red-600 cursor-pointer";
+  if (seatCount > 0 && totalTickets === seatCount)
+    buttonColor = "bg-red-700 hover:bg-red-600 cursor-pointer";
 
   function goToCheckout() {
     const checkoutData = {
@@ -190,6 +194,22 @@ function BookingContent() {
             </div>
           </div>
 
+          {/* Legend */}
+          <div className="flex justify-center gap-4 mb-2 text-xs text-gray-500">
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded-sm bg-gray-400" />
+              <span>Available</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded-sm bg-red-600" />
+              <span>Selected</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded-sm bg-gray-700" />
+              <span>Unavailable</span>
+            </div>
+          </div>
+
           {/* Seat Rows */}
           <div
             className="flex flex-col items-center gap-4"
@@ -200,28 +220,50 @@ function BookingContent() {
             {loadingSeats ? (
               <p className="text-center text-gray-500">Loading seats...</p>
             ) : (
-              Object.keys(seatsByRow).sort().map((rowLetter) => (
-                <div key={rowLetter} className="flex justify-center gap-2">
-                  {seatsByRow[rowLetter].map((seat) => {
-                    const selected = selectedSeats.includes(seat.seat_number);
+              Object.keys(seatsByRow)
+                .sort()
+                .map((rowLetter) => (
+                  <div key={rowLetter} className="flex justify-center gap-2">
+                    {seatsByRow[rowLetter].map((seat) => {
+                      const selected = selectedSeats.includes(seat.seat_number);
 
-                    let seatColor = "bg-gray-400 hover:bg-gray-300";
-                    if (!seat.is_available) seatColor = "bg-gray-700 text-gray-500 cursor-not-allowed";
-                    if (selected) seatColor = "bg-red-600 text-white";
+                      let seatColor = "bg-gray-400 hover:bg-gray-300";
+                      if (!seat.is_available)
+                        seatColor =
+                          "bg-gray-700 text-gray-500 cursor-not-allowed";
+                      if (selected) seatColor = "bg-red-600 text-white";
 
-                    return (
-                      <div
-                        key={seat.show_seat_id}
-                        onMouseDown={() => { if (seat.is_available) toggleSeat(seat.seat_number); }}
-                        onMouseEnter={() => { if (seat.is_available) handleDragSeat(seat.seat_number); }}
-                        className={`w-9 h-9 rounded text-sm font-medium flex items-center justify-center cursor-pointer transition-all ${seatColor}`}
-                      >
-                        {seat.seat_number}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))
+                      return (
+                        <div key={seat.show_seat_id} className="relative group">
+                          <div
+                            onMouseDown={() => {
+                              if (seat.is_available) {
+                                dragMode.current = selectedSeats.includes(
+                                  seat.seat_number,
+                                )
+                                  ? "deselect"
+                                  : "select";
+                                toggleSeat(seat.seat_number);
+                              }
+                            }}
+                            onMouseEnter={() => {
+                              if (seat.is_available)
+                                handleDragSeat(seat.seat_number);
+                            }}
+                            className={`w-9 h-9 rounded text-sm font-medium flex items-center justify-center cursor-pointer transition-all ${seatColor}`}
+                          >
+                            {seat.seat_number}
+                          </div>
+                          {!seat.is_available && (
+                            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs text-white bg-gray-900 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                              Unavailable
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))
             )}
           </div>
 
@@ -278,9 +320,10 @@ function BookingContent() {
                       changeQuantity(type as keyof typeof quantities, 1)
                     }
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-xl leading-0
-                      ${totalTickets < seatCount
-                        ? "bg-gray-300 hover:bg-gray-400 text-black"
-                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      ${
+                        totalTickets < seatCount
+                          ? "bg-gray-300 hover:bg-gray-400 text-black"
+                          : "bg-gray-200 text-gray-400 cursor-not-allowed"
                       }
                     `}
                   >
@@ -301,7 +344,6 @@ function BookingContent() {
         >
           Proceed to Checkout
         </button>
-
       </main>
 
       <footer className="bg-black p-8 text-white text-center items-center">

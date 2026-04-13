@@ -2,12 +2,10 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faUsers,
-  faFilm,
-  faTags,
-  faClock,
-} from "@fortawesome/free-solid-svg-icons";
+import { faUsers, faFilm } from "@fortawesome/free-solid-svg-icons";
+import AdminMoviesCard from "@/app/components/AdminMoviesCard";
+import AdminShowtimesCard from "@/app/components/AdminShowtimesCard";
+import AdminPromotionsCard from "@/app/components/AdminPromotionsCard";
 
 export default async function AdminPortalPage() {
   const session = await auth();
@@ -16,29 +14,11 @@ export default async function AdminPortalPage() {
     redirect("/");
   }
 
-  const sections = [
-    {
-      label: "Manage Movies",
-      description: "Add, edit, or remove movies",
-      icon: faFilm,
-      href: "#",
-    },
-    {
-      label: "Manage Promotions",
-      description: "Create and manage promotions",
-      icon: faTags,
-      href: "#",
-    },
+  const staticSections = [
     {
       label: "Manage Users",
       description: "View and manage user accounts",
       icon: faUsers,
-      href: "#",
-    },
-    {
-      label: "Manage Showtimes",
-      description: "Manage movie showtimes",
-      icon: faClock,
       href: "#",
     },
   ];
@@ -51,7 +31,11 @@ export default async function AdminPortalPage() {
         <h1 className="text-3xl font-bold mb-8">Admin Portal</h1>
 
         <div className="grid grid-cols-2 gap-4">
-          {sections.map((s) => (
+          <AdminMoviesCard icon={faFilm} />
+          <AdminShowtimesCard />
+          <AdminPromotionsCard />
+
+          {staticSections.map((s) => (
             <a
               key={s.label}
               href={s.href}
