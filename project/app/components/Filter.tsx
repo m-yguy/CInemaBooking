@@ -34,7 +34,9 @@ export default function Filter({ movieData, favoriteIds = [] }: FilterProps) {
     return movieData.filter((m: movie) => {
       const statusMatch = m.release_status === selected;
 
-      const movieGenres = m.genre.split("/").map((g) => g.trim().toLowerCase());
+      const movieGenres = (m.genre ?? "")
+        .split("/")
+        .map((g) => g.trim().toLowerCase());
 
       const genreMatch =
         genreFilter === "All" ||

@@ -119,13 +119,18 @@ export default function MovieCard({
         </Link>
 
         <span className="uppercase text-sm font-semibold tracking-wide">
-          {formatRuntime(movieData.runtime)} | {movieData.mpa_rating}
+          {movieData.runtime != null
+            ? formatRuntime(movieData.runtime)
+            : "Unavailable"}{" "}
+          | {movieData.mpa_rating ?? "N/A"}
         </span>
 
         <p className="font-semibold text-sm">
-          {movieData.release_status === "Coming Soon"
-            ? `Opening ${formatDate(movieData.showtime)}`
-            : `Released ${formatDate(movieData.showtime)}`}
+          {movieData.showtime
+            ? movieData.release_status === "Coming Soon"
+              ? `Opening ${formatDate(movieData.showtime)}`
+              : `Released ${formatDate(movieData.showtime)}`
+            : "Date Unavailable"}
         </p>
       </div>
 
