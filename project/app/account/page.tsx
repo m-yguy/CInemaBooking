@@ -8,16 +8,11 @@ import FavoriteMovieCard from "../components/FavoriteMovieCard";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
 import {
-  getUserById,
-  getMailingAddress,
-} from "@/lib/repositories/userRepository";
-import { getPaymentCards } from "@/lib/repositories/paymentRepository";
-import { getFavoriteMovies } from "@/lib/repositories/favoriteRepository";
-import {
   updateProfile,
   changePassword,
   notifyProfileChange,
   removeAccountFavorite,
+  getAccountPageData,
 } from "@/app/actions/accountActions";
 
 export default async function AccountPage() {
@@ -27,14 +22,8 @@ export default async function AccountPage() {
 
   const userId = session.user.id;
 
-  const user = await getUserById(userId);
-  const isCustomer = user?.user_type === "CUSTOMER";
-
-  const [addressRow, savedCards, favoriteMovies] = await Promise.all([
-    isCustomer ? getMailingAddress(userId) : Promise.resolve(null),
-    isCustomer ? getPaymentCards(userId) : Promise.resolve([]),
-    isCustomer ? getFavoriteMovies(userId) : Promise.resolve([]),
-  ]);
+  const { user, isCustomer, addressRow, savedCards, favoriteMovies } =
+    await getAccountPageData(userId);
 
   return (
     <div className="min-h-screen bg-white text-black">

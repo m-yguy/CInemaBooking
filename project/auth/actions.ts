@@ -19,7 +19,6 @@ import {
   deletePasswordResetToken,
   updateUserPassword,
 } from "@/lib/repositories/userRepository";
-import { neon } from "@neondatabase/serverless";
 
 export async function signUp(formData: FormData) {
   const email = (formData.get("email") as string)?.trim();
@@ -75,10 +74,8 @@ export async function signUp(formData: FormData) {
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
 
-  const sqlClient = neon(process.env.DATABASE_URL!);
-  const users =
-    await sqlClient`SELECT user_type FROM users WHERE email = ${email} LIMIT 1`;
-  const redirectTo = users[0]?.user_type === "ADMIN" ? "/admin" : "/";
+  const userRecord = await getUserByEmail(email);
+  const redirectTo = userRecord?.user_type === "ADMIN" ? "/admin" : "/";
 
   try {
     await signIn("credentials", {

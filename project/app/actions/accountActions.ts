@@ -13,8 +13,13 @@ import {
   updateUserPassword,
   upsertMailingAddress,
   deleteUser,
+  getMailingAddress,
 } from "@/lib/repositories/userRepository";
-import { removeFavorite } from "@/lib/repositories/favoriteRepository";
+import {
+  removeFavorite,
+  getFavoriteMovies,
+} from "@/lib/repositories/favoriteRepository";
+import { getPaymentCards } from "@/lib/repositories/paymentRepository";
 
 export async function updateProfile(formData: FormData) {
   const session = await auth();
@@ -133,4 +138,15 @@ export async function deleteAccount() {
   await deleteUser(session.user.id);
   await signOut({ redirectTo: "/" });
   redirect("/");
+}
+
+export async function getAccountPageData(userId: string) {
+  const user = await getUserById(userId);
+  const isCustomer = user?.user_type === "CUSTOMER";
+  const [addressRow, savedCards, favoriteMovies] = await Promise.all([
+    isCustomer ? getMailingAddress(userId) : Promise.resolve(null),
+    isCustomer ? getPaymentCards(userId) : Promise.resolve([]),
+    isCustomer ? getFavoriteMovies(userId) : Promise.resolve([]),
+  ]);
+  return { user, isCustomer, addressRow, savedCards, favoriteMovies };
 }

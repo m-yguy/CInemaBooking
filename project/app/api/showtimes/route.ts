@@ -1,40 +1,23 @@
-import { sql } from "@/lib/db";
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import {
+  checkShowtimeConflicts,
+  insertShowtime,
+  insertShowSeats,
+  showroomExists,
+  listShowtimesAdmin,
+  listShowtimes,
+} from "@/lib/repositories/showtimeRepository";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
   if (searchParams.get("admin") === "true") {
-    // Flat list with full details for the admin panel
-    const rows = await sql`
-            SELECT
-                s.show_id,
-                s.movie_id,
-                m.movie_name,
-                s.showroom_id,
-                r.showroom_num,
-                s.time,
-                s.duration
-            FROM showtimes s
-            JOIN movies m ON s.movie_id = m.movie_id
-            JOIN showrooms r ON s.showroom_id = r.showroom_id
-            ORDER BY s.time ASC, m.movie_name ASC
-        `;
+    const rows = await listShowtimesAdmin();
     return NextResponse.json(rows);
   }
 
-  const rows = await sql`
-        SELECT
-            showtimes.show_id,
-            showtimes.time,
-            movies.movie_name,
-            showrooms.showroom_num
-        FROM showtimes
-        JOIN movies ON showtimes.movie_id = movies.movie_id
-        JOIN showrooms ON showtimes.showroom_id = showrooms.showroom_id
-        ORDER BY movies.movie_name, showtimes.time
-    `;
+  const rows = await listShowtimes();
 
   const grouped: Record<
     string,
@@ -98,15 +81,12 @@ export async function POST(req: Request) {
 
   const endTime = new Date(startTime.getTime() + duration * 60_000);
 
-  // Check for scheduling conflicts: same showroom, overlapping time window
-  const conflicts = await sql`
-        SELECT show_id FROM showtimes
-        WHERE showroom_id = ${showroomId}
-          AND "time" < ${endTime.toISOString()}::timestamp
-          AND ("time" + (duration || ' minutes')::interval) > ${startTime.toISOString()}::timestamp
-    `;
-
-  if (conflicts.length > 0) {
+  const hasConflict = await checkShowtimeConflicts(
+    showroomId,
+    startTime,
+    endTime,
+  );
+  if (hasConflict) {
     return NextResponse.json(
       {
         error:
@@ -116,37 +96,18 @@ export async function POST(req: Request) {
     );
   }
 
-  // Verify the showroom exists
-  const showroomRows = await sql`
-        SELECT showroom_id FROM showrooms WHERE showroom_id = ${showroomId}
-    `;
-  if (showroomRows.length === 0) {
+  const exists = await showroomExists(showroomId);
+  if (!exists) {
     return NextResponse.json({ error: "Showroom not found." }, { status: 404 });
   }
 
-  // Insert the new showtime
-  const [newShow] = await sql`
-        INSERT INTO showtimes (showroom_id, movie_id, date, "time", duration)
-        VALUES (
-            ${showroomId},
-            ${movieId},
-            ${startTime.toISOString()}::timestamp,
-            ${startTime.toISOString()}::timestamp,
-            ${duration}
-        )
-        RETURNING show_id
-    `;
+  const show_id = await insertShowtime({
+    showroomId,
+    movieId,
+    startTime,
+    duration,
+  });
+  await insertShowSeats(show_id, showroomId);
 
-  // Populate show_seats for every seat in the showroom
-  await sql`
-        INSERT INTO show_seats (show_id, seat_id, is_available)
-        SELECT ${newShow.show_id}::uuid, seat_id, true
-        FROM seats
-        WHERE showroom_id = ${showroomId}
-    `;
-
-  return NextResponse.json(
-    { success: true, show_id: newShow.show_id },
-    { status: 201 },
-  );
+  return NextResponse.json({ success: true, show_id }, { status: 201 });
 }
