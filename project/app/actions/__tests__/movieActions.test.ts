@@ -44,14 +44,18 @@ describe("addMovieAction", () => {
 
   it("returns error when title exceeds 200 characters", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    expect(await addMovieAction({ ...validInput, title: "A".repeat(201) })).toEqual({
+    expect(
+      await addMovieAction({ ...validInput, title: "A".repeat(201) }),
+    ).toEqual({
       error: "Title must be 200 characters or fewer.",
     });
   });
 
   it("returns error for invalid MPAA rating", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    expect(await addMovieAction({ ...validInput, mpaaRating: "X-RATED" })).toEqual({
+    expect(
+      await addMovieAction({ ...validInput, mpaaRating: "X-RATED" }),
+    ).toEqual({
       error: "Invalid MPAA rating.",
     });
   });
@@ -67,7 +71,9 @@ describe("addMovieAction", () => {
 
   it("returns error for invalid release status", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    expect(await addMovieAction({ ...validInput, releaseStatus: "RELEASED" })).toEqual({
+    expect(
+      await addMovieAction({ ...validInput, releaseStatus: "RELEASED" }),
+    ).toEqual({
       error: "Invalid release status.",
     });
   });
@@ -89,7 +95,10 @@ describe("addMovieAction", () => {
   it("returns success with movieId on valid input", async () => {
     mockAuth.mockResolvedValue(adminSession);
     mockAddMovie.mockResolvedValue(42);
-    expect(await addMovieAction(validInput)).toEqual({ success: true, movieId: 42 });
+    expect(await addMovieAction(validInput)).toEqual({
+      success: true,
+      movieId: 42,
+    });
   });
 
   it("returns error when addMovie throws", async () => {

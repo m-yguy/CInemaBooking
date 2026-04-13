@@ -73,7 +73,8 @@ describe("addShowtimeAction", () => {
     mockAuth.mockResolvedValue(adminSession);
     mockCheckConflicts.mockResolvedValue(true);
     expect(await addShowtimeAction(validData)).toEqual({
-      error: "Scheduling conflict: this showroom is already booked during that time.",
+      error:
+        "Scheduling conflict: this showroom is already booked during that time.",
     });
   });
 
@@ -137,7 +138,8 @@ describe("editShowtimeAction", () => {
     mockGetShowtimeById.mockResolvedValue({ showroom_id: 2 });
     mockCheckConflicts.mockResolvedValue(true);
     expect(await editShowtimeAction(showId, validData)).toEqual({
-      error: "Scheduling conflict: this showroom is already booked during that time.",
+      error:
+        "Scheduling conflict: this showroom is already booked during that time.",
     });
   });
 
@@ -146,7 +148,9 @@ describe("editShowtimeAction", () => {
     mockGetShowtimeById.mockResolvedValue({ showroom_id: 2 });
     mockCheckConflicts.mockResolvedValue(false);
     mockUpdateShowtime.mockResolvedValue(undefined);
-    expect(await editShowtimeAction(showId, validData)).toEqual({ success: true });
+    expect(await editShowtimeAction(showId, validData)).toEqual({
+      success: true,
+    });
     expect(mockRebuildShowSeats).not.toHaveBeenCalled();
   });
 
@@ -156,7 +160,9 @@ describe("editShowtimeAction", () => {
     mockCheckConflicts.mockResolvedValue(false);
     mockUpdateShowtime.mockResolvedValue(undefined);
     mockRebuildShowSeats.mockResolvedValue(undefined);
-    expect(await editShowtimeAction(showId, validData)).toEqual({ success: true });
+    expect(await editShowtimeAction(showId, validData)).toEqual({
+      success: true,
+    });
     expect(mockRebuildShowSeats).toHaveBeenCalledWith(showId, 2);
   });
 });
@@ -167,7 +173,9 @@ describe("editShowtimeAction", () => {
 describe("deleteShowtimeAction", () => {
   it("returns Forbidden when not authenticated", async () => {
     mockAuth.mockResolvedValue(null);
-    expect(await deleteShowtimeAction("show-1")).toEqual({ error: "Forbidden" });
+    expect(await deleteShowtimeAction("show-1")).toEqual({
+      error: "Forbidden",
+    });
   });
 
   it("returns error when showId is empty", async () => {

@@ -38,12 +38,16 @@ const validPromo: AddPromotionInput = {
 describe("addPromotionAction", () => {
   it("returns Forbidden when not authenticated", async () => {
     mockAuth.mockResolvedValue(null);
-    expect(await addPromotionAction(validPromo)).toEqual({ error: "Forbidden" });
+    expect(await addPromotionAction(validPromo)).toEqual({
+      error: "Forbidden",
+    });
   });
 
   it("returns Forbidden for non-ADMIN role", async () => {
     mockAuth.mockResolvedValue({ user: { role: "CUSTOMER" } });
-    expect(await addPromotionAction(validPromo)).toEqual({ error: "Forbidden" });
+    expect(await addPromotionAction(validPromo)).toEqual({
+      error: "Forbidden",
+    });
   });
 
   it("returns error when promo code is empty", async () => {
@@ -65,7 +69,8 @@ describe("addPromotionAction", () => {
     expect(
       await addPromotionAction({ ...validPromo, promoCode: "PROMO CODE!" }),
     ).toEqual({
-      error: "Promo code may only contain letters, numbers, hyphens, and underscores.",
+      error:
+        "Promo code may only contain letters, numbers, hyphens, and underscores.",
     });
   });
 
@@ -186,7 +191,10 @@ describe("sendPromotionEmailsAction", () => {
       },
     ]);
     mockGetSubscribedUserEmails.mockResolvedValue([]);
-    expect(await sendPromotionEmailsAction(1)).toEqual({ success: true, sent: 0 });
+    expect(await sendPromotionEmailsAction(1)).toEqual({
+      success: true,
+      sent: 0,
+    });
     expect(mockSendPromotionEmail).not.toHaveBeenCalled();
   });
 
@@ -210,7 +218,10 @@ describe("sendPromotionEmailsAction", () => {
       { email: "c@d.com", first_name: "Carol" },
     ]);
     mockSendPromotionEmail.mockResolvedValue(undefined);
-    expect(await sendPromotionEmailsAction(1)).toEqual({ success: true, sent: 2 });
+    expect(await sendPromotionEmailsAction(1)).toEqual({
+      success: true,
+      sent: 2,
+    });
     expect(mockSendPromotionEmail).toHaveBeenCalledTimes(2);
   });
 });
