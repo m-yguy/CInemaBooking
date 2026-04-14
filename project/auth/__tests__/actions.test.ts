@@ -49,7 +49,7 @@ describe("signUp", () => {
   it("returns error when required fields are missing", async () => {
     const result = await signUp(makeFormData({ email: "a@b.com" }));
     expect(result).toEqual({
-      error: "Please fill out all sections of the form",
+      error: "First name is required",
     });
   });
 
@@ -63,7 +63,7 @@ describe("signUp", () => {
         confirmPassword: "password123",
       }),
     );
-    expect(result).toEqual({ error: "Please enter a valid email address" });
+    expect(result).toEqual({ error: "Invalid email address" });
   });
 
   it("returns error when password is too short", async () => {
@@ -246,13 +246,13 @@ describe("resetPassword", () => {
   it("returns error when password is too short", async () => {
     const result = await resetPassword("tok", "short", "short");
     expect(result).toEqual({
-      error: "Password must be at least 8 characters.",
+      error: "Password must be at least 8 characters",
     });
   });
 
   it("returns error when passwords don't match", async () => {
     const result = await resetPassword("tok", "newpass123", "different123");
-    expect(result).toEqual({ error: "Passwords don't match." });
+    expect(result).toEqual({ error: "Passwords don't match" });
   });
 
   it("returns error when token is expired or invalid", async () => {

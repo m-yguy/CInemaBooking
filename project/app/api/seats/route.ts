@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSeatsByShowId } from "@/lib/repositories/seatsRepository";
+import * as seatService from "@/lib/services/seatService";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -9,6 +9,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "showId is required" }, { status: 400 });
   }
 
-  const rows = await getSeatsByShowId(showId);
+  const rows = await seatService.getSeatsForShow(showId);
   return NextResponse.json(rows);
 }

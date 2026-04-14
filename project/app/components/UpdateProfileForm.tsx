@@ -46,7 +46,7 @@ export default function UpdateProfileForm({
   mailingAddressId?: number | null;
   savedCards?: SavedCard[];
   action: (formData: FormData) => Promise<{ error?: string } | void>;
-  notifyAction: (changes: string[]) => Promise<void>;
+  notifyAction: (changes: string[]) => Promise<unknown>;
 }) {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");

@@ -1,28 +1,28 @@
 "use server";
 
-import { auth } from "@/auth";
-import { addMovie } from "@/lib/repositories/movieRepository";
+import * as movieService from "@/lib/services/movieService";
+import { withAuthAdmin } from "@/lib/middleware/withAuth";
 
 const MPAA_VALUES = ["G", "PG", "PG-13", "R", "NC-17"] as const;
 const STATUS_VALUES = ["NOW_PLAYING", "COMING_SOON"] as const;
 
-export async function addMovieAction(formData: {
-  title: string;
-  genres: string;
-  synopsis: string;
-  trailer: string;
-  trailerImage: string;
-  mpaaRating: string;
-  releaseStatus: string;
-  runtime: number;
-  cast: string;
-  directors: string;
-  producers: string;
-}): Promise<{ error: string } | { success: true; movieId: number }> {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
-    return { error: "Forbidden" };
-  }
+export const addMovieAction = withAuthAdmin(
+  async (
+    _session,
+    formData: {
+      title: string;
+      genres: string;
+      synopsis: string;
+      trailer: string;
+      trailerImage: string;
+      mpaaRating: string;
+      releaseStatus: string;
+      runtime: number;
+      cast: string;
+      directors: string;
+      producers: string;
+    },
+  ): Promise<{ error: string } | { success: true; movieId: number }> => {
 
   if (!formData.title.trim()) return { error: "Title is required." };
   if (formData.title.trim().length > 200)
@@ -50,7 +50,7 @@ export async function addMovieAction(formData: {
       .filter(Boolean);
 
   try {
-    const movieId = await addMovie({
+    const movieId = await movieService.addMovie({
       title: formData.title.trim(),
       genres: parsePeople(formData.genres),
       synopsis: formData.synopsis.trim(),
@@ -67,4 +67,5 @@ export async function addMovieAction(formData: {
   } catch {
     return { error: "Failed to add movie. Please try again." };
   }
-}
+  },
+);

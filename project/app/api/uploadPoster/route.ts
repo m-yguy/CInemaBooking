@@ -1,7 +1,7 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { writeFile } from "fs/promises";
 import path from "path";
+import { withAuthAdminRoute } from "@/lib/middleware/withAuth";
 
 const ALLOWED_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -11,15 +11,10 @@ const ALLOWED_TYPES: Record<string, string> = {
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
-export async function POST(req: Request) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
+export const POST = withAuthAdminRoute(async (_session, request) => {
   let formData: FormData;
   try {
-    formData = await req.formData();
+    formData = await request.formData();
   } catch {
     return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
   }
@@ -62,4 +57,4 @@ export async function POST(req: Request) {
   await writeFile(dest, Buffer.from(bytes));
 
   return NextResponse.json({ path: `/Movie_Posters/${filename}` });
-}
+});

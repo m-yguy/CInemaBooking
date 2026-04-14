@@ -19,29 +19,24 @@ import {
   deletePasswordResetToken,
   updateUserPassword,
 } from "@/lib/repositories/userRepository";
+import {
+  signUpSchema,
+  emailSchema,
+  resetPasswordSchema,
+} from "@/lib/schemas/userSchema";
 
 export async function signUp(formData: FormData) {
-  const email = (formData.get("email") as string)?.trim();
-  const firstName = (formData.get("firstName") as string)?.trim();
-  const lastName = (formData.get("lastName") as string)?.trim();
-  const password = formData.get("password") as string;
-  const confirmPassword = formData.get("confirmPassword") as string;
-  const receivesPromos = formData.get("receivesPromos") === "on";
-
-  // Field presence validation
-  if (!email || !firstName || !lastName || !password || !confirmPassword)
-    return { error: "Please fill out all sections of the form" };
-
-  // Email format validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email))
-    return { error: "Please enter a valid email address" };
-
-  // Password strength validation
-  if (password.length < 8)
-    return { error: "Password must be at least 8 characters" };
-
-  if (password !== confirmPassword) return { error: "Passwords don't match" };
+  const parsed = signUpSchema.safeParse({
+    firstName: (formData.get("firstName") as string)?.trim() ?? "",
+    lastName: (formData.get("lastName") as string)?.trim() ?? "",
+    email: (formData.get("email") as string)?.trim() ?? "",
+    password: (formData.get("password") as string) ?? "",
+    confirmPassword: (formData.get("confirmPassword") as string) ?? "",
+    promotions: formData.get("receivesPromos") === "on",
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const { firstName, lastName, email, password, promotions: receivesPromos } =
+    parsed.data;
 
   const existingUser = await getUserByEmail(email);
   if (existingUser) return { error: "That email is already in use" };
@@ -101,8 +96,7 @@ export async function logout() {
 }
 
 export async function resendVerification(email: string) {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!email?.trim() || !emailRegex.test(email.trim())) {
+  if (!emailSchema.safeParse(email?.trim()).success) {
     return { error: "Please enter a valid email address." };
   }
 
@@ -148,8 +142,7 @@ export async function checkEmailVerified(
 export async function requestPasswordReset(
   email: string,
 ): Promise<{ error?: string; success?: string }> {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!email?.trim() || !emailRegex.test(email.trim())) {
+  if (!emailSchema.safeParse(email?.trim()).success) {
     return { error: "Please enter a valid email address." };
   }
 
@@ -188,10 +181,11 @@ export async function resetPassword(
   confirmPassword: string,
 ): Promise<{ error?: string; success?: string }> {
   if (!token) return { error: "Invalid or missing reset token." };
-  if (!newPassword || newPassword.length < 8)
-    return { error: "Password must be at least 8 characters." };
-  if (newPassword !== confirmPassword)
-    return { error: "Passwords don't match." };
+  const parsed = resetPasswordSchema.safeParse({
+    password: newPassword,
+    confirmPassword,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const tokenRow = await getPasswordResetToken(token);
   if (!tokenRow) {

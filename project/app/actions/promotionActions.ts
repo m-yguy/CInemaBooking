@@ -1,13 +1,9 @@
 "use server";
 
-import { auth } from "@/auth";
-import {
-  createPromotion,
-  getAllPromotions,
-  getSubscribedUserEmails,
-  type Promotion,
-} from "@/lib/repositories/promotionRepository";
-import { sendPromotionEmail } from "@/lib/mail";
+import * as promotionService from "@/lib/services/promotionService";
+import { withAuthAdmin } from "@/lib/middleware/withAuth";
+
+export type { Promotion } from "@/lib/services/promotionService";
 
 const DISCOUNT_TYPES = ["PERCENTAGE", "FLAT"] as const;
 const STATUSES = ["ACTIVE", "INACTIVE"] as const;
@@ -54,82 +50,50 @@ function validatePromotion(data: AddPromotionInput): string | null {
   return null;
 }
 
-export async function addPromotionAction(
-  data: AddPromotionInput,
-): Promise<{ error: string } | { success: true; promoId: number }> {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
-    return { error: "Forbidden" };
-  }
+export const addPromotionAction = withAuthAdmin(
+  async (
+    _session,
+    data: AddPromotionInput,
+  ): Promise<{ error: string } | { success: true; promoId: number }> => {
+    const validationError = validatePromotion(data);
+    if (validationError) return { error: validationError };
 
-  const validationError = validatePromotion(data);
-  if (validationError) return { error: validationError };
-
-  try {
-    const promoId = await createPromotion({
-      promoCode: data.promoCode.trim().toUpperCase(),
-      title: data.title.trim(),
-      description: data.description.trim(),
-      discountType: data.discountType as "PERCENTAGE" | "FLAT",
-      discountAmount: parseFloat(data.discountAmount),
-      startDate: data.startDate,
-      endDate: data.endDate,
-      status: data.status as "ACTIVE" | "INACTIVE",
-    });
-    return { success: true, promoId };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "";
-    if (msg.includes("promotions_promo_code_key")) {
-      return { error: "A promotion with that promo code already exists." };
+    try {
+      const result = await promotionService.addPromotion({
+        promoCode: data.promoCode.trim().toUpperCase(),
+        title: data.title.trim(),
+        description: data.description.trim(),
+        discountType: data.discountType as "PERCENTAGE" | "FLAT",
+        discountAmount: parseFloat(data.discountAmount),
+        startDate: data.startDate,
+        endDate: data.endDate,
+        status: data.status as "ACTIVE" | "INACTIVE",
+      });
+      if (!result.ok) return { error: result.error };
+      return { success: true, promoId: result.promoId };
+    } catch {
+      return { error: "Failed to create promotion. Please try again." };
     }
-    return { error: "Failed to create promotion. Please try again." };
-  }
-}
+  },
+);
 
-export async function sendPromotionEmailsAction(
-  promoId: number,
-): Promise<{ error: string } | { success: true; sent: number }> {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
-    return { error: "Forbidden" };
-  }
+export const sendPromotionEmailsAction = withAuthAdmin(
+  async (
+    _session,
+    promoId: number,
+  ): Promise<{ error: string } | { success: true; sent: number }> => {
+    const result = await promotionService.sendPromotionEmails(promoId);
+    if (!result.ok) return { error: result.error };
+    return { success: true, sent: result.sent };
+  },
+);
 
-  // Re-fetch the promotion so we have authoritative data
-  const { getAllPromotions } =
-    await import("@/lib/repositories/promotionRepository");
-  const all = await getAllPromotions();
-  const promo = all.find((p) => p.promo_id === promoId);
-  if (!promo) return { error: "Promotion not found." };
-  if (promo.status !== "ACTIVE")
-    return { error: "Only ACTIVE promotions can be sent." };
-
-  const subscribers = await getSubscribedUserEmails();
-  if (subscribers.length === 0) return { success: true, sent: 0 };
-
-  await Promise.all(
-    subscribers.map((u) =>
-      sendPromotionEmail(u.email, u.first_name ?? "Valued Customer", {
-        title: promo.title,
-        description: promo.description,
-        promoCode: promo.promo_code,
-        discountType: promo.discount_type,
-        discountAmount: promo.discount_amount,
-        startDate: promo.start_date,
-        endDate: promo.end_date,
-      }),
-    ),
-  );
-
-  return { success: true, sent: subscribers.length };
-}
-
-export async function getPromotionsAction(): Promise<
-  { error: string } | { success: true; promotions: Promotion[] }
-> {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
-    return { error: "Forbidden" };
-  }
-  const promotions = await getAllPromotions();
-  return { success: true, promotions };
-}
+export const getPromotionsAction = withAuthAdmin(
+  async (_session): Promise<
+    | { error: string }
+    | { success: true; promotions: promotionService.Promotion[] }
+  > => {
+    const promotions = await promotionService.listPromotions();
+    return { success: true, promotions };
+  },
+);
