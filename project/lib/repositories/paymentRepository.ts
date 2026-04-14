@@ -1,6 +1,14 @@
 import { sql } from "@/lib/db";
 
-export async function getPaymentCards(userId: string) {
+export interface PaymentCard {
+  id: string;
+  cardBrand: string | null;
+  cardLastFour: string;
+  cardExpMonth: number;
+  cardExpYear: number;
+}
+
+export async function getPaymentCards(userId: string): Promise<PaymentCard[]> {
   const rows = await sql`
     SELECT id, card_brand, card_last_four, card_exp_month, card_exp_year
     FROM public.payment_method
@@ -86,5 +94,15 @@ export async function insertPaymentCard(data: {
       ${data.cardExpYear},
       ${data.encryptedCardNumber}
     )
+  `;
+}
+
+export async function deletePaymentCard(
+  id: string,
+  userId: string,
+): Promise<void> {
+  await sql`
+    DELETE FROM public.payment_method
+    WHERE id = ${id} AND customer_id = ${userId}
   `;
 }

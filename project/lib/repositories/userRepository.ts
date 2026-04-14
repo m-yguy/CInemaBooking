@@ -1,6 +1,34 @@
 import { sql } from "@/lib/db";
 
-export async function deleteUser(userId: string) {
+export interface UserProfile {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_number: string | null;
+  user_type: string;
+}
+
+export interface UserRecord {
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  user_type: string;
+  verified: boolean;
+}
+
+export interface MailingAddress {
+  id: number;
+  address_line_1: string;
+  address_line_2: string | null;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+}
+
+export async function deleteUser(userId: string): Promise<void> {
   await sql`DELETE FROM customers WHERE customer_id = ${userId}`;
   await sql`DELETE FROM users WHERE user_id = ${userId}`;
 }
@@ -26,23 +54,27 @@ export async function verifyEmailToken(token: string): Promise<boolean> {
   return result.length > 0;
 }
 
-export async function getUserById(userId: string) {
+export async function getUserById(
+  userId: string,
+): Promise<UserProfile | null> {
   const rows = await sql`
     SELECT first_name, last_name, email, phone_number, user_type
     FROM users
     WHERE user_id = ${userId}
     LIMIT 1
   `;
-  return rows[0] ?? null;
+  return (rows[0] as UserProfile) ?? null;
 }
 
-export async function getUserByEmail(email: string) {
+export async function getUserByEmail(
+  email: string,
+): Promise<UserRecord | null> {
   const rows = await sql`
     SELECT user_id, first_name, last_name, email, password, user_type, verified
     FROM users
     WHERE email = ${email}
   `;
-  return rows[0] ?? null;
+  return (rows[0] as UserRecord) ?? null;
 }
 
 export async function createCustomerUser(data: {
@@ -142,14 +174,16 @@ export async function getUserType(userId: string): Promise<string | null> {
   return (rows[0]?.user_type as string) ?? null;
 }
 
-export async function getMailingAddress(userId: string) {
+export async function getMailingAddress(
+  userId: string,
+): Promise<MailingAddress | null> {
   const rows = await sql`
     SELECT id, address_line_1, address_line_2, city, state, postal_code, country
     FROM public.mailing_address
     WHERE customer_id = ${userId}
     LIMIT 1
   `;
-  return rows[0] ?? null;
+  return (rows[0] as MailingAddress) ?? null;
 }
 
 export async function upsertMailingAddress(
@@ -162,7 +196,7 @@ export async function upsertMailingAddress(
     postalCode: string;
     country: string;
   },
-) {
+): Promise<void> {
   const updated = await sql`
     UPDATE public.mailing_address
     SET address_line_1 = ${data.addressLine1},

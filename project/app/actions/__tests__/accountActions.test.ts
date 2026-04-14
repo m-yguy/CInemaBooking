@@ -9,7 +9,7 @@ jest.mock("@/lib/repositories/favoriteRepository");
 import {
   changePassword,
   updateProfile,
-  removeAccountFavorite,
+  removeFavoriteAction,
 } from "@/app/actions/accountActions";
 import { auth } from "@/auth";
 import * as security from "@/lib/security";
@@ -165,28 +165,41 @@ describe("updateProfile", () => {
 });
 
 // ---------------------------------------------------------------------------
-// removeAccountFavorite
+// removeFavoriteAction
 // ---------------------------------------------------------------------------
-describe("removeAccountFavorite", () => {
+describe("removeFavoriteAction", () => {
   it("does nothing when not authenticated", async () => {
     mockAuth.mockResolvedValue(null);
-    await removeAccountFavorite(makeFormData({ movieId: "5" }));
+    await removeFavoriteAction(makeFormData({ movieId: "5" }));
     expect(mockRemoveFavorite).not.toHaveBeenCalled();
   });
 
   it("does nothing when movieId is missing", async () => {
     mockAuth.mockResolvedValue(fakeSession);
-    await removeAccountFavorite(makeFormData({}));
+    await removeFavoriteAction(makeFormData({}));
     expect(mockRemoveFavorite).not.toHaveBeenCalled();
   });
 
-  it("removes favorite and revalidates", async () => {
+  it("removes favorite and revalidates /account by default", async () => {
     mockAuth.mockResolvedValue(fakeSession);
     mockRemoveFavorite.mockResolvedValue(undefined);
 
-    await removeAccountFavorite(makeFormData({ movieId: "42" }));
+    await removeFavoriteAction(makeFormData({ movieId: "42" }));
 
     expect(mockRemoveFavorite).toHaveBeenCalledWith("user-1", 42);
     expect(revalidatePath).toHaveBeenCalledWith("/account");
+  });
+
+  it("revalidates the provided path when revalidateTo is given", async () => {
+    mockAuth.mockResolvedValue(fakeSession);
+    mockRemoveFavorite.mockResolvedValue(undefined);
+
+    await removeFavoriteAction(
+      makeFormData({ movieId: "7" }),
+      "/account/favorites",
+    );
+
+    expect(mockRemoveFavorite).toHaveBeenCalledWith("user-1", 7);
+    expect(revalidatePath).toHaveBeenCalledWith("/account/favorites");
   });
 });

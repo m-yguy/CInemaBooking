@@ -109,7 +109,10 @@ export async function notifyProfileChange(changes: string[]) {
   );
 }
 
-export async function removeAccountFavorite(formData: FormData) {
+export async function removeFavoriteAction(
+  formData: FormData,
+  revalidateTo = "/account",
+) {
   const session = await auth();
   if (!session) return;
 
@@ -117,18 +120,7 @@ export async function removeAccountFavorite(formData: FormData) {
   if (!movieId) return;
 
   await removeFavorite(session.user.id, parseInt(movieId));
-  revalidatePath("/account");
-}
-
-export async function removeFavoritesPageFavorite(formData: FormData) {
-  const session = await auth();
-  if (!session) return;
-
-  const movieId = formData.get("movieId") as string;
-  if (!movieId) return;
-
-  await removeFavorite(session.user.id, parseInt(movieId));
-  revalidatePath("/account/favorites");
+  revalidatePath(revalidateTo);
 }
 
 export async function deleteAccount() {

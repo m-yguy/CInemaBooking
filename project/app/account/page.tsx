@@ -11,7 +11,7 @@ import {
   updateProfile,
   changePassword,
   notifyProfileChange,
-  removeAccountFavorite,
+  removeFavoriteAction,
   getAccountPageData,
 } from "@/app/actions/accountActions";
 
@@ -83,7 +83,7 @@ export default async function AccountPage() {
                         movieId={movie.movie_id}
                         title={movie.title}
                         posterPath={movie.poster_path}
-                        removeAction={removeAccountFavorite}
+                        removeAction={removeFavoriteAction}
                       />
                     </div>
                   ))}

@@ -8,6 +8,7 @@ import {
   verifyAddressOwnership,
   insertBillingAddress,
   insertPaymentCard,
+  deletePaymentCard,
 } from "@/lib/repositories/paymentRepository";
 
 export async function POST(request: Request) {
@@ -139,10 +140,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Invalid card id" }, { status: 400 });
   }
 
-  await sql`
-    DELETE FROM public.payment_method
-    WHERE id = ${id} AND customer_id = ${userId}
-  `;
+  await deletePaymentCard(id.trim(), userId);
 
   return NextResponse.json({ success: true });
 }
