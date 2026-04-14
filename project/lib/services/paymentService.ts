@@ -9,8 +9,6 @@ import {
   deletePaymentCard,
   type PaymentCard,
 } from "@/lib/repositories/paymentRepository";
-import { getUserType } from "@/lib/services/userService";
-
 export type { PaymentCard };
 
 export interface AddCardInput {
@@ -40,11 +38,6 @@ export async function addCard(
   userId: string,
   input: AddCardInput,
 ): Promise<ServiceResult> {
-  const userType = await getUserType(userId);
-  if (userType !== "CUSTOMER") {
-    return { ok: false, error: "Forbidden", status: 403 };
-  }
-
   const cardCount = await countPaymentCards(userId);
   if (cardCount >= 3) {
     return {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getShowrooms } from "@/lib/repositories/showroomRepository";
+import * as showroomService from "@/lib/services/showroomService";
 
 export async function GET() {
-  const rows = await getShowrooms();
+  const rows = await showroomService.listShowrooms();
   return NextResponse.json(rows);
 }

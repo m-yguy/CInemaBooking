@@ -1,19 +1,18 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import * as showtimeService from "@/lib/services/showtimeService";
 import { withAuthAdminRoute } from "@/lib/middleware/withAuth";
+
+const adminGet = withAuthAdminRoute(async (_session, _req) => {
+  const rows = await showtimeService.getShowtimesAdmin();
+  return NextResponse.json(rows);
+});
 
 // GET is public (grouped list) or admin-gated (?admin=true).
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
   if (searchParams.get("admin") === "true") {
-    const session = await auth();
-    if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-    const rows = await showtimeService.getShowtimesAdmin();
-    return NextResponse.json(rows);
+    return adminGet(req);
   }
 
   const rows = await showtimeService.getShowtimes();

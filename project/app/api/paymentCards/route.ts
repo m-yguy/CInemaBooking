@@ -5,6 +5,10 @@ import { withAuthRoute } from "@/lib/middleware/withAuth";
 import { addCardSchema, removeCardSchema } from "@/lib/schemas/paymentSchema";
 
 export const POST = withAuthRoute(async (session, request) => {
+  if (session.role !== "CUSTOMER") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   let body: unknown;
   try {
     body = await request.json();

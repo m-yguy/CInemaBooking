@@ -29,7 +29,9 @@ export default function AddPromotionModal({
 
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [createdPromotionId, setCreatedPromotionId] = useState<number | null>(null);
+  const [createdPromotionId, setCreatedPromotionId] = useState<number | null>(
+    null,
+  );
   const [isPending, startTransition] = useTransition();
   const [isSending, startSendTransition] = useTransition();
 

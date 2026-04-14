@@ -5,7 +5,6 @@ import { AuthError } from "next-auth";
 import {
   sendVerificationEmail,
   sendPasswordResetEmail,
-  sendPasswordChangedEmail,
 } from "@/lib/mail";
 import { hashPassword } from "@/lib/security";
 import * as userService from "@/lib/services/userService";
@@ -25,8 +24,13 @@ export async function signUp(formData: FormData) {
     promotions: formData.get("receivesPromos") === "on",
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-  const { firstName, lastName, email, password, promotions: receivesPromos } =
-    parsed.data;
+  const {
+    firstName,
+    lastName,
+    email,
+    password,
+    promotions: receivesPromos,
+  } = parsed.data;
 
   const existingUser = await userService.findUserByEmail(email);
   if (existingUser) return { error: "That email is already in use" };
@@ -189,14 +193,6 @@ export async function resetPassword(
 
   await userService.updatePassword(userId, hashedPassword);
   await userService.deletePasswordReset(userId);
-
-  const user = await userService.getUserProfile(userId);
-  if (user) {
-    await sendPasswordChangedEmail(
-      user.email as string,
-      user.first_name as string,
-    );
-  }
 
   return { success: "Password reset successfully. You can now sign in." };
 }

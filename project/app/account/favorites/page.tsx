@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import Navbar from "@/app/components/Navbar";
 import FavoriteMovieCard from "@/app/components/FavoriteMovieCard";
-import { getFavoriteMovies } from "@/lib/repositories/favoriteRepository";
+import { getFavoriteMovieList } from "@/lib/services/favoriteService";
 import { removeFavoriteAction } from "@/app/actions/accountActions";
 
 export default async function FavoritesPage() {
@@ -15,7 +15,7 @@ export default async function FavoritesPage() {
 
   if (!isCustomer) redirect("/account");
 
-  const favoriteMovies = await getFavoriteMovies(userId);
+  const favoriteMovies = await getFavoriteMovieList(userId);
 
   async function removeFromFavoritesPage(formData: FormData) {
     "use server";

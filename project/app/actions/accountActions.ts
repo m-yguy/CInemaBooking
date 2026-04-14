@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { comparePassword, hashPassword } from "@/lib/security";
-import { sendPasswordChangedEmail, sendProfileUpdatedEmail } from "@/lib/mail";
+import { sendProfileUpdatedEmail } from "@/lib/mail";
 import { redirect } from "next/navigation";
 import { signOut } from "@/auth";
 import * as userService from "@/lib/services/userService";
@@ -72,12 +72,6 @@ export const changePassword = withAuth(async (session, formData: FormData) => {
 
   const hashed = await hashPassword(newPassword);
   await userService.updatePassword(userId, hashed);
-
-  const user = await userService.getUserProfile(userId);
-  await sendPasswordChangedEmail(
-    user?.email ?? "",
-    user?.first_name ?? "there",
-  );
 
   return {};
 });

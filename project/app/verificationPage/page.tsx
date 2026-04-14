@@ -7,7 +7,7 @@ import {
   faEnvelope,
   faCircleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
-import { verifyEmailToken } from "@/lib/repositories/userRepository";
+import { verifyEmail } from "@/lib/services/userService";
 
 export default async function VerificationPage({
   searchParams,
@@ -21,7 +21,7 @@ export default async function VerificationPage({
   if (resend && !key) {
     status = "resend";
   } else if (key) {
-    const verified = await verifyEmailToken(decodeURIComponent(key));
+    const verified = await verifyEmail(decodeURIComponent(key));
     status = verified ? "success" : "invalid";
   }
 
