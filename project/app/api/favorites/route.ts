@@ -1,16 +1,12 @@
 import { auth } from "@/auth";
-import {
-  getFavoriteMovieIds,
-  addFavorite,
-  removeFavorite,
-} from "@/lib/repositories/favoriteRepository";
+import * as favoriteService from "@/lib/services/favoriteService";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json([], { status: 200 });
 
-  const movieIds = await getFavoriteMovieIds(session.user.id);
+  const movieIds = await favoriteService.listFavoriteIds(session.user.id);
   return NextResponse.json(movieIds);
 }
 
@@ -23,11 +19,7 @@ export async function POST(req: Request) {
   if (!movieId)
     return NextResponse.json({ error: "Missing movieId" }, { status: 400 });
 
-  if (favorited) {
-    await addFavorite(session.user.id, movieId);
-  } else {
-    await removeFavorite(session.user.id, movieId);
-  }
+  await favoriteService.toggleFavorite(session.user.id, movieId, favorited);
 
   return NextResponse.json({ ok: true });
 }
