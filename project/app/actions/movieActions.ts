@@ -23,49 +23,52 @@ export const addMovieAction = withAuthAdmin(
       producers: string;
     },
   ): Promise<{ error: string } | { success: true; movieId: number }> => {
+    if (!formData.title.trim()) return { error: "Title is required." };
+    if (formData.title.trim().length > 200)
+      return { error: "Title must be 200 characters or fewer." };
 
-  if (!formData.title.trim()) return { error: "Title is required." };
-  if (formData.title.trim().length > 200)
-    return { error: "Title must be 200 characters or fewer." };
+    if (
+      formData.mpaaRating !== "" &&
+      !(MPAA_VALUES as readonly string[]).includes(formData.mpaaRating)
+    ) {
+      return { error: "Invalid MPAA rating." };
+    }
 
-  if (
-    formData.mpaaRating !== "" &&
-    !(MPAA_VALUES as readonly string[]).includes(formData.mpaaRating)
-  ) {
-    return { error: "Invalid MPAA rating." };
-  }
+    if (
+      !(STATUS_VALUES as readonly string[]).includes(formData.releaseStatus)
+    ) {
+      return { error: "Invalid release status." };
+    }
 
-  if (!(STATUS_VALUES as readonly string[]).includes(formData.releaseStatus)) {
-    return { error: "Invalid release status." };
-  }
+    if (!Number.isInteger(formData.runtime) || formData.runtime < 0) {
+      return {
+        error: "Runtime must be a non-negative whole number (minutes).",
+      };
+    }
 
-  if (!Number.isInteger(formData.runtime) || formData.runtime < 0) {
-    return { error: "Runtime must be a non-negative whole number (minutes)." };
-  }
+    const parsePeople = (val: string): string[] =>
+      val
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
 
-  const parsePeople = (val: string): string[] =>
-    val
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-  try {
-    const movieId = await movieService.addMovie({
-      title: formData.title.trim(),
-      genres: parsePeople(formData.genres),
-      synopsis: formData.synopsis.trim(),
-      trailer: formData.trailer.trim(),
-      trailerImage: formData.trailerImage.trim(),
-      mpaaRating: formData.mpaaRating,
-      releaseStatus: formData.releaseStatus,
-      runtime: formData.runtime,
-      cast: parsePeople(formData.cast),
-      directors: parsePeople(formData.directors),
-      producers: parsePeople(formData.producers),
-    });
-    return { success: true, movieId };
-  } catch {
-    return { error: "Failed to add movie. Please try again." };
-  }
+    try {
+      const movieId = await movieService.addMovie({
+        title: formData.title.trim(),
+        genres: parsePeople(formData.genres),
+        synopsis: formData.synopsis.trim(),
+        trailer: formData.trailer.trim(),
+        trailerImage: formData.trailerImage.trim(),
+        mpaaRating: formData.mpaaRating,
+        releaseStatus: formData.releaseStatus,
+        runtime: formData.runtime,
+        cast: parsePeople(formData.cast),
+        directors: parsePeople(formData.directors),
+        producers: parsePeople(formData.producers),
+      });
+      return { success: true, movieId };
+    } catch {
+      return { error: "Failed to add movie. Please try again." };
+    }
   },
 );

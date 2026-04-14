@@ -17,13 +17,23 @@ export const POST = withAuthRoute(async (session, request) => {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 },
+    );
   }
 
-  const { movieId, favorited } = body as { movieId?: unknown; favorited?: unknown };
+  const { movieId, favorited } = body as {
+    movieId?: unknown;
+    favorited?: unknown;
+  };
   if (!movieId)
     return NextResponse.json({ error: "Missing movieId" }, { status: 400 });
 
-  await favoriteService.toggleFavorite(session.id, Number(movieId), Boolean(favorited));
+  await favoriteService.toggleFavorite(
+    session.id,
+    Number(movieId),
+    Boolean(favorited),
+  );
   return NextResponse.json({ ok: true });
 });

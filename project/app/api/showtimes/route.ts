@@ -88,5 +88,8 @@ export const POST = withAuthAdminRoute(async (_session, request) => {
     return NextResponse.json({ error: result.error }, { status: 409 });
   }
 
-  return NextResponse.json({ success: true, show_id: result.show_id }, { status: 201 });
+  return NextResponse.json(
+    { success: true, show_id: result.show_id },
+    { status: 201 },
+  );
 });

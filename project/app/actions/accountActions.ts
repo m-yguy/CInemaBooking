@@ -11,78 +11,76 @@ import * as paymentService from "@/lib/services/paymentService";
 import { withAuth } from "@/lib/middleware/withAuth";
 import { changePasswordSchema } from "@/lib/schemas/userSchema";
 
-export const updateProfile = withAuth(
-  async (session, formData: FormData) => {
-    const userId = session.id;
-    const isCustomer = session.role === "CUSTOMER";
+export const updateProfile = withAuth(async (session, formData: FormData) => {
+  const userId = session.id;
+  const isCustomer = session.role === "CUSTOMER";
 
-    const firstName = (formData.get("firstName") as string)?.trim();
-    const lastName = (formData.get("lastName") as string)?.trim();
-    const phone = (formData.get("phone") as string)?.trim();
+  const firstName = (formData.get("firstName") as string)?.trim();
+  const lastName = (formData.get("lastName") as string)?.trim();
+  const phone = (formData.get("phone") as string)?.trim();
 
-    try {
-      await userService.updateBasicInfo(userId, firstName, lastName, phone);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (msg.includes("phone_number")) {
-        return { error: "That phone number is already in use" };
-      }
-      throw e;
+  try {
+    await userService.updateBasicInfo(userId, firstName, lastName, phone);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("phone_number")) {
+      return { error: "That phone number is already in use" };
     }
+    throw e;
+  }
 
-    if (isCustomer) {
-      const addressLine1 =
-        (formData.get("addressLine1") as string)?.trim() ?? "";
-      const addressLine2 =
-        (formData.get("addressLine2") as string)?.trim() || null;
-      const city = (formData.get("city") as string)?.trim() ?? "";
-      const state = (formData.get("state") as string)?.trim() ?? "";
-      const postalCode = (formData.get("postalCode") as string)?.trim() ?? "";
-      const country =
-        (formData.get("country") as string)?.trim().toUpperCase() || "US";
-      if (addressLine1 || city) {
-        await userService.updateAddress(userId, {
-          addressLine1,
-          addressLine2,
-          city,
-          state,
-          postalCode,
-          country,
-        });
-      }
+  if (isCustomer) {
+    const addressLine1 = (formData.get("addressLine1") as string)?.trim() ?? "";
+    const addressLine2 =
+      (formData.get("addressLine2") as string)?.trim() || null;
+    const city = (formData.get("city") as string)?.trim() ?? "";
+    const state = (formData.get("state") as string)?.trim() ?? "";
+    const postalCode = (formData.get("postalCode") as string)?.trim() ?? "";
+    const country =
+      (formData.get("country") as string)?.trim().toUpperCase() || "US";
+    if (addressLine1 || city) {
+      await userService.updateAddress(userId, {
+        addressLine1,
+        addressLine2,
+        city,
+        state,
+        postalCode,
+        country,
+      });
     }
+  }
 
-    revalidatePath("/account");
-  },
-);
+  revalidatePath("/account");
+});
 
-export const changePassword = withAuth(
-  async (session, formData: FormData) => {
-    const userId = session.id;
-    const currentPassword = formData.get("currentPassword") as string;
-    const newPassword = formData.get("newPassword") as string;
+export const changePassword = withAuth(async (session, formData: FormData) => {
+  const userId = session.id;
+  const currentPassword = formData.get("currentPassword") as string;
+  const newPassword = formData.get("newPassword") as string;
 
-    const parsed = changePasswordSchema.safeParse({ currentPassword, newPassword });
-    if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const parsed = changePasswordSchema.safeParse({
+    currentPassword,
+    newPassword,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-    const storedPassword = await userService.getPasswordHash(userId);
-    if (!storedPassword) return { error: "No password set on this account" };
+  const storedPassword = await userService.getPasswordHash(userId);
+  if (!storedPassword) return { error: "No password set on this account" };
 
-    const isValid = await comparePassword(currentPassword, storedPassword);
-    if (!isValid) return { error: "Password is incorrect" };
+  const isValid = await comparePassword(currentPassword, storedPassword);
+  if (!isValid) return { error: "Password is incorrect" };
 
-    const hashed = await hashPassword(newPassword);
-    await userService.updatePassword(userId, hashed);
+  const hashed = await hashPassword(newPassword);
+  await userService.updatePassword(userId, hashed);
 
-    const user = await userService.getUserProfile(userId);
-    await sendPasswordChangedEmail(
-      user?.email ?? "",
-      user?.first_name ?? "there",
-    );
+  const user = await userService.getUserProfile(userId);
+  await sendPasswordChangedEmail(
+    user?.email ?? "",
+    user?.first_name ?? "there",
+  );
 
-    return {};
-  },
-);
+  return {};
+});
 
 export const notifyProfileChange = withAuth(
   async (session, changes: string[]) => {
@@ -115,9 +113,13 @@ export async function getAccountPageData(userId: string) {
   const user = await userService.getUserProfile(userId);
   const isCustomer = user?.user_type === "CUSTOMER";
   const [addressRow, savedCards, favoriteMovies] = await Promise.all([
-    isCustomer ? userService.getUserMailingAddress(userId) : Promise.resolve(null),
+    isCustomer
+      ? userService.getUserMailingAddress(userId)
+      : Promise.resolve(null),
     isCustomer ? paymentService.getCards(userId) : Promise.resolve([]),
-    isCustomer ? favoriteService.getFavoriteMovieList(userId) : Promise.resolve([]),
+    isCustomer
+      ? favoriteService.getFavoriteMovieList(userId)
+      : Promise.resolve([]),
   ]);
   return { user, isCustomer, addressRow, savedCards, favoriteMovies };
 }

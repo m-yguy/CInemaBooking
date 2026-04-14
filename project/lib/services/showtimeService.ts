@@ -23,7 +23,9 @@ export async function getShowtimesAdmin(): Promise<ShowtimeAdminRow[]> {
   return listShowtimesAdmin();
 }
 
-export async function verifyShowroomExists(showroomId: number): Promise<boolean> {
+export async function verifyShowroomExists(
+  showroomId: number,
+): Promise<boolean> {
   return showroomExists(showroomId);
 }
 
@@ -46,7 +48,8 @@ export async function addShowtime(
   if (hasConflict) {
     return {
       ok: false,
-      error: "Scheduling conflict: this showroom is already booked during that time.",
+      error:
+        "Scheduling conflict: this showroom is already booked during that time.",
     };
   }
 
@@ -85,7 +88,8 @@ export async function editShowtime(
   if (hasConflict) {
     return {
       ok: false,
-      error: "Scheduling conflict: this showroom is already booked during that time.",
+      error:
+        "Scheduling conflict: this showroom is already booked during that time.",
     };
   }
 

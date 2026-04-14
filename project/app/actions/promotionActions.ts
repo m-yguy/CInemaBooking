@@ -89,7 +89,9 @@ export const sendPromotionEmailsAction = withAuthAdmin(
 );
 
 export const getPromotionsAction = withAuthAdmin(
-  async (_session): Promise<
+  async (
+    _session,
+  ): Promise<
     | { error: string }
     | { success: true; promotions: promotionService.Promotion[] }
   > => {
