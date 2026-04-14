@@ -19,12 +19,10 @@ export interface AddPromotionInput {
   status: "ACTIVE" | "INACTIVE";
 }
 
-/** Facade: return all promotions. */
 export async function listPromotions(): Promise<Promotion[]> {
   return getAllPromotions();
 }
 
-/** Facade: persist a new promotion; maps DB constraint violations to domain errors. */
 export async function addPromotion(
   data: AddPromotionInput,
 ): Promise<{ ok: true; promoId: number } | { ok: false; error: string }> {
@@ -43,7 +41,6 @@ export async function addPromotion(
   }
 }
 
-/** Facade: look up promo, fetch subscribers, dispatch emails, return sent count. */
 export async function sendPromotionEmails(
   promoId: number,
 ): Promise<{ ok: true; sent: number } | { ok: false; error: string }> {

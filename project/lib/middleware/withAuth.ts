@@ -4,7 +4,7 @@ import type { Session } from "next-auth";
 
 type SessionUser = Session["user"];
 
-/** Decorator: injects session into Server Actions; rejects unauthenticated callers. */
+/** Wraps a Server Action — injects session.user as first arg; returns { error: "Not authenticated" } early if no session. */
 export function withAuth<TArgs extends unknown[], TReturn>(
   action: (session: SessionUser, ...args: TArgs) => Promise<TReturn>,
 ): (...args: TArgs) => Promise<TReturn | { error: string }> {
@@ -15,7 +15,7 @@ export function withAuth<TArgs extends unknown[], TReturn>(
   };
 }
 
-/** Decorator: injects session into Server Actions; rejects non-ADMIN callers. */
+/** Wraps a Server Action — injects session.user as first arg; returns { error: "Forbidden" } early if no session or role !== "ADMIN". */
 export function withAuthAdmin<TArgs extends unknown[], TReturn>(
   action: (session: SessionUser, ...args: TArgs) => Promise<TReturn>,
 ): (...args: TArgs) => Promise<TReturn | { error: string }> {
@@ -27,7 +27,7 @@ export function withAuthAdmin<TArgs extends unknown[], TReturn>(
   };
 }
 
-/** Decorator: injects session into API Route handlers; rejects unauthenticated callers. */
+/** Wraps an API Route handler — injects session.user as first arg; returns 401 early if no session. */
 export function withAuthRoute<TReturn extends Response>(
   handler: (session: SessionUser, request: Request) => Promise<TReturn>,
 ): (request: Request) => Promise<TReturn | NextResponse> {
@@ -40,7 +40,7 @@ export function withAuthRoute<TReturn extends Response>(
   };
 }
 
-/** Decorator: injects session into API Route handlers; rejects non-ADMIN callers. */
+/** Wraps an API Route handler — injects session.user as first arg; returns 403 early if no session or role !== "ADMIN". */
 export function withAuthAdminRoute<TReturn extends Response>(
   handler: (session: SessionUser, request: Request) => Promise<TReturn>,
 ): (request: Request) => Promise<TReturn | NextResponse> {

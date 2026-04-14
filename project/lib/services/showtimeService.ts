@@ -34,7 +34,6 @@ export interface AddShowtimeInput {
   duration: number;
 }
 
-/** Facade: conflict-check, insert showtime, provision seats. */
 export async function addShowtime(
   data: AddShowtimeInput,
 ): Promise<{ ok: true; show_id: string } | { ok: false; error: string }> {
@@ -68,7 +67,6 @@ export interface EditShowtimeInput {
   duration: number;
 }
 
-/** Facade: fetch existing, conflict-check, update, optionally rebuild seats. */
 export async function editShowtime(
   showId: string,
   data: EditShowtimeInput,
@@ -103,7 +101,6 @@ export async function editShowtime(
   return { ok: true };
 }
 
-/** Facade: verify showtime exists, then delete it with all dependent rows. */
 export async function removeShowtime(
   showId: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {

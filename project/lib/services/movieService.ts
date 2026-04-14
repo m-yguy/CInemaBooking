@@ -19,7 +19,6 @@ export async function getMovieDetails(title: string) {
   return getMovieByTitle(title);
 }
 
-/** Facade: orchestrate inserting a movie and all related junction data. */
 export async function addMovie(data: AddMovieInput): Promise<number> {
   return addMovieRepo(data);
 }
