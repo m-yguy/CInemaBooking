@@ -9,7 +9,7 @@ import {
   deletePaymentCard,
   type PaymentCard,
 } from "@/lib/repositories/paymentRepository";
-import { getUserType } from "@/lib/repositories/userRepository";
+import { getUserType } from "@/lib/services/userService";
 
 export type { PaymentCard };
 

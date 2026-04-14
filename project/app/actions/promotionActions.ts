@@ -8,7 +8,7 @@ export type { Promotion } from "@/lib/services/promotionService";
 const DISCOUNT_TYPES = ["PERCENTAGE", "FLAT"] as const;
 const STATUSES = ["ACTIVE", "INACTIVE"] as const;
 
-export interface AddPromotionInput {
+export interface PromotionFormData {
   promoCode: string;
   title: string;
   description: string;
@@ -19,7 +19,7 @@ export interface AddPromotionInput {
   status: string;
 }
 
-function validatePromotion(data: AddPromotionInput): string | null {
+function validatePromotion(data: PromotionFormData): string | null {
   if (!data.promoCode.trim()) return "Promo code is required.";
   if (data.promoCode.trim().length > 50)
     return "Promo code must be 50 characters or fewer.";
@@ -53,8 +53,8 @@ function validatePromotion(data: AddPromotionInput): string | null {
 export const addPromotionAction = withAuthAdmin(
   async (
     _session,
-    data: AddPromotionInput,
-  ): Promise<{ error: string } | { success: true; promoId: number }> => {
+    data: PromotionFormData,
+  ): Promise<{ error: string } | { success: true; promotionId: number }> => {
     const validationError = validatePromotion(data);
     if (validationError) return { error: validationError };
 
@@ -70,7 +70,7 @@ export const addPromotionAction = withAuthAdmin(
         status: data.status as "ACTIVE" | "INACTIVE",
       });
       if (!result.ok) return { error: result.error };
-      return { success: true, promoId: result.promoId };
+      return { success: true, promotionId: result.promotionId };
     } catch {
       return { error: "Failed to create promotion. Please try again." };
     }
@@ -80,9 +80,9 @@ export const addPromotionAction = withAuthAdmin(
 export const sendPromotionEmailsAction = withAuthAdmin(
   async (
     _session,
-    promoId: number,
+    promotionId: number,
   ): Promise<{ error: string } | { success: true; sent: number }> => {
-    const result = await promotionService.sendPromotionEmails(promoId);
+    const result = await promotionService.sendPromotionEmails(promotionId);
     if (!result.ok) return { error: result.error };
     return { success: true, sent: result.sent };
   },

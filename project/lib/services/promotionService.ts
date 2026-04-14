@@ -1,5 +1,6 @@
 import {
   getAllPromotions,
+  getPromotionById,
   createPromotion,
   getSubscribedUserEmails,
   type Promotion,
@@ -25,10 +26,10 @@ export async function listPromotions(): Promise<Promotion[]> {
 
 export async function addPromotion(
   data: AddPromotionInput,
-): Promise<{ ok: true; promoId: number } | { ok: false; error: string }> {
+): Promise<{ ok: true; promotionId: number } | { ok: false; error: string }> {
   try {
-    const promoId = await createPromotion(data);
-    return { ok: true, promoId };
+    const promotionId = await createPromotion(data);
+    return { ok: true, promotionId };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "";
     if (msg.includes("promotions_promo_code_key")) {
@@ -42,10 +43,9 @@ export async function addPromotion(
 }
 
 export async function sendPromotionEmails(
-  promoId: number,
+  promotionId: number,
 ): Promise<{ ok: true; sent: number } | { ok: false; error: string }> {
-  const all = await getAllPromotions();
-  const promo = all.find((p) => p.promo_id === promoId);
+  const promo = await getPromotionById(promotionId);
   if (!promo) return { ok: false, error: "Promotion not found." };
   if (promo.status !== "ACTIVE")
     return { ok: false, error: "Only ACTIVE promotions can be sent." };

@@ -47,6 +47,19 @@ export async function createPromotion(data: {
   return rows[0].promo_id as number;
 }
 
+export async function getPromotionById(
+  promotionId: number,
+): Promise<Promotion | null> {
+  const rows = await sql`
+    SELECT promo_id, promo_code, title, description,
+           discount_type, discount_amount, start_date, end_date, status
+    FROM public.promotions
+    WHERE promo_id = ${promotionId}
+    LIMIT 1
+  `;
+  return (rows[0] as Promotion) ?? null;
+}
+
 export async function getSubscribedUserEmails(): Promise<
   { email: string; first_name: string }[]
 > {

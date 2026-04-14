@@ -8,17 +8,7 @@ import {
   sendPasswordChangedEmail,
 } from "@/lib/mail";
 import { hashPassword } from "@/lib/security";
-import {
-  getUserByEmail,
-  getUserById,
-  createCustomerUser,
-  insertEmailVerificationToken,
-  upsertEmailVerificationToken,
-  upsertPasswordResetToken,
-  getPasswordResetToken,
-  deletePasswordResetToken,
-  updateUserPassword,
-} from "@/lib/repositories/userRepository";
+import * as userService from "@/lib/services/userService";
 import {
   signUpSchema,
   emailSchema,
@@ -38,21 +28,21 @@ export async function signUp(formData: FormData) {
   const { firstName, lastName, email, password, promotions: receivesPromos } =
     parsed.data;
 
-  const existingUser = await getUserByEmail(email);
+  const existingUser = await userService.findUserByEmail(email);
   if (existingUser) return { error: "That email is already in use" };
 
   const hashedPassword = await hashPassword(password);
   const token = crypto.randomBytes(32).toString("hex");
 
-  const userId = await createCustomerUser({
+  const userId = await userService.createCustomer({
     firstName,
     lastName,
     email,
     hashedPassword,
-    receivesPromos,
+    receivesPromos: receivesPromos ?? false,
   });
 
-  await insertEmailVerificationToken(userId, token);
+  await userService.insertVerificationToken(userId, token);
 
   const verifyUrl = `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/verificationPage?key=${encodeURIComponent(token)}`;
   try {
@@ -69,7 +59,7 @@ export async function signUp(formData: FormData) {
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
 
-  const userRecord = await getUserByEmail(email);
+  const userRecord = await userService.findUserByEmail(email);
   const redirectTo = userRecord?.user_type === "ADMIN" ? "/admin" : "/";
 
   try {
@@ -100,7 +90,7 @@ export async function resendVerification(email: string) {
     return { error: "Please enter a valid email address." };
   }
 
-  const user = await getUserByEmail(email.trim());
+  const user = await userService.findUserByEmail(email.trim());
 
   if (!user) {
     return { error: "No account found with that email address." };
@@ -111,7 +101,7 @@ export async function resendVerification(email: string) {
   }
 
   const token = crypto.randomBytes(32).toString("hex");
-  await upsertEmailVerificationToken(user.user_id as string, token);
+  await userService.upsertVerificationToken(user.user_id as string, token);
 
   const verifyUrl = `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/verificationPage?key=${encodeURIComponent(token)}`;
   try {
@@ -134,7 +124,7 @@ export async function checkEmailVerified(
   email: string,
 ): Promise<{ verified: boolean } | null> {
   if (!email?.trim()) return null;
-  const user = await getUserByEmail(email.trim());
+  const user = await userService.findUserByEmail(email.trim());
   if (!user) return null;
   return { verified: !!user.verified };
 }
@@ -152,11 +142,11 @@ export async function requestPasswordReset(
       "If that email is registered and verified, a reset link has been sent.",
   };
 
-  const user = await getUserByEmail(email.trim());
+  const user = await userService.findUserByEmail(email.trim());
   if (!user || !user.verified) return genericSuccess;
 
   const token = crypto.randomBytes(32).toString("hex");
-  await upsertPasswordResetToken(user.user_id as string, token);
+  await userService.upsertPasswordReset(user.user_id as string, token);
 
   const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
   const resetUrl = `${baseUrl}/resetPassword?token=${encodeURIComponent(token)}`;
@@ -187,7 +177,7 @@ export async function resetPassword(
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  const tokenRow = await getPasswordResetToken(token);
+  const tokenRow = await userService.getPasswordReset(token);
   if (!tokenRow) {
     return {
       error: "Reset link is invalid or has expired. Please request a new one.",
@@ -197,10 +187,10 @@ export async function resetPassword(
   const userId = tokenRow.user_id as string;
   const hashedPassword = await hashPassword(newPassword);
 
-  await updateUserPassword(userId, hashedPassword);
-  await deletePasswordResetToken(userId);
+  await userService.updatePassword(userId, hashedPassword);
+  await userService.deletePasswordReset(userId);
 
-  const user = await getUserById(userId);
+  const user = await userService.getUserProfile(userId);
   if (user) {
     await sendPasswordChangedEmail(
       user.email as string,
