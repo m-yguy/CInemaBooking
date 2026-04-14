@@ -54,9 +54,7 @@ export async function verifyEmailToken(token: string): Promise<boolean> {
   return result.length > 0;
 }
 
-export async function getUserById(
-  userId: string,
-): Promise<UserProfile | null> {
+export async function getUserById(userId: string): Promise<UserProfile | null> {
   const rows = await sql`
     SELECT first_name, last_name, email, phone_number, user_type
     FROM users
