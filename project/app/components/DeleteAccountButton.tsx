@@ -6,7 +6,7 @@ import { signOut } from "next-auth/react";
 export default function DeleteAccountButton({
   action,
 }: {
-  action: () => Promise<void>;
+  action: () => Promise<unknown>;
 }) {
   const [showModal, setShowModal] = useState(false);
   const [isPending, startTransition] = useTransition();

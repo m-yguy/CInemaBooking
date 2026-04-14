@@ -29,7 +29,9 @@ export default function AddPromotionModal({
 
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [createdPromoId, setCreatedPromoId] = useState<number | null>(null);
+  const [createdPromotionId, setCreatedPromotionId] = useState<number | null>(
+    null,
+  );
   const [isPending, startTransition] = useTransition();
   const [isSending, startSendTransition] = useTransition();
 
@@ -53,7 +55,7 @@ export default function AddPromotionModal({
       if ("error" in result) {
         setError(result.error);
       } else {
-        setCreatedPromoId(result.promoId);
+        setCreatedPromotionId(result.promotionId);
         setSuccessMsg(
           status === "ACTIVE"
             ? "Promotion created! You can now send it to subscribed users."
@@ -65,12 +67,12 @@ export default function AddPromotionModal({
   }
 
   function handleSendEmails() {
-    if (createdPromoId === null) return;
+    if (createdPromotionId === null) return;
     setError(null);
     setSuccessMsg(null);
 
     startSendTransition(async () => {
-      const result = await sendPromotionEmailsAction(createdPromoId);
+      const result = await sendPromotionEmailsAction(createdPromotionId);
       if ("error" in result) {
         setError(result.error);
       } else {
@@ -142,7 +144,7 @@ export default function AddPromotionModal({
           )}
 
           {/* After creation, offer to send emails if ACTIVE */}
-          {createdPromoId !== null && status === "ACTIVE" && (
+          {createdPromotionId !== null && status === "ACTIVE" && (
             <div className="mb-5">
               <button
                 type="button"
@@ -343,12 +345,12 @@ export default function AddPromotionModal({
               </button>
               <button
                 type="submit"
-                disabled={isPending || createdPromoId !== null}
+                disabled={isPending || createdPromotionId !== null}
                 className="flex-1 bg-white hover:bg-neutral-200 disabled:opacity-50 text-black font-semibold rounded-lg px-4 py-2.5 text-sm transition-colors"
               >
                 {isPending
                   ? "Creating…"
-                  : createdPromoId !== null
+                  : createdPromotionId !== null
                     ? "Created"
                     : "Create Promotion"}
               </button>

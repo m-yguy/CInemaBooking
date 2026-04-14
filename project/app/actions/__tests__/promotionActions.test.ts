@@ -6,7 +6,7 @@ import {
   addPromotionAction,
   sendPromotionEmailsAction,
   getPromotionsAction,
-  type AddPromotionInput,
+  type PromotionFormData,
 } from "@/app/actions/promotionActions";
 import { auth } from "@/auth";
 import * as promotionRepo from "@/lib/repositories/promotionRepository";
@@ -15,13 +15,14 @@ import * as mail from "@/lib/mail";
 const mockAuth = auth as jest.Mock;
 const mockCreatePromotion = promotionRepo.createPromotion as jest.Mock;
 const mockGetAllPromotions = promotionRepo.getAllPromotions as jest.Mock;
+const mockGetPromotionById = promotionRepo.getPromotionById as jest.Mock;
 const mockGetSubscribedUserEmails =
   promotionRepo.getSubscribedUserEmails as jest.Mock;
 const mockSendPromotionEmail = mail.sendPromotionEmail as jest.Mock;
 
 const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
 
-const validPromo: AddPromotionInput = {
+const validPromo: PromotionFormData = {
   promoCode: "SUMMER10",
   title: "Summer Sale",
   description: "10% off all tickets",
@@ -111,7 +112,7 @@ describe("addPromotionAction", () => {
         discountType: "FLAT",
         discountAmount: "150",
       }),
-    ).toEqual({ success: true, promoId: 3 });
+    ).toEqual({ success: true, promotionId: 3 });
   });
 
   it("returns error when end date is before start date", async () => {
@@ -133,7 +134,7 @@ describe("addPromotionAction", () => {
     mockCreatePromotion.mockResolvedValue(7);
     expect(await addPromotionAction(validPromo)).toEqual({
       success: true,
-      promoId: 7,
+      promotionId: 7,
     });
   });
 
@@ -159,7 +160,7 @@ describe("sendPromotionEmailsAction", () => {
 
   it("returns error when promotion is not found", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockGetAllPromotions.mockResolvedValue([]);
+    mockGetPromotionById.mockResolvedValue(null);
     expect(await sendPromotionEmailsAction(99)).toEqual({
       error: "Promotion not found.",
     });
@@ -167,9 +168,7 @@ describe("sendPromotionEmailsAction", () => {
 
   it("returns error when promotion is not ACTIVE", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockGetAllPromotions.mockResolvedValue([
-      { promo_id: 1, status: "INACTIVE" },
-    ]);
+    mockGetPromotionById.mockResolvedValue({ promo_id: 1, status: "INACTIVE" });
     expect(await sendPromotionEmailsAction(1)).toEqual({
       error: "Only ACTIVE promotions can be sent.",
     });
@@ -177,19 +176,17 @@ describe("sendPromotionEmailsAction", () => {
 
   it("returns sent: 0 when no subscribers exist", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockGetAllPromotions.mockResolvedValue([
-      {
-        promo_id: 1,
-        status: "ACTIVE",
-        title: "T",
-        description: "D",
-        promo_code: "CODE",
-        discount_type: "FLAT",
-        discount_amount: 5,
-        start_date: "2026-06-01",
-        end_date: "2026-08-31",
-      },
-    ]);
+    mockGetPromotionById.mockResolvedValue({
+      promo_id: 1,
+      status: "ACTIVE",
+      title: "T",
+      description: "D",
+      promo_code: "CODE",
+      discount_type: "FLAT",
+      discount_amount: 5,
+      start_date: "2026-06-01",
+      end_date: "2026-08-31",
+    });
     mockGetSubscribedUserEmails.mockResolvedValue([]);
     expect(await sendPromotionEmailsAction(1)).toEqual({
       success: true,
@@ -200,19 +197,17 @@ describe("sendPromotionEmailsAction", () => {
 
   it("sends emails to all subscribers and returns count", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockGetAllPromotions.mockResolvedValue([
-      {
-        promo_id: 1,
-        status: "ACTIVE",
-        title: "T",
-        description: "D",
-        promo_code: "CODE",
-        discount_type: "FLAT",
-        discount_amount: 5,
-        start_date: "2026-06-01",
-        end_date: "2026-08-31",
-      },
-    ]);
+    mockGetPromotionById.mockResolvedValue({
+      promo_id: 1,
+      status: "ACTIVE",
+      title: "T",
+      description: "D",
+      promo_code: "CODE",
+      discount_type: "FLAT",
+      discount_amount: 5,
+      start_date: "2026-06-01",
+      end_date: "2026-08-31",
+    });
     mockGetSubscribedUserEmails.mockResolvedValue([
       { email: "a@b.com", first_name: "Alice" },
       { email: "c@d.com", first_name: "Carol" },

@@ -1,5 +1,27 @@
 import { sql } from "@/lib/db";
 
+export interface ShowtimeRow {
+  show_id: string;
+  showroom_id: number;
+}
+
+export interface ShowtimeSummary {
+  show_id: string;
+  time: string;
+  movie_name: string;
+  showroom_num: number;
+}
+
+export interface ShowtimeAdminRow {
+  show_id: string;
+  movie_id: number;
+  movie_name: string;
+  showroom_id: number;
+  showroom_num: number;
+  time: string;
+  duration: number;
+}
+
 export async function checkShowtimeConflicts(
   showroomId: number,
   startTime: Date,
@@ -26,11 +48,13 @@ export async function checkShowtimeConflicts(
   return conflicts.length > 0;
 }
 
-export async function getShowtimeById(showId: string) {
+export async function getShowtimeById(
+  showId: string,
+): Promise<ShowtimeRow | null> {
   const rows = await sql`
     SELECT showroom_id FROM showtimes WHERE show_id = ${showId}::uuid
   `;
-  return rows[0] ?? null;
+  return (rows[0] as ShowtimeRow) ?? null;
 }
 
 export async function insertShowtime(data: {
@@ -116,8 +140,8 @@ export async function showroomExists(showroomId: number): Promise<boolean> {
   return rows.length > 0;
 }
 
-export async function listShowtimesAdmin() {
-  return sql`
+export async function listShowtimesAdmin(): Promise<ShowtimeAdminRow[]> {
+  const rows = await sql`
     SELECT
       s.show_id,
       s.movie_id,
@@ -131,10 +155,11 @@ export async function listShowtimesAdmin() {
     JOIN showrooms r ON s.showroom_id = r.showroom_id
     ORDER BY s.time ASC, m.movie_name ASC
   `;
+  return rows as ShowtimeAdminRow[];
 }
 
-export async function listShowtimes() {
-  return sql`
+export async function listShowtimes(): Promise<ShowtimeSummary[]> {
+  const rows = await sql`
     SELECT
       showtimes.show_id,
       showtimes.time,
@@ -145,4 +170,5 @@ export async function listShowtimes() {
     JOIN showrooms ON showtimes.showroom_id = showrooms.showroom_id
     ORDER BY movies.movie_name, showtimes.time
   `;
+  return rows as ShowtimeSummary[];
 }

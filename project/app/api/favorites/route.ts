@@ -1,33 +1,39 @@
 import { auth } from "@/auth";
-import {
-  getFavoriteMovieIds,
-  addFavorite,
-  removeFavorite,
-} from "@/lib/repositories/favoriteRepository";
+import * as favoriteService from "@/lib/services/favoriteService";
 import { NextResponse } from "next/server";
+import { withAuthRoute } from "@/lib/middleware/withAuth";
 
+// GET is intentionally unauthenticated — returns empty array for guests.
 export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json([], { status: 200 });
 
-  const movieIds = await getFavoriteMovieIds(session.user.id);
+  const movieIds = await favoriteService.listFavoriteIds(session.user.id);
   return NextResponse.json(movieIds);
 }
 
-export async function POST(req: Request) {
-  const session = await auth();
-  if (!session)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export const POST = withAuthRoute(async (session, request) => {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 },
+    );
+  }
 
-  const { movieId, favorited } = await req.json();
+  const { movieId, favorited } = body as {
+    movieId?: unknown;
+    favorited?: unknown;
+  };
   if (!movieId)
     return NextResponse.json({ error: "Missing movieId" }, { status: 400 });
 
-  if (favorited) {
-    await addFavorite(session.user.id, movieId);
-  } else {
-    await removeFavorite(session.user.id, movieId);
-  }
-
+  await favoriteService.toggleFavorite(
+    session.id,
+    Number(movieId),
+    Boolean(favorited),
+  );
   return NextResponse.json({ ok: true });
-}
+});

@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
-import { getAllPromotions } from "@/lib/repositories/promotionRepository";
+import * as promotionService from "@/lib/services/promotionService";
+import { withAuthAdminRoute } from "@/lib/middleware/withAuth";
 
-export async function GET() {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const promotions = await getAllPromotions();
+export const GET = withAuthAdminRoute(async (_session, _request) => {
+  const promotions = await promotionService.listPromotions();
   return NextResponse.json(promotions);
-}
+});

@@ -1,7 +1,13 @@
 import { sql } from "@/lib/db";
 
-export async function getSeatsByShowId(showId: string) {
-  return sql`
+export interface ShowSeat {
+  show_seat_id: number;
+  is_available: boolean;
+  seat_number: string;
+}
+
+export async function getSeatsByShowId(showId: string): Promise<ShowSeat[]> {
+  const rows = await sql`
     SELECT
       show_seats.show_seat_id,
       show_seats.is_available,
@@ -11,4 +17,5 @@ export async function getSeatsByShowId(showId: string) {
     WHERE show_seats.show_id = ${showId}
     ORDER BY seats.seat_number
   `;
+  return rows as ShowSeat[];
 }

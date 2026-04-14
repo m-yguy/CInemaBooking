@@ -1,23 +1,21 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-import {
-  checkShowtimeConflicts,
-  insertShowtime,
-  insertShowSeats,
-  showroomExists,
-  listShowtimesAdmin,
-  listShowtimes,
-} from "@/lib/repositories/showtimeRepository";
+import * as showtimeService from "@/lib/services/showtimeService";
+import { withAuthAdminRoute } from "@/lib/middleware/withAuth";
 
+const adminGet = withAuthAdminRoute(async (_session, _req) => {
+  const rows = await showtimeService.getShowtimesAdmin();
+  return NextResponse.json(rows);
+});
+
+// GET is public (grouped list) or admin-gated (?admin=true).
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
   if (searchParams.get("admin") === "true") {
-    const rows = await listShowtimesAdmin();
-    return NextResponse.json(rows);
+    return adminGet(req);
   }
 
-  const rows = await listShowtimes();
+  const rows = await showtimeService.getShowtimes();
 
   const grouped: Record<
     string,
@@ -29,7 +27,6 @@ export async function GET(req: Request) {
       hour: "numeric",
       minute: "2-digit",
     });
-
     if (!grouped[row.movie_name]) grouped[row.movie_name] = [];
     grouped[row.movie_name].push({
       show_id: row.show_id,
@@ -41,13 +38,8 @@ export async function GET(req: Request) {
   return NextResponse.json(grouped);
 }
 
-export async function POST(req: Request) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const body = (await req.json()) as {
+export const POST = withAuthAdminRoute(async (_session, request) => {
+  const body = (await request.json()) as {
     movieId?: unknown;
     showroomId?: unknown;
     datetime?: unknown;
@@ -79,35 +71,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid datetime." }, { status: 400 });
   }
 
-  const endTime = new Date(startTime.getTime() + duration * 60_000);
-
-  const hasConflict = await checkShowtimeConflicts(
-    showroomId,
-    startTime,
-    endTime,
-  );
-  if (hasConflict) {
-    return NextResponse.json(
-      {
-        error:
-          "Scheduling conflict: this showroom is already booked during that time.",
-      },
-      { status: 409 },
-    );
-  }
-
-  const exists = await showroomExists(showroomId);
+  // Verify the showroom exists before delegating to the service.
+  const exists = await showtimeService.verifyShowroomExists(showroomId);
   if (!exists) {
     return NextResponse.json({ error: "Showroom not found." }, { status: 404 });
   }
 
-  const show_id = await insertShowtime({
-    showroomId,
+  const result = await showtimeService.addShowtime({
     movieId,
+    showroomId,
     startTime,
     duration,
   });
-  await insertShowSeats(show_id, showroomId);
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: 409 });
+  }
 
-  return NextResponse.json({ success: true, show_id }, { status: 201 });
-}
+  return NextResponse.json(
+    { success: true, show_id: result.show_id },
+    { status: 201 },
+  );
+});

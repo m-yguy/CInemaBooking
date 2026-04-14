@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { getPromotionsAction } from "@/app/actions/promotionActions";
-import type { Promotion } from "@/lib/repositories/promotionRepository";
+import type { Promotion } from "@/lib/services/promotionService";
 
 export default function PromotionsListModal({
   onClose,

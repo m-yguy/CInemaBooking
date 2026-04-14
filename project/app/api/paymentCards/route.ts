@@ -1,128 +1,14 @@
-import { auth } from "@/auth";
-import { encryptCard } from "@/lib/security";
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-import { getUserType } from "@/lib/repositories/userRepository";
-import {
-  countPaymentCards,
-  verifyAddressOwnership,
-  insertBillingAddress,
-  insertPaymentCard,
-} from "@/lib/repositories/paymentRepository";
+import * as paymentService from "@/lib/services/paymentService";
+import type { AddCardInput } from "@/lib/services/paymentService";
+import { withAuthRoute } from "@/lib/middleware/withAuth";
+import { addCardSchema, removeCardSchema } from "@/lib/schemas/paymentSchema";
 
-export async function POST(request: Request) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const userId = session.user.id;
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid request body" },
-      { status: 400 },
-    );
-  }
-
-  const {
-    cardNumber,
-    cardLastFour,
-    cardBrand,
-    cardExpMonth,
-    cardExpYear,
-    existingBillingAddressId,
-    billingLine1,
-    billingLine2,
-    billingCity,
-    billingState,
-    billingPostal,
-    billingCountry,
-  } = body as Record<string, unknown>;
-
-  if (typeof cardNumber !== "string" || !/^\d{13,16}$/.test(cardNumber)) {
-    return NextResponse.json({ error: "Invalid card number" }, { status: 400 });
-  }
-
-  if (typeof cardLastFour !== "string" || !/^\d{4}$/.test(cardLastFour)) {
-    return NextResponse.json({ error: "Invalid card number" }, { status: 400 });
-  }
-
-  const month = Number(cardExpMonth);
-  const year = Number(cardExpYear);
-  if (
-    !month ||
-    month < 1 ||
-    month > 12 ||
-    !year ||
-    year < new Date().getFullYear()
-  ) {
-    return NextResponse.json({ error: "Invalid expiry date" }, { status: 400 });
-  }
-
-  // Verify the user is a customer
-  const userType = await getUserType(userId);
-  if (userType !== "CUSTOMER") {
+export const POST = withAuthRoute(async (session, request) => {
+  if (session.role !== "CUSTOMER") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Enforce 3-card limit
-  const cardCount = await countPaymentCards(userId);
-  if (cardCount >= 3) {
-    return NextResponse.json(
-      { error: "You can save a maximum of 3 payment cards" },
-      { status: 422 },
-    );
-  }
-
-  let billingAddressId: number | null = null;
-
-  if (typeof existingBillingAddressId === "number") {
-    const owns = await verifyAddressOwnership(existingBillingAddressId, userId);
-    if (owns) billingAddressId = existingBillingAddressId;
-  } else if (typeof billingLine1 === "string" && billingLine1.trim()) {
-    const country =
-      typeof billingCountry === "string"
-        ? billingCountry.toUpperCase().slice(0, 2) || "US"
-        : "US";
-    billingAddressId = await insertBillingAddress(userId, {
-      line1: billingLine1.trim(),
-      line2:
-        typeof billingLine2 === "string" && billingLine2.trim()
-          ? billingLine2.trim()
-          : null,
-      city: typeof billingCity === "string" ? billingCity.trim() : "",
-      state: typeof billingState === "string" ? billingState.trim() : "",
-      postal: typeof billingPostal === "string" ? billingPostal.trim() : "",
-      country,
-    });
-  }
-
-  await insertPaymentCard({
-    id: randomUUID(),
-    userId,
-    billingAddressId,
-    cardLastFour: cardLastFour as string,
-    cardBrand: typeof cardBrand === "string" && cardBrand ? cardBrand : null,
-    cardExpMonth: month,
-    cardExpYear: year,
-    encryptedCardNumber: encryptCard(cardNumber),
-  });
-
-  return NextResponse.json({ success: true });
-}
-
-export async function DELETE(request: Request) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const userId = session.user.id;
-
   let body: unknown;
   try {
     body = await request.json();
@@ -133,16 +19,54 @@ export async function DELETE(request: Request) {
     );
   }
 
-  const { id } = body as Record<string, unknown>;
-
-  if (typeof id !== "string" || !id.trim()) {
-    return NextResponse.json({ error: "Invalid card id" }, { status: 400 });
+  const parsed = addCardSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0].message },
+      { status: 400 },
+    );
   }
 
-  await sql`
-    DELETE FROM public.payment_method
-    WHERE id = ${id} AND customer_id = ${userId}
-  `;
+  const result = await paymentService.addCard(
+    session.id,
+    parsed.data as AddCardInput,
+  );
+  if (!result.ok) {
+    return NextResponse.json(
+      { error: result.error },
+      { status: result.status },
+    );
+  }
 
   return NextResponse.json({ success: true });
-}
+});
+
+export const DELETE = withAuthRoute(async (session, request) => {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 },
+    );
+  }
+
+  const parsed = removeCardSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0].message },
+      { status: 400 },
+    );
+  }
+
+  const result = await paymentService.removeCard(parsed.data.id, session.id);
+  if (!result.ok) {
+    return NextResponse.json(
+      { error: result.error },
+      { status: result.status },
+    );
+  }
+
+  return NextResponse.json({ success: true });
+});

@@ -3,8 +3,8 @@ import Image from "next/image";
 interface FavoriteMovieCardProps {
   movieId: number | string;
   title: string;
-  posterPath: string;
-  removeAction?: (formData: FormData) => Promise<void>;
+  posterPath: string | null;
+  removeAction?: (formData: FormData) => Promise<unknown>;
 }
 
 export default function FavoriteMovieCard({
@@ -21,7 +21,7 @@ export default function FavoriteMovieCard({
           className="block w-full h-full"
         >
           <Image
-            src={posterPath}
+            src={posterPath ?? ""}
             alt={`${title} poster`}
             fill
             sizes="(max-width: 640px) 96px, 112px"

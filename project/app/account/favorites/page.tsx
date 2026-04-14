@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import Navbar from "@/app/components/Navbar";
 import FavoriteMovieCard from "@/app/components/FavoriteMovieCard";
-import { getFavoriteMovies } from "@/lib/repositories/favoriteRepository";
-import { removeFavoritesPageFavorite } from "@/app/actions/accountActions";
+import { getFavoriteMovieList } from "@/lib/services/favoriteService";
+import { removeFavoriteAction } from "@/app/actions/accountActions";
 
 export default async function FavoritesPage() {
   const session = await auth();
@@ -15,7 +15,12 @@ export default async function FavoritesPage() {
 
   if (!isCustomer) redirect("/account");
 
-  const favoriteMovies = await getFavoriteMovies(userId);
+  const favoriteMovies = await getFavoriteMovieList(userId);
+
+  async function removeFromFavoritesPage(formData: FormData) {
+    "use server";
+    await removeFavoriteAction(formData, "/account/favorites");
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -40,7 +45,7 @@ export default async function FavoritesPage() {
                 movieId={movie.movie_id}
                 title={movie.title}
                 posterPath={movie.poster_path}
-                removeAction={removeFavoritesPageFavorite}
+                removeAction={removeFromFavoritesPage}
               />
             ))}
           </div>
