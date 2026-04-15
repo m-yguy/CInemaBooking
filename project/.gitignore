@@ -42,6 +42,9 @@ next-env.d.ts
 
 data.sql
 migrations
+
+# design pattern diagrams
+/patterns
 # # Testing
 # jest.config.ts
 # test/
