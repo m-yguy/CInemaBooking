@@ -1,4 +1,3 @@
-import { sendPasswordChangedEmail } from "@/lib/mail";
 import {
   getUserById,
   getUserByEmail,
@@ -57,8 +56,6 @@ export async function updatePassword(
   hashedPassword: string,
 ): Promise<void> {
   await updateUserPassword(userId, hashedPassword);
-  const user = await getUserById(userId);
-  await sendPasswordChangedEmail(user?.email ?? "", user?.first_name ?? "there");
 }
 
 export async function updateAddress(

@@ -101,11 +101,9 @@ describe("addMovieAction", () => {
     });
   });
 
-  it("returns error when addMovie throws", async () => {
+  it("throws when addMovie throws", async () => {
     mockAuth.mockResolvedValue(adminSession);
     mockAddMovie.mockRejectedValue(new Error("DB error"));
-    expect(await addMovieAction(validInput)).toEqual({
-      error: "Failed to add movie. Please try again.",
-    });
+    await expect(addMovieAction(validInput)).rejects.toThrow("DB error");
   });
 });

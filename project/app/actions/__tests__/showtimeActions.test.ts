@@ -89,12 +89,10 @@ describe("addShowtimeAction", () => {
     });
   });
 
-  it("returns error when repository throws", async () => {
+  it("throws when repository throws", async () => {
     mockAuth.mockResolvedValue(adminSession);
     mockCheckConflicts.mockRejectedValue(new Error("DB error"));
-    expect(await addShowtimeAction(validData)).toEqual({
-      error: "Failed to add showtime. Please try again.",
-    });
+    await expect(addShowtimeAction(validData)).rejects.toThrow("DB error");
   });
 });
 

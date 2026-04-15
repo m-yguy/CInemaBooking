@@ -52,23 +52,19 @@ export const addMovieAction = withAuthAdmin(
         .map((s) => s.trim())
         .filter(Boolean);
 
-    try {
-      const movieId = await movieService.addMovie({
-        title: formData.title.trim(),
-        genres: parsePeople(formData.genres),
-        synopsis: formData.synopsis.trim(),
-        trailer: formData.trailer.trim(),
-        trailerImage: formData.trailerImage.trim(),
-        mpaaRating: formData.mpaaRating,
-        releaseStatus: formData.releaseStatus,
-        runtime: formData.runtime,
-        cast: parsePeople(formData.cast),
-        directors: parsePeople(formData.directors),
-        producers: parsePeople(formData.producers),
-      });
-      return { success: true, movieId };
-    } catch {
-      return { error: "Failed to add movie. Please try again." };
-    }
+    const movieId = await movieService.addMovie({
+      title: formData.title.trim(),
+      genres: parsePeople(formData.genres),
+      synopsis: formData.synopsis.trim(),
+      trailer: formData.trailer.trim(),
+      trailerImage: formData.trailerImage.trim(),
+      mpaaRating: formData.mpaaRating,
+      releaseStatus: formData.releaseStatus,
+      runtime: formData.runtime,
+      cast: parsePeople(formData.cast),
+      directors: parsePeople(formData.directors),
+      producers: parsePeople(formData.producers),
+    });
+    return { success: true, movieId };
   },
 );
