@@ -7,9 +7,19 @@ import {
   deleteShowtimeAction,
 } from "@/app/actions/showtimeActions";
 import { auth } from "@/auth";
-import * as showtimeRepo from "@/lib/repositories/showtimeRepository";
 
 const mockAuth = auth as jest.Mock;
+const showtimeRepo = jest.requireMock(
+  "@/lib/repositories/showtimeRepository",
+) as {
+  checkShowtimeConflicts: jest.Mock;
+  getShowtimeById: jest.Mock;
+  insertShowtime: jest.Mock;
+  insertShowSeats: jest.Mock;
+  updateShowtime: jest.Mock;
+  rebuildShowSeats: jest.Mock;
+  deleteShowtime: jest.Mock;
+};
 const mockCheckConflicts = showtimeRepo.checkShowtimeConflicts as jest.Mock;
 const mockGetShowtimeById = showtimeRepo.getShowtimeById as jest.Mock;
 const mockInsertShowtime = showtimeRepo.insertShowtime as jest.Mock;

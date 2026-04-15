@@ -24,13 +24,10 @@ function BookingContent() {
   const showId = searchParams.get("showId");
 
   const [seats, setSeats] = useState<Seat[]>([]);
-  const [loadingSeats, setLoadingSeats] = useState(true);
+  const [loadingSeats, setLoadingSeats] = useState(Boolean(showId));
 
   useEffect(() => {
-    if (!showId) {
-      setLoadingSeats(false);
-      return;
-    }
+    if (!showId) return;
 
     fetch(`/api/seats?showId=${showId}`)
       .then((response) => response.json())
@@ -63,22 +60,6 @@ function BookingContent() {
 
   const seatCount = selectedSeats.length;
   const totalTickets = quantities.adult + quantities.child + quantities.senior;
-
-  // 8 rows theater
-  const baseRows = [
-    { row: "A", seats: 10 },
-    { row: "B", seats: 12 },
-    { row: "C", seats: 14 },
-    { row: "D", seats: 12 },
-  ];
-
-  const allRows = [
-    ...baseRows,
-    ...baseRows.map((r, i) => ({
-      row: String.fromCharCode(69 + i), // E–H
-      seats: r.seats,
-    })),
-  ];
 
   const toggleSeat = (seatId: string) => {
     setSelectedSeats((prev) =>

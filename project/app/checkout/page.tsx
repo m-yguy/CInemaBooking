@@ -112,7 +112,7 @@ function CheckoutContent() {
         <section className="bg-gray-100 p-6 rounded-xl flex flex-col gap-4">
           <h2 className="text-2xl font-semibold">Confirm Your Email</h2>
           <p className="text-gray-600">
-            We'll send your booking confirmation here.
+            We&apos;ll send your booking confirmation here.
           </p>
           <input
             type="email"

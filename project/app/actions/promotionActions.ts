@@ -92,6 +92,7 @@ export const getPromotionsAction = withAuthAdmin(
     | { error: string }
     | { success: true; promotions: promotionService.Promotion[] }
   > => {
+    void _session;
     const promotions = await promotionService.listPromotions();
     return { success: true, promotions };
   },

@@ -110,13 +110,6 @@ export default function UpdateProfileForm({
     }
   }
 
-  useEffect(() => {
-    if (!editing) {
-      setError("");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editing]);
-
   const prevValuesRef = useRef({
     firstName,
     lastName,
@@ -385,7 +378,13 @@ export default function UpdateProfileForm({
   }
 
   return (
-    <form action={handleSubmit} className="space-y-6">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSubmit(new FormData(e.currentTarget));
+      }}
+      className="space-y-6"
+    >
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div>
           <label className="mb-2 block text-sm font-semibold">First name</label>

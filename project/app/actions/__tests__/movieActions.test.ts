@@ -3,9 +3,11 @@ jest.mock("@/lib/repositories/movieRepository");
 
 import { addMovieAction } from "@/app/actions/movieActions";
 import { auth } from "@/auth";
-import * as movieRepo from "@/lib/repositories/movieRepository";
 
 const mockAuth = auth as jest.Mock;
+const movieRepo = jest.requireMock("@/lib/repositories/movieRepository") as {
+  addMovie: jest.Mock;
+};
 const mockAddMovie = movieRepo.addMovie as jest.Mock;
 
 const adminSession = { user: { id: "admin-1", role: "ADMIN" } };

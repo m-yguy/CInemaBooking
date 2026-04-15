@@ -5,4 +5,7 @@ export class AuthError extends Error {
     this.type = type;
   }
 }
-export default {};
+
+const nextAuthMock = {};
+
+export default nextAuthMock;

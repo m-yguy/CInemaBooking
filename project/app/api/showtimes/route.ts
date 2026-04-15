@@ -3,6 +3,8 @@ import * as showtimeService from "@/lib/services/showtimeService";
 import { withAuthAdminRoute } from "@/lib/middleware/withAuthDecorator";
 
 const adminGet = withAuthAdminRoute(async (_session, _req) => {
+  void _session;
+  void _req;
   const rows = await showtimeService.getShowtimesAdmin();
   return NextResponse.json(rows);
 });
