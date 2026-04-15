@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { encryptCard } from "@/lib/security";
+import { encryptCard } from "@/lib/securityFacade";
 import {
   getPaymentCards,
   countPaymentCards,

@@ -1,7 +1,7 @@
 "use server";
 
 import * as showtimeService from "@/lib/services/showtimeService";
-import { withAuthAdmin } from "@/lib/middleware/withAuth";
+import { withAuthAdmin } from "@/lib/middleware/withAuthDecorator";
 
 export const addShowtimeAction = withAuthAdmin(
   async (

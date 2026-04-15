@@ -1,4 +1,4 @@
-import { sql } from "@/lib/db";
+import { sql } from "@/lib/dbSingleton";
 
 export interface Promotion {
   promo_id: number;

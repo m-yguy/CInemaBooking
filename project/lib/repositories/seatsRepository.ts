@@ -1,4 +1,4 @@
-import { sql } from "@/lib/db";
+import { sql } from "@/lib/dbSingleton";
 
 export interface ShowSeat {
   show_seat_id: number;

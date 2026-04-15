@@ -1,7 +1,7 @@
 "use server";
 
 import * as promotionService from "@/lib/services/promotionService";
-import { withAuthAdmin } from "@/lib/middleware/withAuth";
+import { withAuthAdmin } from "@/lib/middleware/withAuthDecorator";
 
 export type { Promotion } from "@/lib/services/promotionService";
 

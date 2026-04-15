@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import * as favoriteService from "@/lib/services/favoriteService";
 import { NextResponse } from "next/server";
-import { withAuthRoute } from "@/lib/middleware/withAuth";
+import { withAuthRoute } from "@/lib/middleware/withAuthDecorator";
 
 // GET is intentionally unauthenticated — returns empty array for guests.
 export async function GET() {

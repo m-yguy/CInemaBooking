@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import * as paymentService from "@/lib/services/paymentService";
 import type { AddCardInput } from "@/lib/services/paymentService";
-import { withAuthRoute } from "@/lib/middleware/withAuth";
+import { withAuthRoute } from "@/lib/middleware/withAuthDecorator";
 import { addCardSchema, removeCardSchema } from "@/lib/schemas/paymentSchema";
 
 export const POST = withAuthRoute(async (session, request) => {

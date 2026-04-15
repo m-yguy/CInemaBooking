@@ -3,7 +3,7 @@ import {
   comparePassword,
   encryptCard,
   decryptCard,
-} from "@/lib/security";
+} from "@/lib/securityFacade";
 
 describe("hashPassword / comparePassword", () => {
   it("hashes a password and verifies it correctly", async () => {

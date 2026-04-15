@@ -1,7 +1,7 @@
 "use server";
 
 import * as movieService from "@/lib/services/movieService";
-import { withAuthAdmin } from "@/lib/middleware/withAuth";
+import { withAuthAdmin } from "@/lib/middleware/withAuthDecorator";
 
 const MPAA_VALUES = ["G", "PG", "PG-13", "R", "NC-17"] as const;
 const STATUS_VALUES = ["NOW_PLAYING", "COMING_SOON"] as const;

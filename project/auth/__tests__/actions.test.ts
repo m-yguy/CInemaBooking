@@ -17,7 +17,7 @@ import {
 } from "@/auth/actions";
 import * as userRepo from "@/lib/repositories/userRepository";
 import * as mail from "@/lib/mail";
-import * as security from "@/lib/security";
+import * as security from "@/lib/securityFacade";
 
 const mockGetUserByEmail = userRepo.getUserByEmail as jest.Mock;
 const mockGetUserById = userRepo.getUserById as jest.Mock;

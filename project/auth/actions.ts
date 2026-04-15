@@ -6,7 +6,7 @@ import {
   sendVerificationEmail,
   sendPasswordResetEmail,
 } from "@/lib/mail";
-import { hashPassword } from "@/lib/security";
+import { hashPassword } from "@/lib/securityFacade";
 import * as userService from "@/lib/services/userService";
 import {
   signUpSchema,

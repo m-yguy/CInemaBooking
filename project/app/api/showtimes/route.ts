@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import * as showtimeService from "@/lib/services/showtimeService";
-import { withAuthAdminRoute } from "@/lib/middleware/withAuth";
+import { withAuthAdminRoute } from "@/lib/middleware/withAuthDecorator";
 
 const adminGet = withAuthAdminRoute(async (_session, _req) => {
   const rows = await showtimeService.getShowtimesAdmin();

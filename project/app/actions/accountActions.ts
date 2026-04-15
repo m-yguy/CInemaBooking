@@ -1,14 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { comparePassword, hashPassword } from "@/lib/security";
+import { comparePassword, hashPassword } from "@/lib/securityFacade";
 import { sendProfileUpdatedEmail } from "@/lib/mail";
 import { redirect } from "next/navigation";
 import { signOut } from "@/auth";
 import * as userService from "@/lib/services/userService";
 import * as favoriteService from "@/lib/services/favoriteService";
 import * as paymentService from "@/lib/services/paymentService";
-import { withAuth } from "@/lib/middleware/withAuth";
+import { withAuth } from "@/lib/middleware/withAuthDecorator";
 import { changePasswordSchema } from "@/lib/schemas/userSchema";
 
 export const updateProfile = withAuth(async (session, formData: FormData) => {

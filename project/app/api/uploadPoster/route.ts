@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { writeFile } from "fs/promises";
 import path from "path";
-import { withAuthAdminRoute } from "@/lib/middleware/withAuth";
+import { withAuthAdminRoute } from "@/lib/middleware/withAuthDecorator";
 
 const ALLOWED_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",

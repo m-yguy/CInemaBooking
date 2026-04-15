@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import * as promotionService from "@/lib/services/promotionService";
-import { withAuthAdminRoute } from "@/lib/middleware/withAuth";
+import { withAuthAdminRoute } from "@/lib/middleware/withAuthDecorator";
 
 export const GET = withAuthAdminRoute(async (_session, _request) => {
   const promotions = await promotionService.listPromotions();

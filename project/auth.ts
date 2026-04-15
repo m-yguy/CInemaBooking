@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { getUserByEmail } from "@/lib/repositories/userRepository";
-import { comparePassword } from "@/lib/security";
+import { comparePassword } from "@/lib/securityFacade";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [

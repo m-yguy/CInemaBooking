@@ -12,7 +12,7 @@ import {
   removeFavoriteAction,
 } from "@/app/actions/accountActions";
 import { auth } from "@/auth";
-import * as security from "@/lib/security";
+import * as security from "@/lib/securityFacade";
 import * as mail from "@/lib/mail";
 import * as userRepo from "@/lib/repositories/userRepository";
 import * as favoriteRepo from "@/lib/repositories/favoriteRepository";
