@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { comparePassword, hashPassword } from "@/lib/securityFacade";
 import { sendProfileUpdatedEmail } from "@/lib/mail";
 import { redirect } from "next/navigation";
 import { signOut } from "@/auth";
@@ -10,51 +9,30 @@ import * as favoriteService from "@/lib/services/favoriteService";
 import * as paymentService from "@/lib/services/paymentService";
 import { withAuth } from "@/lib/middleware/withAuthDecorator";
 import { changePasswordSchema } from "@/lib/schemas/userSchema";
+import { userAccountFacade } from "@/lib/facades/userAccountFacade";
 
 export const updateProfile = withAuth(async (session, formData: FormData) => {
-  const userId = session.id;
-  const isCustomer = session.role === "CUSTOMER";
-
-  const firstName = (formData.get("firstName") as string)?.trim();
-  const lastName = (formData.get("lastName") as string)?.trim();
-  const phone = (formData.get("phone") as string)?.trim();
-
-  try {
-    await userService.updateBasicInfo(userId, firstName, lastName, phone);
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("phone_number")) {
-      return { error: "That phone number is already in use" };
-    }
-    throw e;
-  }
-
-  if (isCustomer) {
-    const addressLine1 = (formData.get("addressLine1") as string)?.trim() ?? "";
-    const addressLine2 =
-      (formData.get("addressLine2") as string)?.trim() || null;
-    const city = (formData.get("city") as string)?.trim() ?? "";
-    const state = (formData.get("state") as string)?.trim() ?? "";
-    const postalCode = (formData.get("postalCode") as string)?.trim() ?? "";
-    const country =
-      (formData.get("country") as string)?.trim().toUpperCase() || "US";
-    if (addressLine1 || city) {
-      await userService.updateAddress(userId, {
-        addressLine1,
-        addressLine2,
-        city,
-        state,
-        postalCode,
-        country,
-      });
-    }
-  }
+  const result = await userAccountFacade.updateProfile(
+    session.id,
+    session.role,
+    {
+      firstName: (formData.get("firstName") as string)?.trim() ?? "",
+      lastName: (formData.get("lastName") as string)?.trim() ?? "",
+      phone: (formData.get("phone") as string)?.trim() ?? "",
+      addressLine1: (formData.get("addressLine1") as string)?.trim() ?? "",
+      addressLine2: (formData.get("addressLine2") as string)?.trim() ?? "",
+      city: (formData.get("city") as string)?.trim() ?? "",
+      state: (formData.get("state") as string)?.trim() ?? "",
+      postalCode: (formData.get("postalCode") as string)?.trim() ?? "",
+      country: (formData.get("country") as string)?.trim() ?? "",
+    },
+  );
+  if (result.error) return result;
 
   revalidatePath("/account");
 });
 
 export const changePassword = withAuth(async (session, formData: FormData) => {
-  const userId = session.id;
   const currentPassword = formData.get("currentPassword") as string;
   const newPassword = formData.get("newPassword") as string;
 
@@ -64,16 +42,11 @@ export const changePassword = withAuth(async (session, formData: FormData) => {
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  const storedPassword = await userService.getPasswordHash(userId);
-  if (!storedPassword) return { error: "No password set on this account" };
-
-  const isValid = await comparePassword(currentPassword, storedPassword);
-  if (!isValid) return { error: "Password is incorrect" };
-
-  const hashed = await hashPassword(newPassword);
-  await userService.updatePassword(userId, hashed);
-
-  return {};
+  return userAccountFacade.changePassword(
+    session.id,
+    currentPassword,
+    newPassword,
+  );
 });
 
 export const notifyProfileChange = withAuth(

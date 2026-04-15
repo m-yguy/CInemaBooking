@@ -2,11 +2,8 @@
 import crypto from "crypto";
 import { signIn, signOut } from "@/auth";
 import { AuthError } from "next-auth";
-import {
-  sendVerificationEmail,
-  sendPasswordResetEmail,
-} from "@/lib/mail";
-import { hashPassword } from "@/lib/securityFacade";
+import { sendVerificationEmail, sendPasswordResetEmail } from "@/lib/mail";
+import { userAccountFacade } from "@/lib/facades/userAccountFacade";
 import * as userService from "@/lib/services/userService";
 import {
   signUpSchema,
@@ -32,32 +29,13 @@ export async function signUp(formData: FormData) {
     promotions: receivesPromos,
   } = parsed.data;
 
-  const existingUser = await userService.findUserByEmail(email);
-  if (existingUser) return { error: "That email is already in use" };
-
-  const hashedPassword = await hashPassword(password);
-  const token = crypto.randomBytes(32).toString("hex");
-
-  const userId = await userService.createCustomer({
+  return userAccountFacade.signUp({
     firstName,
     lastName,
     email,
-    hashedPassword,
+    password,
     receivesPromos: receivesPromos ?? false,
   });
-
-  await userService.insertVerificationToken(userId, token);
-
-  const verifyUrl = `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/verificationPage?key=${encodeURIComponent(token)}`;
-  try {
-    await sendVerificationEmail(email, firstName, lastName, verifyUrl);
-  } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Failed to send verification email";
-    return { error: `Email error: ${message}` };
-  }
-
-  return { success: "Verification email sent. Please check your inbox." };
 }
 
 export async function login(formData: FormData) {
@@ -181,18 +159,5 @@ export async function resetPassword(
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  const tokenRow = await userService.getPasswordReset(token);
-  if (!tokenRow) {
-    return {
-      error: "Reset link is invalid or has expired. Please request a new one.",
-    };
-  }
-
-  const userId = tokenRow.user_id as string;
-  const hashedPassword = await hashPassword(newPassword);
-
-  await userService.updatePassword(userId, hashedPassword);
-  await userService.deletePasswordReset(userId);
-
-  return { success: "Password reset successfully. You can now sign in." };
+  return userAccountFacade.resetPassword(token, newPassword);
 }
