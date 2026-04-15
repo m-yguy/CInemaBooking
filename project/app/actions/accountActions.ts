@@ -1,12 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { sendProfileUpdatedEmail } from "@/lib/mail";
 import { redirect } from "next/navigation";
 import { signOut } from "@/auth";
-import * as userService from "@/lib/services/userService";
-import * as favoriteService from "@/lib/services/favoriteService";
-import * as paymentService from "@/lib/services/paymentService";
 import { withAuth } from "@/lib/middleware/withAuthDecorator";
 import { changePasswordSchema } from "@/lib/schemas/userSchema";
 import { userAccountFacade } from "@/lib/facades/userAccountFacade";
@@ -51,12 +47,7 @@ export const changePassword = withAuth(async (session, formData: FormData) => {
 
 export const notifyProfileChange = withAuth(
   async (session, changes: string[]) => {
-    const user = await userService.getUserProfile(session.id);
-    await sendProfileUpdatedEmail(
-      user?.email ?? "",
-      user?.first_name ?? "there",
-      changes,
-    );
+    await userAccountFacade.notifyProfileChange(session.id, changes);
   },
 );
 
@@ -65,28 +56,17 @@ export const removeFavoriteAction = withAuth(
     const movieId = formData.get("movieId") as string;
     if (!movieId) return;
 
-    await favoriteService.removeFavoriteMovie(session.id, parseInt(movieId));
+    await userAccountFacade.removeFavorite(session.id, parseInt(movieId, 10));
     revalidatePath(revalidateTo);
   },
 );
 
 export const deleteAccount = withAuth(async (session) => {
-  await userService.deleteUserAccount(session.id);
+  await userAccountFacade.deleteAccount(session.id);
   await signOut({ redirectTo: "/" });
   redirect("/");
 });
 
 export async function getAccountPageData(userId: string) {
-  const user = await userService.getUserProfile(userId);
-  const isCustomer = user?.user_type === "CUSTOMER";
-  const [addressRow, savedCards, favoriteMovies] = await Promise.all([
-    isCustomer
-      ? userService.getUserMailingAddress(userId)
-      : Promise.resolve(null),
-    isCustomer ? paymentService.getCards(userId) : Promise.resolve([]),
-    isCustomer
-      ? favoriteService.getFavoriteMovieList(userId)
-      : Promise.resolve([]),
-  ]);
-  return { user, isCustomer, addressRow, savedCards, favoriteMovies };
+  return userAccountFacade.getAccountPageData(userId);
 }

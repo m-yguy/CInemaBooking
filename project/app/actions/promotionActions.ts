@@ -1,6 +1,7 @@
 "use server";
 
 import * as promotionService from "@/lib/services/promotionService";
+import { promotionFacade } from "@/lib/facades/promotionFacade";
 import { withAuthAdmin } from "@/lib/middleware/withAuthDecorator";
 
 export type { Promotion } from "@/lib/services/promotionService";
@@ -58,22 +59,18 @@ export const addPromotionAction = withAuthAdmin(
     const validationError = validatePromotion(data);
     if (validationError) return { error: validationError };
 
-    try {
-      const result = await promotionService.addPromotion({
-        promoCode: data.promoCode.trim().toUpperCase(),
-        title: data.title.trim(),
-        description: data.description.trim(),
-        discountType: data.discountType as "PERCENTAGE" | "FLAT",
-        discountAmount: parseFloat(data.discountAmount),
-        startDate: data.startDate,
-        endDate: data.endDate,
-        status: data.status as "ACTIVE" | "INACTIVE",
-      });
-      if (!result.ok) return { error: result.error };
-      return { success: true, promotionId: result.promotionId };
-    } catch {
-      return { error: "Failed to create promotion. Please try again." };
-    }
+    const result = await promotionService.addPromotion({
+      promoCode: data.promoCode.trim().toUpperCase(),
+      title: data.title.trim(),
+      description: data.description.trim(),
+      discountType: data.discountType as "PERCENTAGE" | "FLAT",
+      discountAmount: parseFloat(data.discountAmount),
+      startDate: data.startDate,
+      endDate: data.endDate,
+      status: data.status as "ACTIVE" | "INACTIVE",
+    });
+    if (!result.ok) return { error: result.error };
+    return { success: true, promotionId: result.promotionId };
   },
 );
 
@@ -82,7 +79,7 @@ export const sendPromotionEmailsAction = withAuthAdmin(
     _session,
     promotionId: number,
   ): Promise<{ error: string } | { success: true; sent: number }> => {
-    const result = await promotionService.sendPromotionEmails(promotionId);
+    const result = await promotionFacade.sendPromotionEmails(promotionId);
     if (!result.ok) return { error: result.error };
     return { success: true, sent: result.sent };
   },
