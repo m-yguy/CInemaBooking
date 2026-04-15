@@ -1,6 +1,7 @@
 "use client";
 
 import Navbar from "@/app/components/Navbar";
+import { BookingBuilder, BookingOrder } from "@/lib/builders/bookingBuilder";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, Suspense } from "react";
 import Image from "next/image";
@@ -14,7 +15,14 @@ function CheckoutContent() {
     const router = useRouter();
 
     const rawData = searchParams.get("data");
-    const bookingData = rawData ? JSON.parse(decodeURIComponent(rawData)) : null;
+    let bookingData: BookingOrder | null = null;
+    if (rawData) {
+        try {
+            bookingData = BookingBuilder.fromSerialized(rawData);
+        } catch {
+            bookingData = null;
+        }
+    }
 
     const [email, setEmail] = useState(session?.user?.email ?? "");
 
@@ -22,10 +30,22 @@ function CheckoutContent() {
         return <p className="text-center mt-20">No booking data found.</p>;
     }
 
-    const { title, time, posterUrl, selectedSeats, quantities, total } = bookingData;
+    const { title, time, posterUrl, showId, selectedSeats, quantities, total } = bookingData;
 
     function goToPayment() {
-        const paymentData = { ...bookingData, email };
+        let paymentData: BookingOrder;
+        try {
+            paymentData = new BookingBuilder()
+                .setShowInfo({ title, time, posterUrl, showId })
+                .setSeats(selectedSeats)
+                .setTickets(quantities)
+                .setTotal(total)
+                .setEmail(email)
+                .build({ requireEmail: true });
+        } catch {
+            return;
+        }
+
         const encoded = encodeURIComponent(JSON.stringify(paymentData));
         router.push(`/payment?data=${encoded}`);
     }

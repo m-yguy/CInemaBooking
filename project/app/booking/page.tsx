@@ -1,6 +1,7 @@
 "use client";
 
 import Navbar from "@/app/components/Navbar";
+import { BookingBuilder } from "@/lib/builders/bookingBuilder";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useRef, useEffect, Suspense } from "react";
 import Image from "next/image";
@@ -120,15 +121,18 @@ function BookingContent() {
     buttonColor = "bg-red-700 hover:bg-red-600 cursor-pointer";
 
   function goToCheckout() {
-    const checkoutData = {
-      title,
-      time,
-      posterUrl,
-      showId,
-      selectedSeats: selectedSeats.sort(),
-      quantities,
-      total,
-    };
+    let checkoutData;
+    try {
+      checkoutData = new BookingBuilder()
+        .setShowInfo({ title, time, posterUrl, showId })
+        .setSeats(selectedSeats)
+        .setTickets(quantities)
+        .setTotal(total)
+        .build();
+    } catch {
+      return;
+    }
+
     const encoded = encodeURIComponent(JSON.stringify(checkoutData));
 
     // If not logged in, redirect to sign in page and come back after
