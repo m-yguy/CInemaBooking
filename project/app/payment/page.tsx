@@ -1,6 +1,7 @@
 "use client";
 
 import Navbar from "@/app/components/Navbar";
+import { BookingBuilder, BookingOrder } from "@/lib/builders/bookingBuilder";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import Image from "next/image";
@@ -9,7 +10,16 @@ function PaymentContent() {
   const searchParams = useSearchParams();
 
   const rawData = searchParams.get("data");
-  const bookingData = rawData ? JSON.parse(decodeURIComponent(rawData)) : null;
+  let bookingData: BookingOrder | null = null;
+  if (rawData) {
+    try {
+      bookingData = BookingBuilder.fromSerialized(rawData, {
+        requireEmail: true,
+      });
+    } catch {
+      bookingData = null;
+    }
+  }
 
   if (!bookingData) {
     return <p className="text-center mt-20">No booking data found.</p>;

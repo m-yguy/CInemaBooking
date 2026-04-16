@@ -3,9 +3,11 @@ jest.mock("@/lib/repositories/movieRepository");
 
 import { addMovieAction } from "@/app/actions/movieActions";
 import { auth } from "@/auth";
-import * as movieRepo from "@/lib/repositories/movieRepository";
 
 const mockAuth = auth as jest.Mock;
+const movieRepo = jest.requireMock("@/lib/repositories/movieRepository") as {
+  addMovie: jest.Mock;
+};
 const mockAddMovie = movieRepo.addMovie as jest.Mock;
 
 const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
@@ -101,11 +103,9 @@ describe("addMovieAction", () => {
     });
   });
 
-  it("returns error when addMovie throws", async () => {
+  it("throws when addMovie throws", async () => {
     mockAuth.mockResolvedValue(adminSession);
     mockAddMovie.mockRejectedValue(new Error("DB error"));
-    expect(await addMovieAction(validInput)).toEqual({
-      error: "Failed to add movie. Please try again.",
-    });
+    await expect(addMovieAction(validInput)).rejects.toThrow("DB error");
   });
 });

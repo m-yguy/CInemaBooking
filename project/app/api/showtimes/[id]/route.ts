@@ -1,4 +1,4 @@
-import { sql } from "@/lib/db";
+import { sql } from "@/lib/dbSingleton";
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 

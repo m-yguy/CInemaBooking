@@ -9,10 +9,17 @@ import {
   type PromotionFormData,
 } from "@/app/actions/promotionActions";
 import { auth } from "@/auth";
-import * as promotionRepo from "@/lib/repositories/promotionRepository";
 import * as mail from "@/lib/mail";
 
 const mockAuth = auth as jest.Mock;
+const promotionRepo = jest.requireMock(
+  "@/lib/repositories/promotionRepository",
+) as {
+  createPromotion: jest.Mock;
+  getAllPromotions: jest.Mock;
+  getPromotionById: jest.Mock;
+  getSubscribedUserEmails: jest.Mock;
+};
 const mockCreatePromotion = promotionRepo.createPromotion as jest.Mock;
 const mockGetAllPromotions = promotionRepo.getAllPromotions as jest.Mock;
 const mockGetPromotionById = promotionRepo.getPromotionById as jest.Mock;

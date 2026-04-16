@@ -26,18 +26,14 @@ export const addShowtimeAction = withAuthAdmin(
       return { error: "Invalid date/time." };
     }
 
-    try {
-      const result = await showtimeService.addShowtime({
-        movieId: data.movieId,
-        showroomId: data.showroomId,
-        startTime,
-        duration: data.duration,
-      });
-      if (!result.ok) return { error: result.error };
-      return { success: true, show_id: result.show_id };
-    } catch {
-      return { error: "Failed to add showtime. Please try again." };
-    }
+    const result = await showtimeService.addShowtime({
+      movieId: data.movieId,
+      showroomId: data.showroomId,
+      startTime,
+      duration: data.duration,
+    });
+    if (!result.ok) return { error: result.error };
+    return { success: true, show_id: result.show_id };
   },
 );
 
@@ -71,18 +67,14 @@ export const editShowtimeAction = withAuthAdmin(
       return { error: "Invalid date/time." };
     }
 
-    try {
-      const result = await showtimeService.editShowtime(showId, {
-        movieId: data.movieId,
-        showroomId: data.showroomId,
-        startTime,
-        duration: data.duration,
-      });
-      if (!result.ok) return { error: result.error };
-      return { success: true };
-    } catch {
-      return { error: "Failed to update showtime. Please try again." };
-    }
+    const result = await showtimeService.editShowtime(showId, {
+      movieId: data.movieId,
+      showroomId: data.showroomId,
+      startTime,
+      duration: data.duration,
+    });
+    if (!result.ok) return { error: result.error };
+    return { success: true };
   },
 );
 
@@ -93,12 +85,8 @@ export const deleteShowtimeAction = withAuthAdmin(
   ): Promise<{ error: string } | { success: true }> => {
     if (!showId) return { error: "Showtime ID is required." };
 
-    try {
-      const result = await showtimeService.removeShowtime(showId);
-      if (!result.ok) return { error: result.error };
-      return { success: true };
-    } catch {
-      return { error: "Failed to delete showtime. Please try again." };
-    }
+    const result = await showtimeService.removeShowtime(showId);
+    if (!result.ok) return { error: result.error };
+    return { success: true };
   },
 );

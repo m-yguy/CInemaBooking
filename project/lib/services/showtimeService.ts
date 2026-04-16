@@ -12,6 +12,7 @@ import {
   type ShowtimeSummary,
   type ShowtimeAdminRow,
 } from "@/lib/repositories/showtimeRepository";
+import { ShowtimeFactory } from "@/lib/factories/showtimeFactory";
 
 export type { ShowtimeSummary, ShowtimeAdminRow };
 
@@ -39,11 +40,17 @@ export interface AddShowtimeInput {
 export async function addShowtime(
   data: AddShowtimeInput,
 ): Promise<{ ok: true; show_id: string } | { ok: false; error: string }> {
-  const endTime = new Date(data.startTime.getTime() + data.duration * 60_000);
+  const showtimeInput = ShowtimeFactory.createShowtimeInput(
+    "",
+    data.movieId,
+    data.startTime,
+    data.duration,
+  );
+
   const hasConflict = await checkShowtimeConflicts(
     data.showroomId,
-    data.startTime,
-    endTime,
+    showtimeInput.startTime,
+    showtimeInput.endTime,
   );
   if (hasConflict) {
     return {
@@ -55,9 +62,9 @@ export async function addShowtime(
 
   const show_id = await insertShowtime({
     showroomId: data.showroomId,
-    movieId: data.movieId,
-    startTime: data.startTime,
-    duration: data.duration,
+    movieId: showtimeInput.movieId,
+    startTime: showtimeInput.startTime,
+    duration: showtimeInput.duration,
   });
   await insertShowSeats(show_id, data.showroomId);
   return { ok: true, show_id };
@@ -78,11 +85,17 @@ export async function editShowtime(
   if (!existing) return { ok: false, error: "Showtime not found." };
 
   const oldShowroomId = existing.showroom_id as number;
-  const endTime = new Date(data.startTime.getTime() + data.duration * 60_000);
+  const showtimeInput = ShowtimeFactory.createShowtimeInput(
+    showId,
+    data.movieId,
+    data.startTime,
+    data.duration,
+  );
+
   const hasConflict = await checkShowtimeConflicts(
     data.showroomId,
-    data.startTime,
-    endTime,
+    showtimeInput.startTime,
+    showtimeInput.endTime,
     showId,
   );
   if (hasConflict) {
@@ -94,10 +107,10 @@ export async function editShowtime(
   }
 
   await updateShowtime(showId, {
-    movieId: data.movieId,
+    movieId: showtimeInput.movieId,
     showroomId: data.showroomId,
-    startTime: data.startTime,
-    duration: data.duration,
+    startTime: showtimeInput.startTime,
+    duration: showtimeInput.duration,
   });
   if (oldShowroomId !== data.showroomId) {
     await rebuildShowSeats(showId, data.showroomId);

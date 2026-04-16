@@ -1,6 +1,7 @@
 "use client";
 
 import Navbar from "@/app/components/Navbar";
+import { BookingBuilder } from "@/lib/builders/bookingBuilder";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useRef, useEffect, Suspense } from "react";
 import Image from "next/image";
@@ -23,13 +24,10 @@ function BookingContent() {
   const showId = searchParams.get("showId");
 
   const [seats, setSeats] = useState<Seat[]>([]);
-  const [loadingSeats, setLoadingSeats] = useState(true);
+  const [loadingSeats, setLoadingSeats] = useState(Boolean(showId));
 
   useEffect(() => {
-    if (!showId) {
-      setLoadingSeats(false);
-      return;
-    }
+    if (!showId) return;
 
     fetch(`/api/seats?showId=${showId}`)
       .then((response) => response.json())
@@ -62,22 +60,6 @@ function BookingContent() {
 
   const seatCount = selectedSeats.length;
   const totalTickets = quantities.adult + quantities.child + quantities.senior;
-
-  // 8 rows theater
-  const baseRows = [
-    { row: "A", seats: 10 },
-    { row: "B", seats: 12 },
-    { row: "C", seats: 14 },
-    { row: "D", seats: 12 },
-  ];
-
-  const allRows = [
-    ...baseRows,
-    ...baseRows.map((r, i) => ({
-      row: String.fromCharCode(69 + i), // E–H
-      seats: r.seats,
-    })),
-  ];
 
   const toggleSeat = (seatId: string) => {
     setSelectedSeats((prev) =>
@@ -120,15 +102,18 @@ function BookingContent() {
     buttonColor = "bg-red-700 hover:bg-red-600 cursor-pointer";
 
   function goToCheckout() {
-    const checkoutData = {
-      title,
-      time,
-      posterUrl,
-      showId,
-      selectedSeats: selectedSeats.sort(),
-      quantities,
-      total,
-    };
+    let checkoutData;
+    try {
+      checkoutData = new BookingBuilder()
+        .setShowInfo({ title, time, posterUrl, showId })
+        .setSeats(selectedSeats)
+        .setTickets(quantities)
+        .setTotal(total)
+        .build();
+    } catch {
+      return;
+    }
+
     const encoded = encodeURIComponent(JSON.stringify(checkoutData));
 
     // If not logged in, redirect to sign in page and come back after

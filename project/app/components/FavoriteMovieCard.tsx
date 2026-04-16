@@ -4,7 +4,7 @@ interface FavoriteMovieCardProps {
   movieId: number | string;
   title: string;
   posterPath: string | null;
-  removeAction?: (formData: FormData) => Promise<unknown>;
+  removeAction?: (formData: FormData) => Promise<void> | void;
 }
 
 export default function FavoriteMovieCard({
