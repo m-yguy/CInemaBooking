@@ -14,6 +14,12 @@ function CheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [statusType, setStatusType] = useState<"success" | "error" | null>(
+    null,
+  );
+  const [isSending, setIsSending] = useState(false);
+
   const rawData = searchParams.get("data");
   let bookingData: BookingOrder | null = null;
   if (rawData) {
@@ -33,7 +39,7 @@ function CheckoutContent() {
   const { title, time, posterUrl, showId, selectedSeats, quantities, total } =
     bookingData;
 
-  function goToPayment() {
+  async function goToPayment() {
     let paymentData: BookingOrder;
     try {
       paymentData = new BookingBuilder()
@@ -48,7 +54,40 @@ function CheckoutContent() {
     }
 
     const encoded = encodeURIComponent(JSON.stringify(paymentData));
-    router.push(`/payment?data=${encoded}`);
+
+    // send booking confirmation before navigating to payment
+    setIsSending(true);
+    setStatusMessage(null);
+    setStatusType(null);
+    try {
+      const resp = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...paymentData,
+          firstName: session?.user?.first_name,
+        }),
+      });
+      const json = await resp.json();
+      if (!resp.ok || !json.ok) {
+        setStatusMessage(
+          "Proceeding to payment — confirmation email failed to send.",
+        );
+        setStatusType("error");
+      } else {
+        setStatusMessage(`Confirmation email sent to ${paymentData.email}`);
+        setStatusType("success");
+      }
+    } catch (err) {
+      console.error(err);
+      setStatusMessage(
+        "An unexpected error occurred while sending confirmation email.",
+      );
+      setStatusType("error");
+    } finally {
+      setIsSending(false);
+      setTimeout(() => router.push(`/payment?data=${encoded}`), 1500);
+    }
   }
 
   let buttonColor = "bg-gray-400 cursor-not-allowed";
@@ -123,13 +162,34 @@ function CheckoutContent() {
           />
         </section>
 
-        <button
-          onClick={goToPayment}
-          disabled={!email.includes("@")}
-          className={`ml-auto rounded-3xl px-12 py-4 text-white font-bold ${buttonColor}`}
-        >
-          Proceed to Payment
-        </button>
+        <div className="flex flex-col gap-3">
+          <div className="self-end">
+            <button
+              onClick={goToPayment}
+              disabled={!email.includes("@") || isSending}
+              className={`rounded-3xl px-12 py-4 text-white font-bold ${
+                !email.includes("@") || isSending
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-red-700 hover:bg-red-600 cursor-pointer"
+              }`}
+            >
+              {isSending ? "Sending confirmation..." : "Proceed to Payment"}
+            </button>
+          </div>
+
+          {statusMessage && (
+            <div
+              role="status"
+              className={`max-w-xl w-full mx-auto text-center px-4 py-3 rounded ${
+                statusType === "success"
+                  ? "bg-green-50 text-green-800"
+                  : "bg-red-50 text-red-800"
+              }`}
+            >
+              {statusMessage}
+            </div>
+          )}
+        </div>
       </main>
 
       <footer className="bg-black p-8 text-white text-center">
