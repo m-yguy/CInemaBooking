@@ -78,13 +78,15 @@ export default function AddCardModal({
           cardBrand,
           cardExpMonth: month,
           cardExpYear: year,
-          existingBillingAddressId: hasAddress ? mailingAddressId : null,
-          billingLine1: hasAddress ? null : billingLine1,
-          billingLine2: hasAddress ? null : billingLine2,
-          billingCity: hasAddress ? null : billingCity,
-          billingState: hasAddress ? null : billingState,
-          billingPostal: hasAddress ? null : billingPostal,
-          billingCountry: hasAddress ? null : billingCountry,
+          existingBillingAddressId: hasAddress
+            ? (mailingAddressId ?? undefined)
+            : undefined,
+          billingLine1: hasAddress ? undefined : billingLine1,
+          billingLine2: hasAddress ? undefined : billingLine2,
+          billingCity: hasAddress ? undefined : billingCity,
+          billingState: hasAddress ? undefined : billingState,
+          billingPostal: hasAddress ? undefined : billingPostal,
+          billingCountry: hasAddress ? undefined : billingCountry,
         }),
       });
       const data = await res.json();
