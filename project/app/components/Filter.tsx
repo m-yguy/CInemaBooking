@@ -193,7 +193,7 @@ export default function Filter({
           </div>
         ) : (
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {filteredMovies.map((m) => (
+            {filteredMovies.map((m) =>
               isCustomer ? (
                 <MovieCardStarDecorator
                   key={m.title}
@@ -201,12 +201,9 @@ export default function Filter({
                   initialFavorited={favoriteIds.includes(m.movie_id)}
                 />
               ) : (
-                <MovieCardTicketDecorator
-                  key={m.title}
-                  movieData={m}
-                />
-              )
-            ))}
+                <MovieCardTicketDecorator key={m.title} movieData={m} />
+              ),
+            )}
           </div>
         )}
       </div>

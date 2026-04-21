@@ -6,7 +6,10 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
-export type MovieCardData = Pick<movie, "movie_id" | "title" | "poster_path"> & {
+export type MovieCardData = Pick<
+  movie,
+  "movie_id" | "title" | "poster_path"
+> & {
   runtime?: number;
   mpa_rating?: string;
   showtime?: string;
@@ -96,7 +99,9 @@ export function MovieCardSkeleton({
       <div>
         <div className="relative w-full aspect-2/3 overflow-hidden rounded-lg bg-gray-200" />
 
-        {showTitle && <div className={`mt-3 h-6 rounded bg-gray-200 ${titleClassName}`} />}
+        {showTitle && (
+          <div className={`mt-3 h-6 rounded bg-gray-200 ${titleClassName}`} />
+        )}
 
         {showMovieInfo && (
           <>

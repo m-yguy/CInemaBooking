@@ -74,7 +74,7 @@ export default function Home() {
 
         {!loading && !error && movies.length > 0 && (
           <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">
-            {movies.map((m) => (
+            {movies.map((m) =>
               isCustomer ? (
                 <MovieCardStarDecorator
                   key={m.movie_id}
@@ -83,8 +83,8 @@ export default function Home() {
                 />
               ) : (
                 <MovieCardTicketDecorator key={m.movie_id} movieData={m} />
-              )
-            ))}
+              ),
+            )}
           </div>
         )}
       </main>

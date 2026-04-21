@@ -10,7 +10,9 @@ export default function MovieCardTicketSkeletonDecorator({
   return (
     <MovieCardSkeleton
       className={className}
-      footer={<div className="mt-6 h-11 w-full rounded-4xl bg-gray-200 md:max-w-40" />}
+      footer={
+        <div className="mt-6 h-11 w-full rounded-4xl bg-gray-200 md:max-w-40" />
+      }
     />
   );
 }
