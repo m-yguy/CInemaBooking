@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 import type { movie } from "../types/movie";
 import Navbar from "../components/Navbar";
-import MovieCard from "../components/MovieCard";
+import MovieCardStarDecorator from "../components/MovieCardStarDecorator";
+import MovieCardTicketDecorator from "../components/MovieCardTicketDecorator";
+import MovieCardTicketSkeletonDecorator from "../components/MovieCardTicketSkeletonDecorator";
 import { useSession } from "next-auth/react";
 
 export default function Home() {
   const { data: session } = useSession();
-  const userEmail = session?.user?.email;
+  const userRole = session?.user?.role;
+  const isCustomer = userRole === "CUSTOMER";
   const [movies, setMovies] = useState<movie[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +29,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!userEmail) {
+    if (!isCustomer) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setFavoriteIds([]);
       return;
@@ -36,7 +39,7 @@ export default function Home() {
       .then((res) => res.json())
       .then((data: number[]) => setFavoriteIds(data))
       .catch(() => setFavoriteIds([]));
-  }, [userEmail]);
+  }, [isCustomer]);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -50,8 +53,10 @@ export default function Home() {
         </div>
 
         {loading && (
-          <div className="flex items-center justify-center py-20 text-neutral-500">
-            Loading movies...
+          <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">
+            {Array.from({ length: 8 }).map((_, idx) => (
+              <MovieCardTicketSkeletonDecorator key={idx} />
+            ))}
           </div>
         )}
 
@@ -70,11 +75,15 @@ export default function Home() {
         {!loading && !error && movies.length > 0 && (
           <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">
             {movies.map((m) => (
-              <MovieCard
-                key={m.movie_id}
-                movieData={m}
-                initialFavorited={favoriteIds.includes(m.movie_id)}
-              />
+              isCustomer ? (
+                <MovieCardStarDecorator
+                  key={m.movie_id}
+                  movieData={m}
+                  initialFavorited={favoriteIds.includes(m.movie_id)}
+                />
+              ) : (
+                <MovieCardTicketDecorator key={m.movie_id} movieData={m} />
+              )
             ))}
           </div>
         )}

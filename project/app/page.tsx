@@ -7,20 +7,25 @@ import { useSession } from "next-auth/react";
 
 export default function Home() {
   const { data: session } = useSession();
+  const role = session?.user?.role;
+  const isCustomer = role === "CUSTOMER";
   const [movies, setMovies] = useState<movie[]>([]);
+  const [isLoadingMovies, setIsLoadingMovies] = useState(true);
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const prevFavoriteIds = useRef<number[]>([]);
 
   useEffect(() => {
     fetch("/api/movieData")
       .then((res) => res.json())
-      .then((data) => setMovies(data));
+      .then((data) => setMovies(data))
+      .catch(() => setMovies([]))
+      .finally(() => setIsLoadingMovies(false));
   }, []);
 
   useEffect(() => {
     let isMounted = true;
     const fetchFavorites = async () => {
-      if (!session) {
+      if (!session || role !== "CUSTOMER") {
         if (prevFavoriteIds.current.length !== 0) {
           prevFavoriteIds.current = [];
           setFavoriteIds([]);
@@ -50,7 +55,7 @@ export default function Home() {
     return () => {
       isMounted = false;
     };
-  }, [session]);
+  }, [role, session]);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -59,7 +64,12 @@ export default function Home() {
         <div className="flex bg-black text-white rounded-3xl min-h-80 mt-20 text-center items-center justify-center">
           hero
         </div>
-        <Filter movieData={movies} favoriteIds={favoriteIds} />
+        <Filter
+          movieData={movies}
+          favoriteIds={favoriteIds}
+          isCustomer={isCustomer}
+          isLoading={isLoadingMovies}
+        />
       </main>
       <footer className="bg-black p-8 text-white text-center items-center">
         <span>Footer</span>

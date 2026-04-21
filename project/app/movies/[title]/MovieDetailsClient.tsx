@@ -14,6 +14,16 @@ interface MovieDetailsClientProps {
   youtubeId: string | null;
 }
 
+const INVALID_POSTER_PATH = "/Movie_Posters/invalidposter.svg";
+
+const getPosterPath = (posterPath: string | null | undefined) => {
+  if (!posterPath || posterPath.trim() === "") {
+    return INVALID_POSTER_PATH;
+  }
+
+  return posterPath;
+};
+
 export default function MovieDetailsClient({
   movie,
   decodedTitle,
@@ -21,6 +31,7 @@ export default function MovieDetailsClient({
   youtubeId,
 }: MovieDetailsClientProps) {
   const [watchingTrailer, setWatchingTrailer] = useState(false);
+  const [posterSrc, setPosterSrc] = useState(getPosterPath(movie.poster_path));
 
   const ratingDescriptions: Record<string, string> = {
     "PG-13":
@@ -88,12 +99,15 @@ export default function MovieDetailsClient({
           <div className="flex flex-row gap-6 items-end">
             <div className="relative w-40 aspect-2/3 shrink-0 transition-all duration-500">
               <Image
-                src={movie.poster_path}
+                src={posterSrc}
                 alt={`${movie.title} poster`}
                 fill
                 loading="eager"
                 sizes="160px"
                 className="object-cover rounded-md"
+                onError={() => {
+                  setPosterSrc(INVALID_POSTER_PATH);
+                }}
               />
             </div>
 

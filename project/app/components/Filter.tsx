@@ -1,12 +1,16 @@
 "use client";
 
 import type { movie } from "../types/movie";
-import MovieCard from "./MovieCard";
+import MovieCardTicketDecorator from "./MovieCardTicketDecorator";
+import MovieCardStarDecorator from "./MovieCardStarDecorator";
+import MovieCardTicketSkeletonDecorator from "./MovieCardTicketSkeletonDecorator";
 import { useMemo, useState } from "react";
 
 interface FilterProps {
   movieData: movie[];
   favoriteIds?: number[];
+  isCustomer?: boolean;
+  isLoading?: boolean;
 }
 
 type FilterMode = "Coming Soon" | "Now Playing";
@@ -25,7 +29,12 @@ const GENRES = [
   "Western",
 ];
 
-export default function Filter({ movieData, favoriteIds = [] }: FilterProps) {
+export default function Filter({
+  movieData,
+  favoriteIds = [],
+  isCustomer = false,
+  isLoading = false,
+}: FilterProps) {
   const [selected, setSelected] = useState<FilterMode>("Now Playing");
   const [genreFilter, setGenreFilter] = useState("All");
   const [showGenreDropdown, setShowGenreDropdown] = useState(false);
@@ -163,7 +172,13 @@ export default function Filter({ movieData, favoriteIds = [] }: FilterProps) {
       </div>
 
       <div className="mt-4">
-        {filteredMovies.length === 0 ? (
+        {isLoading ? (
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {Array.from({ length: 10 }).map((_, idx) => (
+              <MovieCardTicketSkeletonDecorator key={idx} />
+            ))}
+          </div>
+        ) : filteredMovies.length === 0 ? (
           <div className="flex min-h-100">
             <p className="font-normal opacity-70">
               No movies found for:{" "}
@@ -179,11 +194,18 @@ export default function Filter({ movieData, favoriteIds = [] }: FilterProps) {
         ) : (
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {filteredMovies.map((m) => (
-              <MovieCard
-                key={m.title}
-                movieData={m}
-                initialFavorited={favoriteIds.includes(m.movie_id)}
-              />
+              isCustomer ? (
+                <MovieCardStarDecorator
+                  key={m.title}
+                  movieData={m}
+                  initialFavorited={favoriteIds.includes(m.movie_id)}
+                />
+              ) : (
+                <MovieCardTicketDecorator
+                  key={m.title}
+                  movieData={m}
+                />
+              )
             ))}
           </div>
         )}

@@ -3,15 +3,72 @@
 import type { movie } from "../types/movie";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar } from "@fortawesome/free-solid-svg-icons";
+import type { ReactNode } from "react";
+import { useState } from "react";
+
+export type MovieCardData = Pick<movie, "movie_id" | "title" | "poster_path"> & {
+  runtime?: number;
+  mpa_rating?: string;
+  showtime?: string;
+  release_status?: string;
+};
 
 interface MovieCardProps {
-  movieData: movie;
-  initialFavorited?: boolean;
+  movieData: MovieCardData;
+  showTitle?: boolean;
+  showMovieInfo?: boolean;
+  posterOverlay?: ReactNode;
+  footer?: ReactNode;
+  className?: string;
+  titleClassName?: string;
+  imageClassName?: string;
+  imageSizes?: string;
+}
+
+interface MovieCardSkeletonProps {
+  showTitle?: boolean;
+  showMovieInfo?: boolean;
+  footer?: ReactNode;
+  className?: string;
+  titleClassName?: string;
+}
+
+const INVALID_POSTER_PATH = "/Movie_Posters/invalidposter.svg";
+
+const getPosterPath = (posterPath: string | null | undefined) => {
+  if (!posterPath || posterPath.trim() === "") {
+    return INVALID_POSTER_PATH;
+  }
+
+  return posterPath;
+};
+
+function MoviePoster({
+  posterPath,
+  title,
+  imageClassName,
+  imageSizes,
+}: {
+  posterPath: string | null | undefined;
+  title: string;
+  imageClassName: string;
+  imageSizes: string;
+}) {
+  const [posterSrc, setPosterSrc] = useState(getPosterPath(posterPath));
+
+  return (
+    <Image
+      src={posterSrc}
+      alt={`${title} Poster`}
+      fill
+      loading="eager"
+      sizes={imageSizes}
+      className={`object-cover ${imageClassName}`}
+      onError={() => {
+        setPosterSrc(INVALID_POSTER_PATH);
+      }}
+    />
+  );
 }
 
 export const formatRuntime = (min: number) =>
@@ -24,122 +81,100 @@ export const formatDate = (dateString: string) =>
     day: "numeric",
   });
 
-export default function MovieCard({
-  movieData,
-  initialFavorited = false,
-}: MovieCardProps) {
-  const { data: session, status } = useSession();
-  const isAdmin = session?.user?.role === "ADMIN";
-  const router = useRouter();
-  const [favorited, setFavorited] = useState(initialFavorited);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    setFavorited(initialFavorited);
-  }, [initialFavorited]);
-
-  async function toggleFavorite(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (loading) return;
-    if (status !== "authenticated") {
-      router.push("/signin");
-      return;
-    }
-    setLoading(true);
-    const next = !favorited;
-    setFavorited(next);
-    try {
-      await fetch("/api/favorites", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ movieId: movieData.movie_id, favorited: next }),
-      });
-    } catch {
-      setFavorited(!next);
-    } finally {
-      setLoading(false);
-    }
-  }
-
+export function MovieCardSkeleton({
+  showTitle = true,
+  showMovieInfo = true,
+  footer,
+  className = "",
+  titleClassName = "",
+}: MovieCardSkeletonProps) {
   return (
-    <div className="flex flex-col justify-between mb-6 w-50 hover:scale-101 transition-all duration-200 ease-in-out">
+    <div
+      className={`flex flex-col justify-between mb-6 w-50 animate-pulse ${className}`}
+      aria-hidden="true"
+    >
       <div>
-        <Link
-          href={`/movies/${encodeURIComponent(movieData.title)}`}
-          className="block"
-        >
-          <div className="relative w-full aspect-2/3 overflow-hidden rounded-lg bg-gray-200">
-            <Image
-              src={movieData.poster_path}
-              alt={`${movieData.title} Poster`}
-              fill
-              loading="eager"
-              sizes="220px"
-              className="object-cover"
-            />
+        <div className="relative w-full aspect-2/3 overflow-hidden rounded-lg bg-gray-200" />
 
-            {!isAdmin && (
-              <div className="absolute top-0 right-0 z-10 w-14 h-14">
-                <svg
-                  className="absolute inset-0 w-full h-full"
-                  viewBox="0 0 56 56"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <polygon points="0,0 56,0 56,56" fill="black" />
-                </svg>
+        {showTitle && <div className={`mt-3 h-6 rounded bg-gray-200 ${titleClassName}`} />}
 
-                <button
-                  onClick={toggleFavorite}
-                  title={
-                    status !== "authenticated"
-                      ? "Sign in to favorite"
-                      : favorited
-                        ? "Remove from favorites"
-                        : "Add to favorites"
-                  }
-                  className="absolute top-1 right-1 z-10 w-6 h-6 flex items-center justify-center cursor-pointer"
-                >
-                  <FontAwesomeIcon
-                    icon={faStar}
-                    className={`w-2.5 h-2.5 transition-all duration-300 ease-in-out ${
-                      favorited
-                        ? "text-yellow-300 scale-110"
-                        : "text-white/50 scale-100"
-                    }`}
-                  />
-                </button>
-              </div>
-            )}
-          </div>
-
-          <h2 className="font-bold leading-tight line-clamp-2 text-[clamp(0.5rem,4vw,1.5rem)] transition-all duration-200 hover:text-[#c8997c]">
-            {movieData.title}
-          </h2>
-        </Link>
-
-        <span className="uppercase text-sm font-semibold tracking-wide">
-          {movieData.runtime != null
-            ? formatRuntime(movieData.runtime)
-            : "Unavailable"}{" "}
-          | {movieData.mpa_rating ?? "N/A"}
-        </span>
-
-        <p className="font-semibold text-sm">
-          {movieData.showtime
-            ? movieData.release_status === "Coming Soon"
-              ? `Opening ${formatDate(movieData.showtime)}`
-              : `Released ${formatDate(movieData.showtime)}`
-            : "Date Unavailable"}
-        </p>
+        {showMovieInfo && (
+          <>
+            <div className="mt-2 h-4 w-3/5 rounded bg-gray-200" />
+            <div className="mt-2 h-4 w-2/3 rounded bg-gray-200" />
+          </>
+        )}
       </div>
 
-      <Link
-        href={`/movies/showtimes/${encodeURIComponent(movieData.title)}`}
-        className="bg-red-700 rounded-4xl mt-6 p-2.5 font-bold text-white uppercase w-full md:max-w-40 hover:bg-black transition-all duration-200 text-center"
-      >
-        Get Tickets
-      </Link>
+      {footer}
+    </div>
+  );
+}
+
+export default function MovieCard({
+  movieData,
+  showTitle = true,
+  showMovieInfo = true,
+  posterOverlay,
+  footer,
+  className = "",
+  titleClassName = "",
+  imageClassName = "",
+  imageSizes = "220px",
+}: MovieCardProps) {
+  return (
+    <div
+      className={`flex flex-col justify-between mb-6 w-50 hover:scale-101 transition-all duration-200 ease-in-out ${className}`}
+    >
+      <div>
+        <div className="relative w-full aspect-2/3 overflow-hidden rounded-lg bg-gray-200">
+          <Link
+            href={`/movies/${encodeURIComponent(movieData.title)}`}
+            className="block w-full h-full"
+          >
+            <MoviePoster
+              key={movieData.poster_path ?? ""}
+              posterPath={movieData.poster_path}
+              title={movieData.title}
+              imageClassName={imageClassName}
+              imageSizes={imageSizes}
+            />
+          </Link>
+
+          {posterOverlay}
+        </div>
+
+        {showTitle && (
+          <Link href={`/movies/${encodeURIComponent(movieData.title)}`}>
+            <h2
+              className={`font-bold leading-tight line-clamp-2 text-[clamp(0.5rem,4vw,1.5rem)] transition-all duration-200 hover:text-[#c8997c] ${titleClassName}`}
+            >
+              {movieData.title}
+            </h2>
+          </Link>
+        )}
+
+        {showMovieInfo && (
+          <>
+            <span className="uppercase text-sm font-semibold tracking-wide">
+              {movieData.runtime != null
+                ? formatRuntime(movieData.runtime)
+                : "Unavailable"}{" "}
+              | {movieData.mpa_rating ?? "N/A"}
+            </span>
+
+            <p className="font-semibold text-sm">
+              {movieData.showtime
+                ? movieData.release_status === "Coming Soon"
+                  ? `Opening ${formatDate(movieData.showtime)}`
+                  : `Released ${formatDate(movieData.showtime)}`
+                : "Date Unavailable"}
+            </p>
+          </>
+        )}
+      </div>
+
+      {footer}
     </div>
   );
 }
