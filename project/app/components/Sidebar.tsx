@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faFilm,
   faUser,
   faGear,
   faRightFromBracket,
@@ -34,7 +35,12 @@ export default function Sidebar({ navLinks }: SidebarProps) {
     >
       {isOpen && (
         <div className="flex justify-between mb-8">
-          <div className="border-white border-2">logo</div>
+          <div className="rounded-2xl px-3 py-2 flex items-center gap-2">
+            <FontAwesomeIcon icon={faFilm} className="text-red-400" />
+            <span className="text-sm uppercase tracking-[0.2em]">
+              ReelHouse
+            </span>
+          </div>
           <button onClick={toggleSidebar}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

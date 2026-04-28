@@ -4,6 +4,16 @@ import Link from "next/link";
 import type { movie } from "@/app/types/movie";
 import ShowtimeCard from "@/app/components/ShowtimeCard";
 
+const INVALID_POSTER_PATH = "/Movie_Posters/invalidposter.svg";
+
+const getPosterPath = (posterPath: string | null | undefined) => {
+  if (!posterPath || posterPath.trim() === "") {
+    return INVALID_POSTER_PATH;
+  }
+
+  return posterPath;
+};
+
 type Showtime = {
   show_id: string;
   time: string;
@@ -46,7 +56,7 @@ export default async function ShowtimesPage() {
                   <div className="flex flex-row gap-6 p-6">
                     <div className="relative w-24 aspect-2/3 shrink-0">
                       <Image
-                        src={m.poster_path}
+                        src={getPosterPath(m.poster_path)}
                         alt={`${m.title} poster`}
                         fill
                         loading="eager"
@@ -66,7 +76,7 @@ export default async function ShowtimesPage() {
                       <ShowtimeCard
                         movieTitle={m.title}
                         showtimes={showtimes}
-                        img={m.poster_path}
+                        img={getPosterPath(m.poster_path)}
                       />
                       <Link
                         href={`/movies/${encodeURIComponent(m.title)}`}

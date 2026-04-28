@@ -1,6 +1,7 @@
 "use client";
 import Navbar from "./components/Navbar";
 import Filter from "./components/Filter";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { movie } from "./types/movie";
 import { useSession } from "next-auth/react";
@@ -61,8 +62,28 @@ export default function Home() {
     <div className="flex min-h-screen flex-col">
       <Navbar />
       <main className="flex-1 flex flex-col gap-6 max-w-6xl mx-auto px-6 w-full mb-8">
-        <div className="flex bg-black text-white rounded-3xl min-h-80 mt-20 text-center items-center justify-center">
-          hero
+        <div className="relative rounded-3xl min-h-100 mt-20 overflow-hidden">
+          <Image
+            src="/herosection.jpg"
+            alt="Homepage hero"
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-linear-to-r from-black via-black/70 to-transparent" />
+          <div className="absolute inset-y-0 left-0 flex flex-col justify-center px-8 md:px-16 lg:px-20 text-white max-w-xl">
+            <span className="text-sm uppercase tracking-[0.3em] text-red-400 mb-3">
+              Now showing
+            </span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+              Project Hail Mary
+            </h1>
+            <p className="mt-4 text-sm md:text-base text-white/90 max-w-xl">
+              An epic adaptation of the bestselling novel, bringing the book's
+              space rescue adventure to life on the big screen.
+            </p>
+          </div>
         </div>
         <Filter
           movieData={movies}
@@ -72,7 +93,7 @@ export default function Home() {
         />
       </main>
       <footer className="bg-black p-8 text-white text-center items-center">
-        <span>Footer</span>
+        <span className="tracking-[0.35em] uppercase">REELHOUSE</span>
       </footer>
     </div>
   );

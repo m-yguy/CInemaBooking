@@ -4,6 +4,16 @@ import ShowtimeCard from "@/app/components/ShowtimeCard";
 import Link from "next/link";
 import Image from "next/image";
 
+const INVALID_POSTER_PATH = "/Movie_Posters/invalidposter.svg";
+
+const getPosterPath = (posterPath: string | null | undefined) => {
+  if (!posterPath || posterPath.trim() === "") {
+    return INVALID_POSTER_PATH;
+  }
+
+  return posterPath;
+};
+
 const showtimesResponse = await fetch("http://localhost:3000/api/showtimes", {
   cache: "no-store",
 });
@@ -67,7 +77,7 @@ export default async function MovieShowtimes({
 
   const decodedTitle = decodeURIComponent(title);
 
-  const posterUrl = movie.poster_path;
+  const posterUrl = getPosterPath(movie.poster_path);
 
   const rating = (movie as movie).rating ?? "NR";
   const description = movie.movie_description ?? "No description available.";
@@ -169,7 +179,7 @@ export default async function MovieShowtimes({
             <ShowtimeCard
               movieTitle={movie.title}
               showtimes={showtimes}
-              img={movie.poster_path}
+              img={posterUrl}
             />
           </div>
 

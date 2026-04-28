@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faFilm,
   faUser,
   faGear,
   faRightFromBracket,
@@ -146,9 +147,17 @@ export default function Navbar() {
 
       <nav className="flex flex-row py-4 text-white items-center gap-4 max-w-6xl mx-auto px-6 w-full">
         <Sidebar navLinks={links} />
-        <Link href="/" className="border-2">
-          Logo
-        </Link>
+        <div className="border p-[0.9]">
+          <Link
+            href="/"
+            className="flex items-center gap-2 border border-white rounded-none py-2 px-3 hover:bg-white/10 transition-all duration-200"
+          >
+            <FontAwesomeIcon icon={faFilm} className="text-red-400" />
+            <span className="font-semibold uppercase tracking-[0.05em] text-sm">
+              ReelHouse
+            </span>
+          </Link>
+        </div>
 
         {/* Search */}
         <div
