@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { withAuth } from "@/lib/middleware/withAuthDecorator";
 import { changePasswordSchema } from "@/lib/schemas/userSchema";
 import { userAccountFacade } from "@/lib/facades/userAccountFacade";
-import { getOrderHistory } from "@/lib/repositories/bookingRepository";
+import { getOrderHistory } from "@/lib/services/bookingService";
 
 export const updateProfile = withAuth(async (session, formData: FormData) => {
   const result = await userAccountFacade.updateProfile(

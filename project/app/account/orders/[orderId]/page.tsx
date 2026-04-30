@@ -1,7 +1,8 @@
 import { auth } from "@/auth";
 import { redirect, notFound } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
-import { getOrderById } from "@/lib/repositories/bookingRepository";
+import CancelBookingButton from "@/app/components/CancelBookingButton";
+import { getOrderById } from "@/lib/services/bookingService";
 import Image from "next/image";
 
 export default async function OrderDetailsPage({
@@ -68,8 +69,8 @@ export default async function OrderDetailsPage({
               </p>
 
               <p>
-                <span className="font-semibold text-black">Tickets:</span>{" "}
-                Adult {order.adultTickets}, Child {order.childTickets}, Senior{" "}
+                <span className="font-semibold text-black">Tickets:</span> Adult{" "}
+                {order.adultTickets}, Child {order.childTickets}, Senior{" "}
                 {order.seniorTickets}
               </p>
 
@@ -107,6 +108,10 @@ export default async function OrderDetailsPage({
               </p>
             </div>
           </section>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <CancelBookingButton orderId={order.orderId} />
         </div>
       </main>
     </div>

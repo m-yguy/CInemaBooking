@@ -1,14 +1,14 @@
 jest.mock("@/auth", () => ({ auth: jest.fn() }));
-jest.mock("@/lib/repositories/movieRepository");
+jest.mock("@/lib/services/movieService");
 
 import { addMovieAction } from "@/app/actions/movieActions";
 import { auth } from "@/auth";
 
 const mockAuth = auth as jest.Mock;
-const movieRepo = jest.requireMock("@/lib/repositories/movieRepository") as {
+const movieService = jest.requireMock("@/lib/services/movieService") as {
   addMovie: jest.Mock;
 };
-const mockAddMovie = movieRepo.addMovie as jest.Mock;
+const mockAddMovie = movieService.addMovie as jest.Mock;
 
 const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
 

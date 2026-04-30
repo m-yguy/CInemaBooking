@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendBookingConfirmationEmail } from "@/lib/mail";
-import { createOrder } from "@/lib/repositories/bookingRepository";
+import { createOrder } from "@/lib/services/bookingService";
 import { auth } from "@/auth";
 import * as paymentService from "@/lib/services/paymentService";
 
