@@ -6,6 +6,7 @@ import { signOut } from "@/auth";
 import { withAuth } from "@/lib/middleware/withAuthDecorator";
 import { changePasswordSchema } from "@/lib/schemas/userSchema";
 import { userAccountFacade } from "@/lib/facades/userAccountFacade";
+import { getOrderHistory } from "@/lib/repositories/bookingRepository";
 
 export const updateProfile = withAuth(async (session, formData: FormData) => {
   const result = await userAccountFacade.updateProfile(
@@ -23,6 +24,7 @@ export const updateProfile = withAuth(async (session, formData: FormData) => {
       country: (formData.get("country") as string)?.trim() ?? "",
     },
   );
+
   if (result.error) return result;
 
   revalidatePath("/account");
@@ -36,7 +38,10 @@ export const changePassword = withAuth(async (session, formData: FormData) => {
     currentPassword,
     newPassword,
   });
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
 
   return userAccountFacade.changePassword(
     session.id,
@@ -68,5 +73,11 @@ export const deleteAccount = withAuth(async (session) => {
 });
 
 export async function getAccountPageData(userId: string) {
-  return userAccountFacade.getAccountPageData(userId);
+  const accountData = await userAccountFacade.getAccountPageData(userId);
+  const orderHistory = await getOrderHistory(userId);
+
+  return {
+    ...accountData,
+    orderHistory,
+  };
 }

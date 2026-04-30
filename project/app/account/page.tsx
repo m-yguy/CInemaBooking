@@ -22,8 +22,14 @@ export default async function AccountPage() {
 
   const userId = session.user.id;
 
-  const { user, isCustomer, addressRow, savedCards, favoriteMovies } =
-    await getAccountPageData(userId);
+  const {
+    user,
+    isCustomer,
+    addressRow,
+    savedCards,
+    favoriteMovies,
+    orderHistory,
+  } = await getAccountPageData(userId);
 
   return (
     <div className="min-h-screen bg-white text-black">
@@ -92,6 +98,48 @@ export default async function AccountPage() {
             </section>
           )}
 
+          {isCustomer && (
+            <section className="border-b border-gray-200 pb-12">
+              <h2 className="mb-6 text-2xl font-bold">Order History</h2>
+
+              {!orderHistory || orderHistory.length === 0 ? (
+                <p className="text-gray-500">No orders yet.</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
+                  {orderHistory.map((order) => (
+                    <a
+                      key={order.orderId}
+                      href={`/account/orders/${order.orderId}`}
+                      className="group"
+                    >
+                      <div className="relative aspect-2/3 overflow-hidden rounded-lg bg-gray-200 shadow-sm transition-transform group-hover:scale-105">
+                        {order.posterUrl ? (
+                          <img
+                            src={order.posterUrl}
+                            alt={order.movieTitle}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm text-gray-500">
+                            No Poster
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-3">
+                        <p className="line-clamp-1 font-semibold">
+                          {order.movieTitle}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          ${order.finalTotal.toFixed(2)}
+                        </p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
           <section>
             <ChangePasswordSection action={changePassword} />
           </section>

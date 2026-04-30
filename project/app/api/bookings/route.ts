@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { sendBookingConfirmationEmail } from "@/lib/mail";
+import { createOrder } from "@/lib/repositories/bookingRepository";
+import { auth } from "@/auth";
 
 export async function POST(req: Request) {
   try {
+    const session = await auth();
     const payload = await req.json();
 
     const email = payload?.email;
@@ -13,26 +16,62 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { ok: false, error: "You must be signed in to book." },
+        { status: 401 },
+      );
+    }
+
+    const selectedSeats = Array.isArray(payload.selectedSeats)
+      ? payload.selectedSeats
+      : [];
+
+    const quantities = payload.quantities ?? {
+      adult: 0,
+      child: 0,
+      senior: 0,
+    };
+
+    const paymentMethod = payload.paymentMethod ?? { type: "new" };
+
+    const orderId = await createOrder({
+      customerId: session.user.id,
+      showId: payload.showId ?? null,
+      movieTitle: payload.title,
+      showTime: payload.time,
+      selectedSeats,
+      quantities,
+      originalTotal: Number(payload.originalTotal ?? payload.total ?? 0),
+      discountAmount: Number(payload.discountAmount ?? 0),
+      finalTotal: Number(payload.total ?? 0),
+      promoCode: payload.promoCode ?? null,
+      paymentType: paymentMethod.type === "saved" ? "saved" : "new",
+      cardLastFour: paymentMethod.cardLastFour ?? null,
+      confirmationEmail: email,
+    });
+
     const firstName =
       payload.firstName ||
       payload.first_name ||
-      (typeof payload.name === "string"
-        ? payload.name.split(" ")[0]
-        : "Valued Customer");
+      session.user.first_name ||
+      "Valued Customer";
 
     const booking = {
       title: payload.title,
       time: payload.time,
-      selectedSeats: payload.selectedSeats,
-      quantities: payload.quantities,
-      total: payload.total,
+      selectedSeats,
+      quantities,
+      total: Number(payload.total ?? 0),
+      posterUrl: payload.posterUrl,
+      showId: payload.showId,
     };
 
     await sendBookingConfirmationEmail(email, firstName, booking);
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, orderId });
   } catch (err) {
-    console.error("Failed to send booking confirmation email:", err);
+    console.error("Failed to create booking:", err);
     return NextResponse.json(
       { ok: false, error: String(err) },
       { status: 500 },
