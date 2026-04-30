@@ -70,3 +70,17 @@ export async function getSubscribedUserEmails(): Promise<
   `;
   return rows as { email: string; first_name: string }[];
 }
+
+export async function getPromotionByCode(
+  promoCode: string,
+): Promise<Promotion | null> {
+  const rows = await sql`
+    SELECT promo_id, promo_code, title, description,
+           discount_type, discount_amount, start_date, end_date, status
+    FROM public.promotions
+    WHERE LOWER(promo_code) = LOWER(${promoCode})
+    LIMIT 1
+  `;
+
+  return (rows[0] as Promotion) ?? null;
+}

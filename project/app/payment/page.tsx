@@ -2,15 +2,28 @@
 
 import Navbar from "@/app/components/Navbar";
 import { BookingBuilder, BookingOrder } from "@/lib/builders/bookingBuilder";
-import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 
 function PaymentContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { data: session } = useSession();
+
+  const [promoCode, setPromoCode] = useState("");
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [finalTotal, setFinalTotal] = useState<number | null>(null);
+  const [promoMessage, setPromoMessage] = useState<string | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const rawData = searchParams.get("data");
   let bookingData: BookingOrder | null = null;
+
   if (rawData) {
     try {
       bookingData = BookingBuilder.fromSerialized(rawData, {
@@ -26,6 +39,94 @@ function PaymentContent() {
   }
 
   const { title, time, posterUrl, selectedSeats, total, email } = bookingData;
+  const displayedTotal = finalTotal ?? total;
+
+  async function applyPromoCode() {
+    setPromoMessage(null);
+    setPromoError(null);
+
+    if (!promoCode.trim()) {
+      setPromoError("Please enter a promo code.");
+      return;
+    }
+
+    setIsApplyingPromo(true);
+
+    try {
+      const resp = await fetch("/api/promotions/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          promoCode,
+          orderTotal: total,
+        }),
+      });
+
+      const json = await resp.json();
+
+      if (!resp.ok || !json.ok) {
+        setPromoError(json.error || "Invalid promo code.");
+        setDiscountAmount(0);
+        setFinalTotal(null);
+        return;
+      }
+
+      setDiscountAmount(json.discountAmount);
+      setFinalTotal(json.finalTotal);
+      setPromoMessage(json.message);
+    } catch (err) {
+      console.error(err);
+      setPromoError("Something went wrong while applying the promo code.");
+    } finally {
+      setIsApplyingPromo(false);
+    }
+  }
+
+  async function confirmAndPay() {
+    setIsSubmitting(true);
+    setStatusMessage(null);
+
+    try {
+      const resp = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...bookingData,
+          total: displayedTotal,
+          originalTotal: total,
+          discountAmount,
+          promoCode: discountAmount > 0 ? promoCode : null,
+          firstName: session?.user?.first_name,
+        }),
+      });
+
+      const json = await resp.json();
+
+      if (!resp.ok || !json.ok) {
+        setStatusMessage("Payment accepted, but confirmation email failed.");
+        return;
+      }
+
+      setStatusMessage(`Confirmation email sent to ${email}.`);
+
+      setTimeout(() => {
+        router.push(
+          `/confirmation?data=${encodeURIComponent(
+            JSON.stringify({
+              ...bookingData,
+              total: displayedTotal,
+            }),
+          )}&originalTotal=${total}&discountAmount=${discountAmount}&promoCode=${discountAmount > 0 ? encodeURIComponent(promoCode) : ""
+          }`,
+        );
+      }, 1200);
+    } catch (err) {
+      console.error(err);
+      setStatusMessage("Something went wrong while confirming your order.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -50,6 +151,7 @@ function PaymentContent() {
               />
             </div>
           )}
+
           <div className="flex flex-col justify-center gap-2">
             <p className="text-2xl font-bold">{title}</p>
             <p className="text-gray-300">Showtime: {time}</p>
@@ -60,28 +162,49 @@ function PaymentContent() {
 
         {/* Order Summary */}
         <section className="bg-gray-100 p-6 rounded-xl flex flex-col gap-4">
-          <div className="flex justify-between text-xl font-bold">
-            <span>Total (before tax)</span>
-            <span>${total}</span>
+          <div className="flex justify-between text-lg">
+            <span>Subtotal</span>
+            <span>${total.toFixed(2)}</span>
+          </div>
+
+          {discountAmount > 0 && (
+            <div className="flex justify-between text-lg text-green-700">
+              <span>Promo Discount</span>
+              <span>-${discountAmount.toFixed(2)}</span>
+            </div>
+          )}
+
+          <div className="border-t border-gray-300 pt-4 flex justify-between text-xl font-bold">
+            <span>Total</span>
+            <span>${displayedTotal.toFixed(2)}</span>
           </div>
         </section>
 
         {/* Promo Code */}
         <section className="bg-gray-100 p-6 rounded-xl flex flex-col gap-4">
           <h2 className="text-2xl font-semibold">Promo Code</h2>
+
           <div className="flex gap-3">
             <input
               type="text"
               placeholder="Enter promo code"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
               className="border border-gray-300 rounded-lg px-4 py-3 text-lg flex-1 focus:outline-none"
             />
+
             <button
               type="button"
-              className="rounded-lg px-6 py-3 font-bold text-white bg-red-700 hover:bg-red-600 cursor-pointer"
+              onClick={applyPromoCode}
+              disabled={isApplyingPromo}
+              className="rounded-lg px-6 py-3 font-bold text-white bg-red-700 hover:bg-red-600 cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              Apply
+              {isApplyingPromo ? "Applying..." : "Apply"}
             </button>
           </div>
+
+          {promoMessage && <p className="text-green-700">{promoMessage}</p>}
+          {promoError && <p className="text-red-700">{promoError}</p>}
         </section>
 
         {/* Payment Form */}
@@ -115,6 +238,7 @@ function PaymentContent() {
                 className="border border-gray-300 rounded-lg px-4 py-3 text-lg w-full focus:outline-none"
               />
             </div>
+
             <div className="flex flex-col gap-2 flex-1">
               <label className="font-medium text-gray-700">CVV</label>
               <input
@@ -126,9 +250,21 @@ function PaymentContent() {
           </div>
         </section>
 
-        <button className="ml-auto rounded-3xl px-12 py-4 text-white font-bold bg-red-700 hover:bg-red-600 cursor-pointer">
-          Confirm &amp; Pay — ${total}
+        <button
+          onClick={confirmAndPay}
+          disabled={isSubmitting}
+          className="ml-auto rounded-3xl px-12 py-4 text-white font-bold bg-red-700 hover:bg-red-600 cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+          {isSubmitting
+            ? "Processing..."
+            : `Confirm & Pay — $${displayedTotal.toFixed(2)}`}
         </button>
+
+        {statusMessage && (
+          <p className="text-center text-red-700 font-medium">
+            {statusMessage}
+          </p>
+        )}
       </main>
 
       <footer className="bg-black p-8 text-white text-center">
