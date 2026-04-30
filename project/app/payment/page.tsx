@@ -20,15 +20,14 @@ function PaymentContent() {
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [email, setEmail] = useState(session?.user?.email ?? "");
 
   const rawData = searchParams.get("data");
   let bookingData: BookingOrder | null = null;
 
   if (rawData) {
     try {
-      bookingData = BookingBuilder.fromSerialized(rawData, {
-        requireEmail: true,
-      });
+      bookingData = BookingBuilder.fromSerialized(rawData);
     } catch {
       bookingData = null;
     }
@@ -38,7 +37,7 @@ function PaymentContent() {
     return <p className="text-center mt-20">No booking data found.</p>;
   }
 
-  const { title, time, posterUrl, selectedSeats, total, email } = bookingData;
+  const { title, time, posterUrl, selectedSeats, total } = bookingData;
   const displayedTotal = finalTotal ?? total;
 
   async function applyPromoCode() {
@@ -83,6 +82,11 @@ function PaymentContent() {
   }
 
   async function confirmAndPay() {
+    if (!email.includes("@")) {
+      setStatusMessage("Please enter a valid email address.");
+      return;
+    }
+
     setIsSubmitting(true);
     setStatusMessage(null);
 
@@ -92,6 +96,7 @@ function PaymentContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...bookingData,
+          email,
           total: displayedTotal,
           originalTotal: total,
           discountAmount,
@@ -114,6 +119,7 @@ function PaymentContent() {
           `/confirmation?data=${encodeURIComponent(
             JSON.stringify({
               ...bookingData,
+              email,
               total: displayedTotal,
             }),
           )}&originalTotal=${total}&discountAmount=${discountAmount}&promoCode=${discountAmount > 0 ? encodeURIComponent(promoCode) : ""
@@ -156,7 +162,6 @@ function PaymentContent() {
             <p className="text-2xl font-bold">{title}</p>
             <p className="text-gray-300">Showtime: {time}</p>
             <p className="text-gray-300">Seats: {selectedSeats.join(", ")}</p>
-            <p className="text-gray-300">Email: {email}</p>
           </div>
         </section>
 
@@ -207,6 +212,21 @@ function PaymentContent() {
           {promoError && <p className="text-red-700">{promoError}</p>}
         </section>
 
+        <section className="bg-gray-100 p-6 rounded-xl flex flex-col gap-4">
+          <h2 className="text-2xl font-semibold">Email Confirmation</h2>
+          <p className="text-gray-600">
+            We&apos;ll send your booking confirmation here.
+          </p>
+
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="border border-gray-300 rounded-lg px-4 py-3 text-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500"
+          />
+        </section>
+
         {/* Payment Form */}
         <section className="bg-gray-100 p-6 rounded-xl flex flex-col gap-6">
           <h2 className="text-2xl font-semibold">Card Details</h2>
@@ -252,7 +272,7 @@ function PaymentContent() {
 
         <button
           onClick={confirmAndPay}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !email.includes("@")}
           className="ml-auto rounded-3xl px-12 py-4 text-white font-bold bg-red-700 hover:bg-red-600 cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           {isSubmitting

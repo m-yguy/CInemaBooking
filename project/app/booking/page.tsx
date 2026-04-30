@@ -123,7 +123,7 @@ function BookingContent() {
       return;
     }
 
-    router.push(`/checkout?data=${encoded}`);
+    router.push(`/payment?data=${encoded}`);
   }
 
   return (
