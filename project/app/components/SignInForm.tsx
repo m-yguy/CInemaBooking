@@ -3,7 +3,11 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, getSession } from "next-auth/react";
-import { checkEmailVerified, requestPasswordReset } from "@/auth/actions";
+import {
+  checkAccountExists,
+  checkEmailVerified,
+  requestPasswordReset,
+} from "@/auth/actions";
 import Navbar from "./Navbar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -55,6 +59,13 @@ export default function SignInForm() {
       if (verifyResult !== null && !verifyResult.verified) {
         setUnverifiedEmail(email);
         return;
+      }
+      if (verifyResult === null) {
+        const exists = await checkAccountExists(email);
+        if (!exists) {
+          setError("Account does not exist");
+          return;
+        }
       }
       const result = await signIn("credentials", {
         email,

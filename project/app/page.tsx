@@ -103,8 +103,8 @@ export default function Home() {
               Project Hail Mary
             </h1>
             <p className="mt-4 text-sm md:text-base text-white/90 max-w-xl">
-              An epic adaptation of the bestselling novel, bringing the book's
-              space rescue adventure to life on the big screen.
+              An epic adaptation of the bestselling novel, bringing the
+              book&apos;s space rescue adventure to life on the big screen.
             </p>
           </div>
         </div>

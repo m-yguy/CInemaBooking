@@ -65,6 +65,12 @@ export async function checkEmailVerified(
   return userAccountFacade.getEmailVerifiedStatus(email);
 }
 
+export async function checkAccountExists(email: string): Promise<boolean> {
+  if (!email?.trim()) return false;
+  const status = await userAccountFacade.getEmailVerifiedStatus(email);
+  return status !== null;
+}
+
 export async function requestPasswordReset(
   email: string,
 ): Promise<{ error?: string; success?: string }> {

@@ -16,6 +16,7 @@ jest.mock("@/lib/facades/userAccountFacade", () => ({
 
 import { signIn, signOut } from "@/auth";
 import {
+  checkAccountExists,
   checkEmailVerified,
   login,
   logout,
@@ -147,6 +148,30 @@ describe("auth actions", () => {
       const result = await checkEmailVerified("a@b.com");
       expect(mockFacade.getEmailVerifiedStatus).toHaveBeenCalledWith("a@b.com");
       expect(result).toEqual({ verified: true });
+    });
+  });
+
+  describe("checkAccountExists", () => {
+    it("returns false when email is empty", async () => {
+      const result = await checkAccountExists("   ");
+      expect(result).toBe(false);
+      expect(mockFacade.getEmailVerifiedStatus).not.toHaveBeenCalled();
+    });
+
+    it("returns true when facade finds the account", async () => {
+      mockFacade.getEmailVerifiedStatus.mockResolvedValue({ verified: true });
+      const result = await checkAccountExists("a@b.com");
+      expect(mockFacade.getEmailVerifiedStatus).toHaveBeenCalledWith("a@b.com");
+      expect(result).toBe(true);
+    });
+
+    it("returns false when facade does not find the account", async () => {
+      mockFacade.getEmailVerifiedStatus.mockResolvedValue(null);
+      const result = await checkAccountExists("unknown@example.com");
+      expect(mockFacade.getEmailVerifiedStatus).toHaveBeenCalledWith(
+        "unknown@example.com",
+      );
+      expect(result).toBe(false);
     });
   });
 

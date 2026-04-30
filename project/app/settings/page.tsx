@@ -41,6 +41,9 @@ export default async function SettingsPage() {
           </section>
         </div>
       </main>
+      <footer className="bg-black p-8 text-white text-center items-center">
+        <span className="tracking-[0.35em] uppercase">REELHOUSE</span>
+      </footer>
     </div>
   );
 }
