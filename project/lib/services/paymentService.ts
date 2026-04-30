@@ -3,7 +3,8 @@ import { encryptCard } from "@/lib/securityFacade";
 import {
   getPaymentCards,
   countPaymentCards,
-  verifyAddressOwnership,
+  getBillingAddressById,
+  updateBillingAddress,
   insertBillingAddress,
   insertPaymentCard,
   deletePaymentCard,
@@ -29,7 +30,12 @@ export interface AddCardInput {
 
 export type ServiceResult<T = void> =
   | { ok: true; data: T }
-  | { ok: false; error: string; status: number };
+  | {
+      ok: false;
+      error: string;
+      status: number;
+      requiredFields?: string[];
+    };
 
 export async function getCards(userId: string): Promise<PaymentCard[]> {
   return getPaymentCards(userId);
@@ -50,22 +56,81 @@ export async function addCard(
 
   let billingAddressId: number | null = null;
 
+  const billingLine1 = input.billingLine1?.trim() ?? "";
+  const billingCity = input.billingCity?.trim() ?? "";
+  const billingState = input.billingState?.trim() ?? "";
+  const billingPostal = input.billingPostal?.trim() ?? "";
+  const billingCountry = input.billingCountry?.trim() ?? "";
+  const addressEntered =
+    !!billingLine1 ||
+    !!billingCity ||
+    !!billingState ||
+    !!billingPostal ||
+    !!billingCountry;
+  const addressComplete =
+    !!billingLine1 &&
+    !!billingCity &&
+    !!billingState &&
+    !!billingPostal &&
+    !!billingCountry;
+
+  if (addressEntered && !addressComplete) {
+    const missingFields = [
+      billingLine1 ? null : "billingLine1",
+      billingCity ? null : "billingCity",
+      billingState ? null : "billingState",
+      billingPostal ? null : "billingPostal",
+      billingCountry ? null : "billingCountry",
+    ].filter(Boolean) as string[];
+    return {
+      ok: false,
+      error: "Fill out all required fields. *",
+      status: 422,
+      requiredFields: missingFields,
+    };
+  }
+
   if (typeof input.existingBillingAddressId === "number") {
-    const owns = await verifyAddressOwnership(
+    const existingAddress = await getBillingAddressById(
       input.existingBillingAddressId,
       userId,
     );
-    if (owns) billingAddressId = input.existingBillingAddressId;
-  } else if (input.billingLine1?.trim()) {
-    const country = input.billingCountry
-      ? input.billingCountry.toUpperCase().slice(0, 2) || "US"
+
+    if (existingAddress) {
+      if (addressEntered) {
+        if (existingAddress.line1?.trim()) {
+          return {
+            ok: false,
+            error:
+              "A mailing address is already saved. Use your existing address or update it from your profile.",
+            status: 422,
+          };
+        }
+
+        await updateBillingAddress(input.existingBillingAddressId, userId, {
+          line1: billingLine1,
+          line2: input.billingLine2?.trim() ?? null,
+          city: billingCity,
+          state: billingState,
+          postal: billingPostal,
+          country: billingCountry
+            ? billingCountry.toUpperCase().slice(0, 2) || "US"
+            : "US",
+        });
+      }
+
+      billingAddressId = input.existingBillingAddressId;
+    }
+  } else if (billingLine1) {
+    const country = billingCountry
+      ? billingCountry.toUpperCase().slice(0, 2) || "US"
       : "US";
     billingAddressId = await insertBillingAddress(userId, {
-      line1: input.billingLine1.trim(),
+      line1: billingLine1,
       line2: input.billingLine2?.trim() ?? null,
-      city: input.billingCity?.trim() ?? "",
-      state: input.billingState?.trim() ?? "",
-      postal: input.billingPostal?.trim() ?? "",
+      city: billingCity,
+      state: billingState,
+      postal: billingPostal,
       country,
     });
   }

@@ -195,14 +195,34 @@ export async function upsertMailingAddress(
     country: string;
   },
 ): Promise<void> {
+  const addressLine1 = data.addressLine1.trim();
+  const addressLine2 = data.addressLine2?.trim() || null;
+  const city = data.city.trim();
+  const state = data.state.trim();
+  const postalCode = data.postalCode.trim();
+  const country = data.country.trim();
+
+  const shouldDelete =
+    !addressLine1 &&
+    !addressLine2 &&
+    !city &&
+    !state &&
+    !postalCode &&
+    !country;
+
+  if (shouldDelete) {
+    await sql`DELETE FROM public.mailing_address WHERE customer_id = ${userId}`;
+    return;
+  }
+
   const updated = await sql`
     UPDATE public.mailing_address
-    SET address_line_1 = ${data.addressLine1},
-        address_line_2 = ${data.addressLine2},
-        city           = ${data.city},
-        state          = ${data.state},
-        postal_code    = ${data.postalCode},
-        country        = ${data.country},
+    SET address_line_1 = ${addressLine1},
+        address_line_2 = ${addressLine2},
+        city           = ${city},
+        state          = ${state},
+        postal_code    = ${postalCode},
+        country        = ${country || "US"},
         updated_at     = now()
     WHERE customer_id = ${userId}
     RETURNING id
@@ -211,7 +231,7 @@ export async function upsertMailingAddress(
     await sql`
       INSERT INTO public.mailing_address
         (customer_id, address_line_1, address_line_2, city, state, postal_code, country)
-      VALUES (${userId}, ${data.addressLine1}, ${data.addressLine2}, ${data.city}, ${data.state}, ${data.postalCode}, ${data.country})
+      VALUES (${userId}, ${addressLine1}, ${addressLine2}, ${city}, ${state}, ${postalCode}, ${country || "US"})
     `;
   }
 }

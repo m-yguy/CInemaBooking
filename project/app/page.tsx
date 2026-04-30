@@ -2,7 +2,7 @@
 import Navbar from "./components/Navbar";
 import Filter from "./components/Filter";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { movie } from "./types/movie";
 import { useSession } from "next-auth/react";
 
@@ -14,6 +14,29 @@ export default function Home() {
   const [isLoadingMovies, setIsLoadingMovies] = useState(true);
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const prevFavoriteIds = useRef<number[]>([]);
+
+  const favoriteMovies = useMemo(
+    () => movies.filter((movie) => favoriteIds.includes(movie.movie_id)),
+    [movies, favoriteIds],
+  );
+
+  const favoriteGenres = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    favoriteMovies.forEach((movie) => {
+      movie.genre
+        .split(/[\/,:]/)
+        .map((value) => value.trim())
+        .filter(Boolean)
+        .forEach((genre) => {
+          counts.set(genre, (counts.get(genre) ?? 0) + 1);
+        });
+    });
+
+    return Array.from(counts.entries())
+      .sort(([, aCount], [, bCount]) => bCount - aCount)
+      .map(([genre]) => genre);
+  }, [favoriteMovies]);
 
   useEffect(() => {
     fetch("/api/movieData")
@@ -85,6 +108,42 @@ export default function Home() {
             </p>
           </div>
         </div>
+        {favoriteGenres.length > 0 && (
+          <section className="rounded-3xl border border-white/10 bg-slate-950/80 p-8">
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="text-sm uppercase tracking-[0.3em] text-red-400 mb-2">
+                  Recommendations
+                </p>
+                <h2 className="text-3xl font-bold">Your favorite genres</h2>
+                <p className="mt-2 text-gray-300 max-w-2xl">
+                  Based on the movies you’ve favorited, these are the genres you
+                  watch most often.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {favoriteGenres.slice(0, 4).map((genre) => (
+                  <span
+                    key={genre}
+                    className="rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white"
+                  >
+                    {genre}
+                  </span>
+                ))}
+              </div>
+              {favoriteGenres.length > 4 ? (
+                <p className="text-sm text-gray-400">
+                  Showing your top {Math.min(favoriteGenres.length, 4)} favorite
+                  genres.
+                </p>
+              ) : (
+                <p className="text-sm text-gray-400">
+                  Showing your favorite genres sorted by how often they appear.
+                </p>
+              )}
+            </div>
+          </section>
+        )}
         <Filter
           movieData={movies}
           favoriteIds={favoriteIds}

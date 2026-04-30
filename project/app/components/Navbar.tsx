@@ -28,9 +28,7 @@ export default function Navbar() {
   const { data: session, status } = useSession();
 
   const links: NavLinks[] = [
-    { label: "Find a theater", href: "#" },
     { label: "Movies", href: "http://localhost:3000/movies" },
-    { label: "Promos & Rewards", href: "#" },
     { label: "Showtimes", href: "http://localhost:3000/movies/showtimes" },
   ];
 
