@@ -23,9 +23,9 @@ export default async function FavoritesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       <Navbar />
-      <main className="mx-auto max-w-5xl px-6 py-12">
+      <main className="flex-1 mx-auto max-w-5xl px-6 py-12">
         <div className="mb-8 flex items-center gap-4">
           <a
             href="/account"
@@ -51,6 +51,9 @@ export default async function FavoritesPage() {
           </div>
         )}
       </main>
+      <footer className="bg-black p-8 text-white text-center items-center">
+        <span className="tracking-[0.35em] uppercase">REELHOUSE</span>
+      </footer>
     </div>
   );
 }

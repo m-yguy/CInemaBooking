@@ -135,7 +135,7 @@ export default function MovieCard({
         <div className="relative w-full aspect-2/3 overflow-hidden rounded-lg bg-gray-200">
           <Link
             href={`/movies/${encodeURIComponent(movieData.title)}`}
-            className="block w-full h-full"
+            className="block relative w-full h-full"
           >
             <MoviePoster
               key={movieData.poster_path ?? ""}

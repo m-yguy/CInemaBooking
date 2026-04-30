@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
 import SignOutButton from "../components/SignOutButton";
 import UpdateProfileForm from "../components/UpdateProfileForm";
+import FavoriteMovieCard from "@/app/components/FavoriteMovieCard";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -82,31 +83,15 @@ export default async function AccountPage() {
               {favoriteMovies.length === 0 ? (
                 <p className="text-gray-500">No favorites yet.</p>
               ) : (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
-                  {favoriteMovies.slice(0, 4).map((movie) => (
-                    <a
+                <div className="grid grid-cols-7 gap-x-4 gap-y-6">
+                  {favoriteMovies.slice(0, 7).map((movie) => (
+                    <FavoriteMovieCard
                       key={movie.movie_id}
-                      href={`/movies/${encodeURIComponent(movie.title)}`}
-                      className="group"
-                    >
-                      <div className="relative aspect-2/3 overflow-hidden rounded-lg bg-gray-200 shadow-sm transition-transform group-hover:scale-105">
-                        {movie.poster_path ? (
-                          <img
-                            src={movie.poster_path}
-                            alt={movie.title}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm text-gray-500">
-                            No Poster
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="mt-3">
-                        <p className="line-clamp-1 font-semibold">{movie.title}</p>
-                      </div>
-                    </a>
+                      movieId={movie.movie_id}
+                      title={movie.title}
+                      posterPath={movie.poster_path}
+                      removeAction={removeFavoriteAction}
+                    />
                   ))}
                 </div>
               )}
@@ -115,19 +100,19 @@ export default async function AccountPage() {
 
           {isCustomer && (
             <section className="border-b border-gray-200 pb-12">
-              <h2 className="mb-6 text-2xl font-bold">Order History</h2>
+              <h2 className="mb-2 text-2xl font-bold">Order History</h2>
 
               {!orderHistory || orderHistory.length === 0 ? (
                 <p className="text-gray-500">No orders yet.</p>
               ) : (
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
+                <div className="space-y-2 max-h-[14.5rem] overflow-y-auto pr-2">
                   {orderHistory.map((order) => (
                     <a
                       key={order.orderId}
                       href={`/account/orders/${order.orderId}`}
-                      className="group"
+                      className="group flex h-28 gap-2 overflow-hidden rounded-2xl border border-gray-200 bg-white px-2 py-2 text-left shadow-sm transition hover:shadow-md"
                     >
-                      <div className="relative aspect-2/3 overflow-hidden rounded-lg bg-gray-200 shadow-sm transition-transform group-hover:scale-105">
+                      <div className="relative h-full w-24 shrink-0 overflow-hidden rounded-xl bg-gray-200">
                         {order.posterUrl ? (
                           <img
                             src={order.posterUrl}
@@ -135,19 +120,44 @@ export default async function AccountPage() {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm text-gray-500">
+                          <div className="flex h-full w-full items-center justify-center px-3 text-center text-sm text-gray-500">
                             No Poster
                           </div>
                         )}
                       </div>
 
-                      <div className="mt-3">
-                        <p className="line-clamp-1 font-semibold">
-                          {order.movieTitle}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          ${order.finalTotal.toFixed(2)}
-                        </p>
+                      <div className="flex flex-1 flex-col justify-between">
+                        <div>
+                          <p className="text-base font-semibold text-slate-900">
+                            {order.movieTitle}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            {new Date(order.createdAt).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              },
+                            )}{" "}
+                            • {order.showTime}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            Seats: {order.seats.join(", ")}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span className="font-semibold text-slate-900">
+                            ${order.finalTotal.toFixed(2)}
+                          </span>
+                          <div className="text-right">
+                            <p>{order.status}</p>
+                            <p className="text-[11px] text-gray-400">
+                              Click for details
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </a>
                   ))}
@@ -164,6 +174,9 @@ export default async function AccountPage() {
           </div>
         </div>
       </main>
+      <footer className="bg-black p-8 text-white text-center items-center">
+        <span className="tracking-[0.35em] uppercase">REELHOUSE</span>
+      </footer>
     </div>
   );
 }

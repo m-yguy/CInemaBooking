@@ -1,48 +1,48 @@
 import { sql } from "@/lib/dbSingleton";
 
 export type TicketQuantities = {
-    adult: number;
-    child: number;
-    senior: number;
+  adult: number;
+  child: number;
+  senior: number;
 };
 
 export type CreateOrderInput = {
-    customerId: string;
-    showId: string | null;
-    movieTitle: string;
-    showTime: string;
-    selectedSeats: string[];
-    quantities: TicketQuantities;
-    originalTotal: number;
-    discountAmount: number;
-    finalTotal: number;
-    promoCode: string | null;
-    paymentType: "saved" | "new";
-    cardLastFour: string | null;
-    confirmationEmail: string;
+  customerId: string;
+  showId: string | null;
+  movieTitle: string;
+  showTime: string;
+  selectedSeats: string[];
+  quantities: TicketQuantities;
+  originalTotal: number;
+  discountAmount: number;
+  finalTotal: number;
+  promoCode: string | null;
+  paymentType: "saved" | "new";
+  cardLastFour: string | null;
+  confirmationEmail: string;
 };
 
 export type OrderHistoryItem = {
-    orderId: string;
-    movieTitle: string;
-    showTime: string;
-    seats: string[];
-    adultTickets: number;
-    childTickets: number;
-    seniorTickets: number;
-    originalTotal: number;
-    discountAmount: number;
-    finalTotal: number;
-    promoCode: string | null;
-    paymentType: string;
-    cardLastFour: string | null;
-    status: string;
-    createdAt: string;
-    posterUrl: string | null;
+  orderId: string;
+  movieTitle: string;
+  showTime: string;
+  seats: string[];
+  adultTickets: number;
+  childTickets: number;
+  seniorTickets: number;
+  originalTotal: number;
+  discountAmount: number;
+  finalTotal: number;
+  promoCode: string | null;
+  paymentType: string;
+  cardLastFour: string | null;
+  status: string;
+  createdAt: string;
+  posterUrl: string | null;
 };
 
 export async function createOrder(input: CreateOrderInput): Promise<string> {
-    const rows = await sql`
+  const rows = await sql`
     INSERT INTO public.orders (
       customer_id,
       show_id,
@@ -78,22 +78,22 @@ export async function createOrder(input: CreateOrderInput): Promise<string> {
     RETURNING order_id
   `;
 
-    const orderId = String(rows[0].order_id);
+  const orderId = String(rows[0].order_id);
 
-    for (const seat of input.selectedSeats) {
-        await sql`
+  for (const seat of input.selectedSeats) {
+    await sql`
       INSERT INTO public.order_seats (order_id, show_id, seat_number)
       VALUES (${orderId}, ${input.showId}, ${seat})
     `;
-    }
+  }
 
-    return orderId;
+  return orderId;
 }
 
 export async function getOrderHistory(
-    customerId: string,
+  customerId: string,
 ): Promise<OrderHistoryItem[]> {
-    const rows = await sql`
+  const rows = await sql`
     SELECT
       o.order_id,
       o.movie_title,
@@ -124,24 +124,24 @@ export async function getOrderHistory(
     ORDER BY o.created_at DESC
   `;
 
-    return rows.map((row) => ({
-        orderId: String(row.order_id),
-        movieTitle: String(row.movie_title),
-        showTime: String(row.show_time),
-        seats: row.seats as string[],
-        adultTickets: Number(row.adult_tickets),
-        childTickets: Number(row.child_tickets),
-        seniorTickets: Number(row.senior_tickets),
-        originalTotal: Number(row.original_total),
-        discountAmount: Number(row.discount_amount),
-        finalTotal: Number(row.final_total),
-        promoCode: row.promo_code ? String(row.promo_code) : null,
-        paymentType: String(row.payment_type),
-        cardLastFour: row.card_last_four ? String(row.card_last_four) : null,
-        status: String(row.status),
-        createdAt: String(row.created_at),
-        posterUrl: row.poster_url ? String(row.poster_url) : null,
-    }));
+  return rows.map((row) => ({
+    orderId: String(row.order_id),
+    movieTitle: String(row.movie_title),
+    showTime: String(row.show_time),
+    seats: row.seats as string[],
+    adultTickets: Number(row.adult_tickets),
+    childTickets: Number(row.child_tickets),
+    seniorTickets: Number(row.senior_tickets),
+    originalTotal: Number(row.original_total),
+    discountAmount: Number(row.discount_amount),
+    finalTotal: Number(row.final_total),
+    promoCode: row.promo_code ? String(row.promo_code) : null,
+    paymentType: String(row.payment_type),
+    cardLastFour: row.card_last_four ? String(row.card_last_four) : null,
+    status: String(row.status),
+    createdAt: String(row.created_at),
+    posterUrl: row.poster_url ? String(row.poster_url) : null,
+  }));
 }
 
 export async function getOrderById(
@@ -202,4 +202,16 @@ export async function getOrderById(
     createdAt: String(row.created_at),
     posterUrl: row.poster_url ? String(row.poster_url) : null,
   };
+}
+
+export async function cancelOrder(
+  orderId: string,
+  customerId: string,
+): Promise<void> {
+  await sql`DELETE FROM public.order_seats WHERE order_id = ${orderId}::uuid`;
+  await sql`
+    DELETE FROM public.orders
+    WHERE order_id = ${orderId}::uuid
+      AND customer_id = ${customerId}
+  `;
 }

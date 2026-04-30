@@ -1,44 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { movie } from "../types/movie";
 import Navbar from "../components/Navbar";
-import MovieCardStarDecorator from "../components/MovieCardStarDecorator";
+import type { movie } from "../types/movie";
+import { useSession } from "next-auth/react";
 import MovieCardTicketDecorator from "../components/MovieCardTicketDecorator";
 import MovieCardTicketSkeletonDecorator from "../components/MovieCardTicketSkeletonDecorator";
-import { useSession } from "next-auth/react";
 
-export default function Home() {
+export default function RecommendationsPage() {
   const { data: session } = useSession();
-  const userRole = session?.user?.role;
-  const isCustomer = userRole === "CUSTOMER";
+  const role = session?.user?.role;
+  const isCustomer = role === "CUSTOMER";
   const [movies, setMovies] = useState<movie[]>([]);
-  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/movieData")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch movies");
-        return res.json();
-      })
-      .then((data: movie[]) => setMovies(data))
-      .catch(() => setError("Failed to load movies. Please try again."))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
     if (!isCustomer) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFavoriteIds([]);
+      setMovies([]);
+      setLoading(false);
       return;
     }
 
-    fetch("/api/favorites")
-      .then((res) => res.json())
-      .then((data: number[]) => setFavoriteIds(data))
-      .catch(() => setFavoriteIds([]));
+    setLoading(true);
+    setError(null);
+
+    fetch("/api/recommendations")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch recommendations");
+        return res.json();
+      })
+      .then((data: movie[]) => setMovies(data))
+      .catch(() =>
+        setError("Failed to load recommendations. Please try again."),
+      )
+      .finally(() => setLoading(false));
   }, [isCustomer]);
 
   return (
@@ -47,44 +43,48 @@ export default function Home() {
       <main className="flex-1 max-w-6xl mx-auto px-6 py-10 w-full">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">
-            Movies
+            Recommendations
           </h1>
           <div className="mt-2 h-1 w-16 bg-linear-to-r from-red-600 to-red-400 rounded-full" />
         </div>
 
-        {loading && (
+        {loading ? (
           <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">
             {Array.from({ length: 8 }).map((_, idx) => (
               <MovieCardTicketSkeletonDecorator key={idx} />
             ))}
           </div>
-        )}
-
-        {!loading && error && (
+        ) : error ? (
           <div className="flex items-center justify-center py-20 text-red-500">
             {error}
           </div>
-        )}
-
-        {!loading && !error && movies.length === 0 && (
-          <div className="flex items-center justify-center py-20 text-neutral-500">
-            No movies found.
+        ) : !isCustomer ? (
+          <div className="text-center py-20 text-neutral-700">
+            <p className="text-xl font-semibold text-neutral-900">
+              Sign in as a customer to see Recommendations.
+            </p>
+            <p className="mt-3 text-sm text-neutral-600">
+              Recommendations are generated from your favorite movies and top
+              genres.
+            </p>
           </div>
-        )}
-
-        {!loading && !error && movies.length > 0 && (
+        ) : movies.length === 0 ? (
+          <div className="text-center py-20 text-neutral-700">
+            <p className="text-xl font-semibold text-neutral-900">
+              No recommendations available yet.
+            </p>
+            <p className="mt-3 text-sm text-neutral-600">
+              Favorite some movies first, and we&apos;ll show suggestions here.
+            </p>
+          </div>
+        ) : (
           <div className="grid gap-6 grid-cols-[repeat(auto-fit,minmax(250px,1fr))]">
-            {movies.map((m) =>
-              isCustomer ? (
-                <MovieCardStarDecorator
-                  key={m.movie_id}
-                  movieData={m}
-                  initialFavorited={favoriteIds.includes(m.movie_id)}
-                />
-              ) : (
-                <MovieCardTicketDecorator key={m.movie_id} movieData={m} />
-              ),
-            )}
+            {movies.map((movie) => (
+              <MovieCardTicketDecorator
+                key={movie.movie_id}
+                movieData={movie}
+              />
+            ))}
           </div>
         )}
       </main>

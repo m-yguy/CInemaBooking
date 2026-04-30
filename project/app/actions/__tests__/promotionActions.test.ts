@@ -1,6 +1,6 @@
 jest.mock("@/auth", () => ({ auth: jest.fn() }));
-jest.mock("@/lib/repositories/promotionRepository");
-jest.mock("@/lib/mail");
+jest.mock("@/lib/services/promotionService");
+jest.mock("@/lib/facades/promotionFacade");
 
 import {
   addPromotionAction,
@@ -9,23 +9,23 @@ import {
   type PromotionFormData,
 } from "@/app/actions/promotionActions";
 import { auth } from "@/auth";
-import * as mail from "@/lib/mail";
 
 const mockAuth = auth as jest.Mock;
-const promotionRepo = jest.requireMock(
-  "@/lib/repositories/promotionRepository",
+const promotionService = jest.requireMock(
+  "@/lib/services/promotionService",
 ) as {
-  createPromotion: jest.Mock;
-  getAllPromotions: jest.Mock;
-  getPromotionById: jest.Mock;
-  getSubscribedUserEmails: jest.Mock;
+  addPromotion: jest.Mock;
+  listPromotions: jest.Mock;
 };
-const mockCreatePromotion = promotionRepo.createPromotion as jest.Mock;
-const mockGetAllPromotions = promotionRepo.getAllPromotions as jest.Mock;
-const mockGetPromotionById = promotionRepo.getPromotionById as jest.Mock;
-const mockGetSubscribedUserEmails =
-  promotionRepo.getSubscribedUserEmails as jest.Mock;
-const mockSendPromotionEmail = mail.sendPromotionEmail as jest.Mock;
+const promotionFacade = jest.requireMock("@/lib/facades/promotionFacade") as {
+  promotionFacade: {
+    sendPromotionEmails: jest.Mock;
+  };
+};
+const mockCreatePromotion = promotionService.addPromotion as jest.Mock;
+const mockGetAllPromotions = promotionService.listPromotions as jest.Mock;
+const mockSendPromotionEmails = promotionFacade.promotionFacade
+  .sendPromotionEmails as jest.Mock;
 
 const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
 
@@ -167,7 +167,10 @@ describe("sendPromotionEmailsAction", () => {
 
   it("returns error when promotion is not found", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockGetPromotionById.mockResolvedValue(null);
+    mockSendPromotionEmails.mockResolvedValue({
+      ok: false,
+      error: "Promotion not found.",
+    });
     expect(await sendPromotionEmailsAction(99)).toEqual({
       error: "Promotion not found.",
     });
@@ -175,7 +178,10 @@ describe("sendPromotionEmailsAction", () => {
 
   it("returns error when promotion is not ACTIVE", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockGetPromotionById.mockResolvedValue({ promo_id: 1, status: "INACTIVE" });
+    mockSendPromotionEmails.mockResolvedValue({
+      ok: false,
+      error: "Only ACTIVE promotions can be sent.",
+    });
     expect(await sendPromotionEmailsAction(1)).toEqual({
       error: "Only ACTIVE promotions can be sent.",
     });
@@ -183,48 +189,20 @@ describe("sendPromotionEmailsAction", () => {
 
   it("returns sent: 0 when no subscribers exist", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockGetPromotionById.mockResolvedValue({
-      promo_id: 1,
-      status: "ACTIVE",
-      title: "T",
-      description: "D",
-      promo_code: "CODE",
-      discount_type: "FLAT",
-      discount_amount: 5,
-      start_date: "2026-06-01",
-      end_date: "2026-08-31",
-    });
-    mockGetSubscribedUserEmails.mockResolvedValue([]);
+    mockSendPromotionEmails.mockResolvedValue({ ok: true, sent: 0 });
     expect(await sendPromotionEmailsAction(1)).toEqual({
       success: true,
       sent: 0,
     });
-    expect(mockSendPromotionEmail).not.toHaveBeenCalled();
   });
 
-  it("sends emails to all subscribers and returns count", async () => {
+  it("sends emails and returns count", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockGetPromotionById.mockResolvedValue({
-      promo_id: 1,
-      status: "ACTIVE",
-      title: "T",
-      description: "D",
-      promo_code: "CODE",
-      discount_type: "FLAT",
-      discount_amount: 5,
-      start_date: "2026-06-01",
-      end_date: "2026-08-31",
-    });
-    mockGetSubscribedUserEmails.mockResolvedValue([
-      { email: "a@b.com", first_name: "Alice" },
-      { email: "c@d.com", first_name: "Carol" },
-    ]);
-    mockSendPromotionEmail.mockResolvedValue(undefined);
+    mockSendPromotionEmails.mockResolvedValue({ ok: true, sent: 2 });
     expect(await sendPromotionEmailsAction(1)).toEqual({
       success: true,
       sent: 2,
     });
-    expect(mockSendPromotionEmail).toHaveBeenCalledTimes(2);
   });
 });
 

@@ -77,13 +77,17 @@ export default function UpdateProfileForm({
   }
 
   // Only allow up to 10 digits
-  const [localPhone, setLocalPhone] = useState(formatPhoneInput(phone));
-  const [localAddressLine1, setLocalAddressLine1] = useState(addressLine1);
-  const [localAddressLine2, setLocalAddressLine2] = useState(addressLine2);
-  const [localCity, setLocalCity] = useState(city);
-  const [localState, setLocalState] = useState(state);
-  const [localPostalCode, setLocalPostalCode] = useState(postalCode);
-  const [localCountry, setLocalCountry] = useState(country);
+  const [localPhone, setLocalPhone] = useState(formatPhoneInput(phone ?? ""));
+  const [localAddressLine1, setLocalAddressLine1] = useState(
+    addressLine1 ?? "",
+  );
+  const [localAddressLine2, setLocalAddressLine2] = useState(
+    addressLine2 ?? "",
+  );
+  const [localCity, setLocalCity] = useState(city ?? "");
+  const [localState, setLocalState] = useState(state ?? "");
+  const [localPostalCode, setLocalPostalCode] = useState(postalCode ?? "");
+  const [localCountry, setLocalCountry] = useState(country ?? "");
 
   const [editing, setEditing] = useState(false);
   const [addressOpen, setAddressOpen] = useState(false);
@@ -92,9 +96,20 @@ export default function UpdateProfileForm({
   const [pendingRemovals, setPendingRemovals] = useState<Set<string>>(
     new Set(),
   );
+  const [confirmRemovingCardId, setConfirmRemovingCardId] = useState<
+    string | null
+  >(null);
   const visibleCards = savedCards.filter((c) => !pendingRemovals.has(c.id));
+  const removingCard = confirmRemovingCardId
+    ? (savedCards.find((card) => card.id === confirmRemovingCardId) ?? null)
+    : null;
 
-  async function handleRemoveCard(id: string) {
+  function requestRemoveCard(id: string) {
+    setConfirmRemovingCardId(id);
+  }
+
+  async function confirmRemoveCard(id: string) {
+    setConfirmRemovingCardId(null);
     setPendingRemovals((prev) => new Set(prev).add(id));
     const res = await fetch("/api/paymentCards", {
       method: "DELETE",
@@ -107,6 +122,7 @@ export default function UpdateProfileForm({
         next.delete(id);
         return next;
       });
+      setError("Failed to remove card. Please try again.");
     }
   }
 
@@ -139,6 +155,28 @@ export default function UpdateProfileForm({
       setError("Enter valid phone number");
       return;
     }
+
+    const addressLine1 = localAddressLine1.trim();
+    const addressLine2 = localAddressLine2.trim();
+    const city = localCity.trim();
+    const state = localState.trim();
+    const postalCode = localPostalCode.trim();
+    const country = localCountry.trim();
+    const addressEntered =
+      !!addressLine1 ||
+      !!addressLine2 ||
+      !!city ||
+      !!state ||
+      !!postalCode ||
+      !!country;
+    const addressComplete =
+      !!addressLine1 && !!city && !!state && !!postalCode && !!country;
+
+    if (isCustomer && addressEntered && !addressComplete) {
+      setError("Fill out all required fields. *");
+      return;
+    }
+
     formData.set("firstName", localFirstName);
     formData.set("lastName", localLastName);
     formData.set("phone", phoneDigits);
@@ -266,7 +304,8 @@ export default function UpdateProfileForm({
                   <div className="space-y-6 px-4 pb-4 pt-4">
                     <div>
                       <label className="mb-2 block text-sm font-semibold">
-                        Address line 1
+                        Street Address Line 1{" "}
+                        <span className="text-red-600">*</span>
                       </label>
                       <input
                         readOnly
@@ -289,7 +328,7 @@ export default function UpdateProfileForm({
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                       <div>
                         <label className="mb-2 block text-sm font-semibold">
-                          City
+                          City <span className="text-red-600">*</span>
                         </label>
                         <input
                           readOnly
@@ -300,7 +339,7 @@ export default function UpdateProfileForm({
                       </div>
                       <div>
                         <label className="mb-2 block text-sm font-semibold">
-                          State
+                          State <span className="text-red-600">*</span>
                         </label>
                         <input
                           readOnly
@@ -313,7 +352,7 @@ export default function UpdateProfileForm({
                     <div className="flex gap-6">
                       <div className="w-40">
                         <label className="mb-2 block text-sm font-semibold">
-                          Postal code
+                          Postal code <span className="text-red-600">*</span>
                         </label>
                         <input
                           readOnly
@@ -324,7 +363,7 @@ export default function UpdateProfileForm({
                       </div>
                       <div className="w-28">
                         <label className="mb-2 block text-sm font-semibold">
-                          Country
+                          Country <span className="text-red-600">*</span>
                         </label>
                         <input
                           readOnly
@@ -345,7 +384,7 @@ export default function UpdateProfileForm({
               isOpen={paymentOpen}
               onToggle={() => setPaymentOpen(!paymentOpen)}
               onAddCard={() => setAddingCard(true)}
-              onRemoveCard={handleRemoveCard}
+              onRemoveCard={requestRemoveCard}
             />
           )}
           <button
@@ -372,6 +411,41 @@ export default function UpdateProfileForm({
             mailingAddressId={mailingAddressId}
             onClose={() => setAddingCard(false)}
           />
+        )}
+        {confirmRemovingCardId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="w-full max-w-md rounded-2xl bg-white px-8 py-8 shadow-xl">
+              <h2 className="mb-3 text-2xl font-bold text-black">
+                Remove saved card
+              </h2>
+              <p className="mb-6 text-gray-600">
+                {removingCard ? (
+                  <>
+                    Remove {removingCard.cardBrand || "card"} ••••{" "}
+                    {removingCard.cardLastFour}?
+                  </>
+                ) : (
+                  "Remove this saved card?"
+                )}
+              </p>
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  onClick={() => confirmRemoveCard(confirmRemovingCardId)}
+                  className="flex-1 rounded-full bg-red-700 px-6 py-3 font-semibold text-white hover:bg-red-800"
+                >
+                  Confirm
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmRemovingCardId(null)}
+                  className="flex-1 rounded-full bg-gray-200 px-6 py-3 font-semibold text-black hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </>
     );
@@ -429,9 +503,6 @@ export default function UpdateProfileForm({
           placeholder="123-456-7890"
           className="w-full rounded-md border border-gray-300 px-4 py-3"
         />
-        {error && (
-          <p className="text-red-600 text-sm font-medium mt-2">{error}</p>
-        )}
       </div>
       {isCustomer && (
         <div className="rounded-md border border-gray-200 overflow-hidden">
@@ -453,7 +524,8 @@ export default function UpdateProfileForm({
               <div className="space-y-6 px-4 pb-4 pt-4">
                 <div>
                   <label className="mb-2 block text-sm font-semibold">
-                    Address line 1
+                    Street Address Line 1{" "}
+                    <span className="text-red-600">*</span>
                   </label>
                   <input
                     name="addressLine1"
@@ -480,7 +552,7 @@ export default function UpdateProfileForm({
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <div>
                     <label className="mb-2 block text-sm font-semibold">
-                      City
+                      City <span className="text-red-600">*</span>
                     </label>
                     <input
                       name="city"
@@ -493,7 +565,7 @@ export default function UpdateProfileForm({
                   </div>
                   <div>
                     <label className="mb-2 block text-sm font-semibold">
-                      State
+                      State <span className="text-red-600">*</span>
                     </label>
                     <input
                       name="state"
@@ -508,7 +580,7 @@ export default function UpdateProfileForm({
                 <div className="flex gap-6">
                   <div className="w-40">
                     <label className="mb-2 block text-sm font-semibold">
-                      Postal code
+                      ZIP / Postal Code <span className="text-red-600">*</span>
                     </label>
                     <input
                       name="postalCode"
@@ -521,7 +593,7 @@ export default function UpdateProfileForm({
                   </div>
                   <div className="w-28">
                     <label className="mb-2 block text-sm font-semibold">
-                      Country
+                      Country <span className="text-red-600">*</span>
                     </label>
                     <input
                       name="country"
@@ -537,6 +609,11 @@ export default function UpdateProfileForm({
                     />
                   </div>
                 </div>
+                {error === "Fill out all required fields. *" && (
+                  <p className="text-red-600 text-sm font-medium mt-3">
+                    {error}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -548,7 +625,7 @@ export default function UpdateProfileForm({
           isOpen={paymentOpen}
           onToggle={() => setPaymentOpen(!paymentOpen)}
           onAddCard={() => setAddingCard(true)}
-          onRemoveCard={handleRemoveCard}
+          onRemoveCard={requestRemoveCard}
         />
       )}
       <div className="flex gap-4">
@@ -557,13 +634,13 @@ export default function UpdateProfileForm({
           className="rounded-full bg-gray-300 px-6 py-3 font-semibold text-black hover:bg-gray-400"
           onClick={() => {
             setError("");
-            setLocalPhone(formatPhoneInput(phone));
-            setLocalAddressLine1(addressLine1);
-            setLocalAddressLine2(addressLine2);
-            setLocalCity(city);
-            setLocalState(state);
-            setLocalPostalCode(postalCode);
-            setLocalCountry(country);
+            setLocalPhone(formatPhoneInput(phone ?? ""));
+            setLocalAddressLine1(addressLine1 ?? "");
+            setLocalAddressLine2(addressLine2 ?? "");
+            setLocalCity(city ?? "");
+            setLocalState(state ?? "");
+            setLocalPostalCode(postalCode ?? "");
+            setLocalCountry(country ?? "");
             setEditing(false);
           }}
         >
@@ -577,6 +654,9 @@ export default function UpdateProfileForm({
           {isPending ? "Saving..." : "Save Changes"}
         </button>
       </div>
+      {error && error !== "Fill out all required fields. *" && (
+        <p className="text-red-600 text-sm font-medium mt-4">{error}</p>
+      )}
       {success && (
         <p className="text-green-600 text-sm font-medium mt-2">
           Changes saved successfully
@@ -593,6 +673,41 @@ export default function UpdateProfileForm({
           mailingAddressId={mailingAddressId}
           onClose={() => setAddingCard(false)}
         />
+      )}
+      {confirmRemovingCardId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-2xl bg-white px-8 py-8 shadow-xl">
+            <h2 className="mb-3 text-2xl font-bold text-black">
+              Remove saved card
+            </h2>
+            <p className="mb-6 text-gray-600">
+              {removingCard ? (
+                <>
+                  Remove {removingCard.cardBrand || "card"} ••••{" "}
+                  {removingCard.cardLastFour}?
+                </>
+              ) : (
+                "Remove this saved card?"
+              )}
+            </p>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => confirmRemoveCard(confirmRemovingCardId)}
+                className="flex-1 rounded-full bg-red-700 px-6 py-3 font-semibold text-white hover:bg-red-800"
+              >
+                Confirm
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmRemovingCardId(null)}
+                className="flex-1 rounded-full bg-gray-200 px-6 py-3 font-semibold text-black hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </form>
   );

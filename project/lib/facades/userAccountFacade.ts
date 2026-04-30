@@ -243,16 +243,42 @@ export class UserAccountFacade {
       if (!isCustomer) return {};
 
       const addressLine1 = input.addressLine1?.trim() ?? "";
+      const addressLine2 = input.addressLine2?.trim() || null;
       const city = input.city?.trim() ?? "";
-      if (!addressLine1 && !city) return {};
+      const state = input.state?.trim() ?? "";
+      const postalCode = input.postalCode?.trim() ?? "";
+      const country = input.country?.trim().toUpperCase() ?? "";
+      const addressEntered =
+        !!addressLine1 ||
+        !!addressLine2 ||
+        !!city ||
+        !!state ||
+        !!postalCode ||
+        !!country;
+      const addressComplete =
+        !!addressLine1 && !!city && !!state && !!postalCode && !!country;
+
+      if (addressEntered && !addressComplete) {
+        const missingFields = [
+          addressLine1 ? null : "addressLine1",
+          city ? null : "city",
+          state ? null : "state",
+          postalCode ? null : "postalCode",
+          country ? null : "country",
+        ].filter(Boolean) as string[];
+        return {
+          error: "Fill out all required fields. *",
+          requiredFields: missingFields,
+        };
+      }
 
       await userService.updateAddress(userId, {
         addressLine1,
-        addressLine2: input.addressLine2?.trim() || null,
+        addressLine2,
         city,
-        state: input.state?.trim() ?? "",
-        postalCode: input.postalCode?.trim() ?? "",
-        country: input.country?.trim().toUpperCase() || "US",
+        state,
+        postalCode,
+        country,
       });
 
       return {};

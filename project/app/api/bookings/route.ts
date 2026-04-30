@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { sendBookingConfirmationEmail } from "@/lib/mail";
-import { createOrder } from "@/lib/repositories/bookingRepository";
+import { createOrder } from "@/lib/services/bookingService";
 import { auth } from "@/auth";
+import * as paymentService from "@/lib/services/paymentService";
 
 export async function POST(req: Request) {
   try {
@@ -50,6 +51,30 @@ export async function POST(req: Request) {
       cardLastFour: paymentMethod.cardLastFour ?? null,
       confirmationEmail: email,
     });
+
+    if (
+      paymentMethod.type === "new" &&
+      payload.paymentMethod?.saveCard &&
+      typeof payload.paymentMethod.cardOwner === "string"
+    ) {
+      try {
+        await paymentService.addCard(session.user.id, {
+          cardOwner: payload.paymentMethod.cardOwner,
+          cardNumber: String(payload.paymentMethod.cardNumber ?? "").replace(
+            /\s/g,
+            "",
+          ),
+          cardLastFour: String(payload.paymentMethod.cardLastFour ?? "").slice(
+            -4,
+          ),
+          cardBrand: payload.paymentMethod.cardBrand ?? null,
+          cardExpMonth: Number(payload.paymentMethod.cardExpMonth ?? 0),
+          cardExpYear: Number(payload.paymentMethod.cardExpYear ?? 0),
+        });
+      } catch (err) {
+        console.warn("Booking completed but failed to save payment card:", err);
+      }
+    }
 
     const firstName =
       payload.firstName ||

@@ -43,6 +43,61 @@ export async function verifyAddressOwnership(
   return rows.length > 0;
 }
 
+export async function getBillingAddressById(
+  addressId: number,
+  userId: string,
+): Promise<{
+  line1: string | null;
+  line2: string | null;
+  city: string | null;
+  state: string | null;
+  postal: string | null;
+  country: string | null;
+} | null> {
+  const rows = await sql`
+    SELECT address_line_1, address_line_2, city, state, postal_code, country
+    FROM public.mailing_address
+    WHERE id = ${addressId} AND customer_id = ${userId}
+    LIMIT 1
+  `;
+
+  if (rows.length === 0) return null;
+
+  return {
+    line1: rows[0].address_line_1 ?? null,
+    line2: rows[0].address_line_2 ?? null,
+    city: rows[0].city ?? null,
+    state: rows[0].state ?? null,
+    postal: rows[0].postal_code ?? null,
+    country: rows[0].country ?? null,
+  };
+}
+
+export async function updateBillingAddress(
+  addressId: number,
+  userId: string,
+  data: {
+    line1: string;
+    line2: string | null;
+    city: string;
+    state: string;
+    postal: string;
+    country: string;
+  },
+): Promise<void> {
+  await sql`
+    UPDATE public.mailing_address
+    SET address_line_1 = ${data.line1},
+        address_line_2 = ${data.line2},
+        city = ${data.city},
+        state = ${data.state},
+        postal_code = ${data.postal},
+        country = ${data.country},
+        updated_at = now()
+    WHERE id = ${addressId} AND customer_id = ${userId}
+  `;
+}
+
 export async function insertBillingAddress(
   userId: string,
   data: {
@@ -75,6 +130,7 @@ export async function insertPaymentCard(data: {
   id: string;
   userId: string;
   billingAddressId: number | null;
+  cardOwner: string;
   cardLastFour: string;
   cardBrand: string | null;
   cardExpMonth: number;
@@ -83,11 +139,12 @@ export async function insertPaymentCard(data: {
 }) {
   await sql`
     INSERT INTO public.payment_method
-      (id, customer_id, billing_address_id, card_last_four, card_brand, card_exp_month, card_exp_year, card_number_encrypted)
+      (id, customer_id, billing_address_id, card_owner, card_last_four, card_brand, card_exp_month, card_exp_year, card_number_encrypted)
     VALUES (
       ${data.id},
       ${data.userId},
       ${data.billingAddressId},
+      ${data.cardOwner},
       ${data.cardLastFour},
       ${data.cardBrand},
       ${data.cardExpMonth},
@@ -96,7 +153,6 @@ export async function insertPaymentCard(data: {
     )
   `;
 }
-
 export async function deletePaymentCard(
   id: string,
   userId: string,

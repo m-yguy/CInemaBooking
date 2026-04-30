@@ -1,5 +1,5 @@
 jest.mock("@/auth", () => ({ auth: jest.fn() }));
-jest.mock("@/lib/repositories/showtimeRepository");
+jest.mock("@/lib/services/showtimeService");
 
 import {
   addShowtimeAction,
@@ -9,24 +9,14 @@ import {
 import { auth } from "@/auth";
 
 const mockAuth = auth as jest.Mock;
-const showtimeRepo = jest.requireMock(
-  "@/lib/repositories/showtimeRepository",
-) as {
-  checkShowtimeConflicts: jest.Mock;
-  getShowtimeById: jest.Mock;
-  insertShowtime: jest.Mock;
-  insertShowSeats: jest.Mock;
-  updateShowtime: jest.Mock;
-  rebuildShowSeats: jest.Mock;
-  deleteShowtime: jest.Mock;
+const showtimeService = jest.requireMock("@/lib/services/showtimeService") as {
+  addShowtime: jest.Mock;
+  editShowtime: jest.Mock;
+  removeShowtime: jest.Mock;
 };
-const mockCheckConflicts = showtimeRepo.checkShowtimeConflicts as jest.Mock;
-const mockGetShowtimeById = showtimeRepo.getShowtimeById as jest.Mock;
-const mockInsertShowtime = showtimeRepo.insertShowtime as jest.Mock;
-const mockInsertShowSeats = showtimeRepo.insertShowSeats as jest.Mock;
-const mockUpdateShowtime = showtimeRepo.updateShowtime as jest.Mock;
-const mockRebuildShowSeats = showtimeRepo.rebuildShowSeats as jest.Mock;
-const mockDeleteShowtime = showtimeRepo.deleteShowtime as jest.Mock;
+const mockAddShowtime = showtimeService.addShowtime as jest.Mock;
+const mockEditShowtime = showtimeService.editShowtime as jest.Mock;
+const mockRemoveShowtime = showtimeService.removeShowtime as jest.Mock;
 
 const adminSession = { user: { id: "admin-1", role: "ADMIN" } };
 
@@ -81,7 +71,11 @@ describe("addShowtimeAction", () => {
 
   it("returns conflict error when showroom is already booked", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockCheckConflicts.mockResolvedValue(true);
+    mockAddShowtime.mockResolvedValue({
+      ok: false,
+      error:
+        "Scheduling conflict: this showroom is already booked during that time.",
+    });
     expect(await addShowtimeAction(validData)).toEqual({
       error:
         "Scheduling conflict: this showroom is already booked during that time.",
@@ -90,18 +84,16 @@ describe("addShowtimeAction", () => {
 
   it("inserts showtime and returns success", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockCheckConflicts.mockResolvedValue(false);
-    mockInsertShowtime.mockResolvedValue("show-abc");
-    mockInsertShowSeats.mockResolvedValue(undefined);
+    mockAddShowtime.mockResolvedValue({ ok: true, show_id: "show-abc" });
     expect(await addShowtimeAction(validData)).toEqual({
       success: true,
       show_id: "show-abc",
     });
   });
 
-  it("throws when repository throws", async () => {
+  it("throws when service throws", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockCheckConflicts.mockRejectedValue(new Error("DB error"));
+    mockAddShowtime.mockRejectedValue(new Error("DB error"));
     await expect(addShowtimeAction(validData)).rejects.toThrow("DB error");
   });
 });
@@ -135,7 +127,10 @@ describe("editShowtimeAction", () => {
 
   it("returns error when showtime is not found", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockGetShowtimeById.mockResolvedValue(null);
+    mockEditShowtime.mockResolvedValue({
+      ok: false,
+      error: "Showtime not found.",
+    });
     expect(await editShowtimeAction(showId, validData)).toEqual({
       error: "Showtime not found.",
     });
@@ -143,35 +138,23 @@ describe("editShowtimeAction", () => {
 
   it("returns conflict error when showroom is already booked", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockGetShowtimeById.mockResolvedValue({ showroom_id: 2 });
-    mockCheckConflicts.mockResolvedValue(true);
+    mockEditShowtime.mockResolvedValue({
+      ok: false,
+      error:
+        "Scheduling conflict: this showroom is already booked during that time.",
+    });
     expect(await editShowtimeAction(showId, validData)).toEqual({
       error:
         "Scheduling conflict: this showroom is already booked during that time.",
     });
   });
 
-  it("updates and returns success without rebuilding seats when showroom unchanged", async () => {
+  it("updates and returns success", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockGetShowtimeById.mockResolvedValue({ showroom_id: 2 });
-    mockCheckConflicts.mockResolvedValue(false);
-    mockUpdateShowtime.mockResolvedValue(undefined);
+    mockEditShowtime.mockResolvedValue({ ok: true });
     expect(await editShowtimeAction(showId, validData)).toEqual({
       success: true,
     });
-    expect(mockRebuildShowSeats).not.toHaveBeenCalled();
-  });
-
-  it("rebuilds seats when showroom changes", async () => {
-    mockAuth.mockResolvedValue(adminSession);
-    mockGetShowtimeById.mockResolvedValue({ showroom_id: 99 });
-    mockCheckConflicts.mockResolvedValue(false);
-    mockUpdateShowtime.mockResolvedValue(undefined);
-    mockRebuildShowSeats.mockResolvedValue(undefined);
-    expect(await editShowtimeAction(showId, validData)).toEqual({
-      success: true,
-    });
-    expect(mockRebuildShowSeats).toHaveBeenCalledWith(showId, 2);
   });
 });
 
@@ -195,7 +178,10 @@ describe("deleteShowtimeAction", () => {
 
   it("returns error when showtime is not found", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockGetShowtimeById.mockResolvedValue(null);
+    mockRemoveShowtime.mockResolvedValue({
+      ok: false,
+      error: "Showtime not found.",
+    });
     expect(await deleteShowtimeAction("nonexistent")).toEqual({
       error: "Showtime not found.",
     });
@@ -203,9 +189,8 @@ describe("deleteShowtimeAction", () => {
 
   it("deletes showtime and returns success", async () => {
     mockAuth.mockResolvedValue(adminSession);
-    mockGetShowtimeById.mockResolvedValue({ show_id: "show-1" });
-    mockDeleteShowtime.mockResolvedValue(undefined);
+    mockRemoveShowtime.mockResolvedValue({ ok: true });
     expect(await deleteShowtimeAction("show-1")).toEqual({ success: true });
-    expect(mockDeleteShowtime).toHaveBeenCalledWith("show-1");
+    expect(mockRemoveShowtime).toHaveBeenCalledWith("show-1");
   });
 });

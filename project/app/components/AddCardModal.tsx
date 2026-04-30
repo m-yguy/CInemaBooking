@@ -34,9 +34,10 @@ export default function AddCardModal({
   mailingAddressId?: number | null;
   onClose: () => void;
 }) {
-  const hasAddress = !!addressLine1;
+  const hasAddress = !!addressLine1.trim();
   const router = useRouter();
 
+  const [cardOwner, setCardOwner] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [cardBrand, setCardBrand] = useState("");
   const [expMonth, setExpMonth] = useState("");
@@ -52,6 +53,10 @@ export default function AddCardModal({
 
   async function handleSubmit() {
     const digits = cardNumber.replace(/\s/g, "");
+    if (!cardOwner.trim()) {
+      setError("Enter the card owner name");
+      return;
+    }
     if (digits.length < 13 || digits.length > 16) {
       setError("Enter a valid card number");
       return;
@@ -66,6 +71,30 @@ export default function AddCardModal({
       setError("Enter a valid expiry year");
       return;
     }
+
+    const trimmedBillingLine1 = billingLine1.trim();
+    const trimmedBillingCity = billingCity.trim();
+    const trimmedBillingState = billingState.trim();
+    const trimmedBillingPostal = billingPostal.trim();
+    const trimmedBillingCountry = billingCountry.trim();
+    const addressEntered =
+      !!trimmedBillingLine1 ||
+      !!trimmedBillingCity ||
+      !!trimmedBillingState ||
+      !!trimmedBillingPostal ||
+      !!trimmedBillingCountry;
+    const addressComplete =
+      !!trimmedBillingLine1 &&
+      !!trimmedBillingCity &&
+      !!trimmedBillingState &&
+      !!trimmedBillingPostal &&
+      !!trimmedBillingCountry;
+
+    if (!hasAddress && addressEntered && !addressComplete) {
+      setError("Fill out all required fields. *");
+      return;
+    }
+
     setError("");
     setPending(true);
     try {
@@ -73,20 +102,19 @@ export default function AddCardModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          cardOwner: cardOwner.trim(),
           cardNumber: digits,
           cardLastFour: digits.slice(-4),
           cardBrand,
           cardExpMonth: month,
           cardExpYear: year,
-          existingBillingAddressId: hasAddress
-            ? (mailingAddressId ?? undefined)
-            : undefined,
-          billingLine1: hasAddress ? undefined : billingLine1,
-          billingLine2: hasAddress ? undefined : billingLine2,
-          billingCity: hasAddress ? undefined : billingCity,
-          billingState: hasAddress ? undefined : billingState,
-          billingPostal: hasAddress ? undefined : billingPostal,
-          billingCountry: hasAddress ? undefined : billingCountry,
+          existingBillingAddressId: mailingAddressId ?? undefined,
+          billingLine1: hasAddress ? undefined : trimmedBillingLine1,
+          billingLine2: hasAddress ? undefined : billingLine2?.trim(),
+          billingCity: hasAddress ? undefined : trimmedBillingCity,
+          billingState: hasAddress ? undefined : trimmedBillingState,
+          billingPostal: hasAddress ? undefined : trimmedBillingPostal,
+          billingCountry: hasAddress ? undefined : trimmedBillingCountry,
         }),
       });
       const data = await res.json();
@@ -126,6 +154,19 @@ export default function AddCardModal({
         </div>
 
         <div className="space-y-4 overflow-y-auto max-h-[60vh]">
+          <div>
+            <label className="mb-1 block text-sm font-semibold">
+              Card owner
+            </label>
+            <input
+              type="text"
+              value={cardOwner}
+              onChange={(e) => setCardOwner(e.target.value)}
+              placeholder="Name on card"
+              className="w-full rounded-md border border-gray-300 px-4 py-3"
+            />
+          </div>
+
           <div>
             <label className="mb-1 block text-sm font-semibold">
               Card number
@@ -193,7 +234,7 @@ export default function AddCardModal({
 
           <div>
             <label className="mb-1 block text-sm font-semibold">
-              Billing address
+              Street Address Line 1 <span className="text-red-600">*</span>
             </label>
             <input
               readOnly={hasAddress}
@@ -221,7 +262,9 @@ export default function AddCardModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-sm font-semibold">City</label>
+              <label className="mb-1 block text-sm font-semibold">
+                City <span className="text-red-600">*</span>
+              </label>
               <input
                 readOnly={hasAddress}
                 value={billingCity}
@@ -232,7 +275,9 @@ export default function AddCardModal({
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-semibold">State</label>
+              <label className="mb-1 block text-sm font-semibold">
+                State <span className="text-red-600">*</span>
+              </label>
               <input
                 readOnly={hasAddress}
                 value={billingState}
@@ -247,7 +292,7 @@ export default function AddCardModal({
           <div className="flex gap-4">
             <div className="w-40">
               <label className="mb-1 block text-sm font-semibold">
-                Postal code
+                ZIP / Postal Code <span className="text-red-600">*</span>
               </label>
               <input
                 readOnly={hasAddress}
@@ -260,7 +305,7 @@ export default function AddCardModal({
             </div>
             <div className="w-28">
               <label className="mb-1 block text-sm font-semibold">
-                Country
+                Country <span className="text-red-600">*</span>
               </label>
               <input
                 readOnly={hasAddress}
@@ -275,7 +320,12 @@ export default function AddCardModal({
             </div>
           </div>
 
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {hasAddress && (
+            <p className="mt-2 text-sm text-gray-500">
+              Your saved mailing address is already on file and will be used for
+              this card.
+            </p>
+          )}
 
           <div className="flex gap-4 pt-2">
             <button
