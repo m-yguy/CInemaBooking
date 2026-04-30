@@ -118,7 +118,7 @@ function BookingContent() {
 
     // If not logged in, redirect to sign in page and come back after
     if (!session) {
-      const checkoutUrl = `/checkout?data=${encoded}`;
+      const checkoutUrl = `/payment?data=${encoded}`;
       router.push(`/signin?callbackUrl=${encodeURIComponent(checkoutUrl)}`);
       return;
     }
