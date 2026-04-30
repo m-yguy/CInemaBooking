@@ -75,6 +75,7 @@ export async function insertPaymentCard(data: {
   id: string;
   userId: string;
   billingAddressId: number | null;
+  cardOwner: string;
   cardLastFour: string;
   cardBrand: string | null;
   cardExpMonth: number;
@@ -83,11 +84,12 @@ export async function insertPaymentCard(data: {
 }) {
   await sql`
     INSERT INTO public.payment_method
-      (id, customer_id, billing_address_id, card_last_four, card_brand, card_exp_month, card_exp_year, card_number_encrypted)
+      (id, customer_id, billing_address_id, card_owner, card_last_four, card_brand, card_exp_month, card_exp_year, card_number_encrypted)
     VALUES (
       ${data.id},
       ${data.userId},
       ${data.billingAddressId},
+      ${data.cardOwner},
       ${data.cardLastFour},
       ${data.cardBrand},
       ${data.cardExpMonth},
@@ -96,7 +98,6 @@ export async function insertPaymentCard(data: {
     )
   `;
 }
-
 export async function deletePaymentCard(
   id: string,
   userId: string,

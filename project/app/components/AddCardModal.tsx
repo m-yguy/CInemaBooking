@@ -37,6 +37,7 @@ export default function AddCardModal({
   const hasAddress = !!addressLine1;
   const router = useRouter();
 
+  const [cardOwner, setCardOwner] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [cardBrand, setCardBrand] = useState("");
   const [expMonth, setExpMonth] = useState("");
@@ -52,6 +53,10 @@ export default function AddCardModal({
 
   async function handleSubmit() {
     const digits = cardNumber.replace(/\s/g, "");
+    if (!cardOwner.trim()) {
+      setError("Enter the card owner name");
+      return;
+    }
     if (digits.length < 13 || digits.length > 16) {
       setError("Enter a valid card number");
       return;
@@ -73,6 +78,7 @@ export default function AddCardModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          cardOwner: cardOwner.trim(),
           cardNumber: digits,
           cardLastFour: digits.slice(-4),
           cardBrand,
@@ -126,6 +132,19 @@ export default function AddCardModal({
         </div>
 
         <div className="space-y-4 overflow-y-auto max-h-[60vh]">
+          <div>
+            <label className="mb-1 block text-sm font-semibold">
+              Card owner
+            </label>
+            <input
+              type="text"
+              value={cardOwner}
+              onChange={(e) => setCardOwner(e.target.value)}
+              placeholder="Name on card"
+              className="w-full rounded-md border border-gray-300 px-4 py-3"
+            />
+          </div>
+
           <div>
             <label className="mb-1 block text-sm font-semibold">
               Card number

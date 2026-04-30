@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const addCardSchema = z.object({
+  cardOwner: z.string().min(1, "Enter the card owner name").max(200),
   cardNumber: z.string().regex(/^\d{13,16}$/, "Invalid card number"),
   cardLastFour: z.string().regex(/^\d{4}$/, "Invalid card number"),
   cardBrand: z.string().nullable().optional().default(null),

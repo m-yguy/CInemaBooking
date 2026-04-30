@@ -12,6 +12,7 @@ import {
 export type { PaymentCard };
 
 export interface AddCardInput {
+  cardOwner: string;
   cardNumber: string;
   cardLastFour: string;
   cardBrand: string | null;
@@ -73,6 +74,7 @@ export async function addCard(
     id: randomUUID(),
     userId,
     billingAddressId,
+    cardOwner: input.cardOwner.trim(),
     cardLastFour: input.cardLastFour,
     cardBrand: input.cardBrand ?? null,
     cardExpMonth: input.cardExpMonth,

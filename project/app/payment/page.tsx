@@ -25,14 +25,20 @@ function isValidCardLength(cardNumber: string) {
   return digits.length >= 13 && digits.length <= 16;
 }
 
-function isValidExpiryDate(expiryDate: string) {
-  const [monthText, yearText] = expiryDate.split("/");
+function detectCardBrand(digits: string) {
+  if (/^4/.test(digits)) return "Visa";
+  if (/^(5[1-5]|2[2-7])/.test(digits)) return "Mastercard";
+  if (/^3[47]/.test(digits)) return "American Express";
+  if (/^(6011|65|64[4-9]|622)/.test(digits)) return "Discover";
+  return "";
+}
 
+function isValidExpiryDate(monthText: string, yearText: string) {
   const month = Number(monthText);
   let year = Number(yearText);
 
   if (!month || month < 1 || month > 12) return false;
-  if (!yearText || yearText.length < 2) return false;
+  if (!yearText || yearText.length < 4) return false;
 
   if (yearText.length === 2) {
     year += 2000;
@@ -68,10 +74,13 @@ function PaymentContent() {
   const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>("new");
   const [isLoadingCards, setIsLoadingCards] = useState(false);
 
-  const [nameOnCard, setNameOnCard] = useState("");
+  const [cardOwner, setCardOwner] = useState("");
   const [cardNumber, setCardNumber] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
+  const [cardBrand, setCardBrand] = useState("");
+  const [expMonth, setExpMonth] = useState("");
+  const [expYear, setExpYear] = useState("");
   const [cvv, setCvv] = useState("");
+  const [saveCard, setSaveCard] = useState(false);
 
   useEffect(() => {
     setEmail(session?.user?.email ?? "");
@@ -170,8 +179,8 @@ function PaymentContent() {
       return selectedCardId.length > 0;
     }
 
-    if (!nameOnCard.trim()) {
-      setStatusMessage("Please enter the name on the card.");
+    if (!cardOwner.trim()) {
+      setStatusMessage("Please enter the card owner name.");
       return false;
     }
 
@@ -180,8 +189,8 @@ function PaymentContent() {
       return false;
     }
 
-    if (!isValidExpiryDate(expiryDate)) {
-      setStatusMessage("Please enter a valid expiry date.");
+    if (!isValidExpiryDate(expMonth, expYear)) {
+      setStatusMessage("Please enter a valid expiry month and year.");
       return false;
     }
 
@@ -235,7 +244,13 @@ function PaymentContent() {
                 }
               : {
                   type: "new",
-                  cardLastFour: cardNumber.replace(/\s/g, "").slice(-4),
+                  cardOwner: cardOwner.trim(),
+                  cardNumber: cardNumber.replace(/\s/g, ""),
+                  cardLastFour: cardNumber.replace(/\D/g, "").slice(-4),
+                  cardBrand,
+                  cardExpMonth: Number(expMonth),
+                  cardExpYear: Number(expYear),
+                  saveCard,
                 },
         }),
       });
@@ -373,7 +388,10 @@ function PaymentContent() {
                 type="radio"
                 name="paymentChoice"
                 checked={paymentChoice === "saved"}
-                onChange={() => setPaymentChoice("saved")}
+                onChange={() => {
+                  setPaymentChoice("saved");
+                  setSaveCard(false);
+                }}
               />
               <span className="font-semibold">Use saved payment method</span>
             </label>
@@ -431,14 +449,12 @@ function PaymentContent() {
           {paymentChoice === "new" && (
             <div className="flex flex-col gap-6">
               <div className="flex flex-col gap-2">
-                <label className="font-medium text-gray-700">
-                  Name on Card
-                </label>
+                <label className="font-medium text-gray-700">Card owner</label>
                 <input
                   type="text"
-                  placeholder="Full name as on card"
-                  value={nameOnCard}
-                  onChange={(e) => setNameOnCard(e.target.value)}
+                  placeholder="Name on card"
+                  value={cardOwner}
+                  onChange={(e) => setCardOwner(e.target.value)}
                   className="border border-gray-300 rounded-lg px-4 py-3 text-lg w-full focus:outline-none"
                 />
               </div>
@@ -455,51 +471,84 @@ function PaymentContent() {
                       .slice(0, 16);
                     const formatted = digits.replace(/(.{4})/g, "$1 ").trim();
                     setCardNumber(formatted);
+                    setCardBrand(detectCardBrand(digits));
                   }}
                   className="border border-gray-300 rounded-lg px-4 py-3 text-lg w-full focus:outline-none tracking-widest"
                 />
               </div>
 
-              <div className="flex gap-4">
-                <div className="flex flex-col gap-2 flex-1">
+              <div>
+                <label className="font-medium text-gray-700">Card brand</label>
+                <input
+                  readOnly
+                  value={cardBrand}
+                  placeholder="Auto-detected"
+                  className="border border-gray-300 rounded-lg bg-gray-100 px-4 py-3 text-lg w-full text-gray-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <label className="font-medium text-gray-700">
-                    Expiry Date
+                    Expiry month
                   </label>
                   <input
                     type="text"
-                    placeholder="MM/YY"
-                    value={expiryDate}
-                    onChange={(e) => {
-                      const digits = e.target.value
-                        .replace(/\D/g, "")
-                        .slice(0, 4);
-
-                      if (digits.length <= 2) {
-                        setExpiryDate(digits);
-                      } else {
-                        setExpiryDate(
-                          `${digits.slice(0, 2)}/${digits.slice(2)}`,
-                        );
-                      }
-                    }}
-                    maxLength={5}
+                    inputMode="numeric"
+                    value={expMonth}
+                    onChange={(e) =>
+                      setExpMonth(e.target.value.replace(/\D/g, "").slice(0, 2))
+                    }
+                    placeholder="MM"
+                    maxLength={2}
                     className="border border-gray-300 rounded-lg px-4 py-3 text-lg w-full focus:outline-none"
                   />
                 </div>
-
-                <div className="flex flex-col gap-2 flex-1">
-                  <label className="font-medium text-gray-700">CVV</label>
+                <div>
+                  <label className="font-medium text-gray-700">
+                    Expiry year
+                  </label>
                   <input
                     type="text"
-                    placeholder="..."
-                    value={cvv}
+                    inputMode="numeric"
+                    value={expYear}
                     onChange={(e) =>
-                      setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))
+                      setExpYear(e.target.value.replace(/\D/g, "").slice(0, 4))
                     }
+                    placeholder="YYYY"
                     maxLength={4}
                     className="border border-gray-300 rounded-lg px-4 py-3 text-lg w-full focus:outline-none"
                   />
                 </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-medium text-gray-700">CVV</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="cc-csc"
+                  placeholder="..."
+                  value={cvv}
+                  onChange={(e) =>
+                    setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))
+                  }
+                  maxLength={4}
+                  className="border border-gray-300 rounded-lg px-4 py-3 text-lg w-full focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  id="saveCard"
+                  type="checkbox"
+                  checked={saveCard}
+                  onChange={(e) => setSaveCard(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-red-700 focus:ring-red-500"
+                />
+                <label htmlFor="saveCard" className="text-gray-700">
+                  Save this card for future payments
+                </label>
               </div>
             </div>
           )}

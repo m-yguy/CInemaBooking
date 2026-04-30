@@ -50,8 +50,9 @@ export async function sendVerificationEmail(
   await sgMail.send({
     to: toEmail,
     from: FROM_EMAIL,
-    templateId: "d-ccc0d92738fc40999081974c0dee0aaf",
-    dynamicTemplateData: { firstName, lastName, verifyUrl },
+    subject: "Confirm Your Cinema Booking Account",
+    text: `Hello ${firstName} ${lastName},\n\nPlease confirm your Cinema Booking account by clicking the link below:\n\n${verifyUrl}\n\nIf you did not request this email, you can ignore it. If you no longer want to receive account-related emails, reply with "unsubscribe" or contact support.`,
+    html: `<p>Hello ${firstName} ${lastName},</p><p>Please confirm your Cinema Booking account by clicking the link below:</p><p><a href="${verifyUrl}">Confirm your account</a></p><p>If you did not request this email, you can ignore it.</p><p>If you no longer want to receive account-related emails, reply with <strong>unsubscribe</strong> or contact support.</p>`,
   });
 }
 
