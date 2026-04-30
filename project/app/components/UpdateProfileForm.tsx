@@ -77,13 +77,17 @@ export default function UpdateProfileForm({
   }
 
   // Only allow up to 10 digits
-  const [localPhone, setLocalPhone] = useState(formatPhoneInput(phone));
-  const [localAddressLine1, setLocalAddressLine1] = useState(addressLine1);
-  const [localAddressLine2, setLocalAddressLine2] = useState(addressLine2);
-  const [localCity, setLocalCity] = useState(city);
-  const [localState, setLocalState] = useState(state);
-  const [localPostalCode, setLocalPostalCode] = useState(postalCode);
-  const [localCountry, setLocalCountry] = useState(country);
+  const [localPhone, setLocalPhone] = useState(formatPhoneInput(phone ?? ""));
+  const [localAddressLine1, setLocalAddressLine1] = useState(
+    addressLine1 ?? "",
+  );
+  const [localAddressLine2, setLocalAddressLine2] = useState(
+    addressLine2 ?? "",
+  );
+  const [localCity, setLocalCity] = useState(city ?? "");
+  const [localState, setLocalState] = useState(state ?? "");
+  const [localPostalCode, setLocalPostalCode] = useState(postalCode ?? "");
+  const [localCountry, setLocalCountry] = useState(country ?? "");
 
   const [editing, setEditing] = useState(false);
   const [addressOpen, setAddressOpen] = useState(false);
@@ -94,7 +98,13 @@ export default function UpdateProfileForm({
   );
   const visibleCards = savedCards.filter((c) => !pendingRemovals.has(c.id));
 
-  async function handleRemoveCard(id: string) {
+  function requestRemoveCard(id: string) {
+    if (confirm("Remove this saved card?")) {
+      confirmRemoveCard(id);
+    }
+  }
+
+  async function confirmRemoveCard(id: string) {
     setPendingRemovals((prev) => new Set(prev).add(id));
     const res = await fetch("/api/paymentCards", {
       method: "DELETE",
@@ -345,7 +355,7 @@ export default function UpdateProfileForm({
               isOpen={paymentOpen}
               onToggle={() => setPaymentOpen(!paymentOpen)}
               onAddCard={() => setAddingCard(true)}
-              onRemoveCard={handleRemoveCard}
+              onRemoveCard={requestRemoveCard}
             />
           )}
           <button
@@ -548,7 +558,7 @@ export default function UpdateProfileForm({
           isOpen={paymentOpen}
           onToggle={() => setPaymentOpen(!paymentOpen)}
           onAddCard={() => setAddingCard(true)}
-          onRemoveCard={handleRemoveCard}
+          onRemoveCard={requestRemoveCard}
         />
       )}
       <div className="flex gap-4">
@@ -557,13 +567,13 @@ export default function UpdateProfileForm({
           className="rounded-full bg-gray-300 px-6 py-3 font-semibold text-black hover:bg-gray-400"
           onClick={() => {
             setError("");
-            setLocalPhone(formatPhoneInput(phone));
-            setLocalAddressLine1(addressLine1);
-            setLocalAddressLine2(addressLine2);
-            setLocalCity(city);
-            setLocalState(state);
-            setLocalPostalCode(postalCode);
-            setLocalCountry(country);
+            setLocalPhone(formatPhoneInput(phone ?? ""));
+            setLocalAddressLine1(addressLine1 ?? "");
+            setLocalAddressLine2(addressLine2 ?? "");
+            setLocalCity(city ?? "");
+            setLocalState(state ?? "");
+            setLocalPostalCode(postalCode ?? "");
+            setLocalCountry(country ?? "");
             setEditing(false);
           }}
         >

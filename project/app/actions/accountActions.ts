@@ -1,8 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { signOut } from "@/auth";
 import { withAuth } from "@/lib/middleware/withAuthDecorator";
 import { changePasswordSchema } from "@/lib/schemas/userSchema";
 import { userAccountFacade } from "@/lib/facades/userAccountFacade";
@@ -68,8 +66,6 @@ export const removeFavoriteAction = withAuth(
 
 export const deleteAccount = withAuth(async (session) => {
   await userAccountFacade.deleteAccount(session.id);
-  await signOut({ redirectTo: "/" });
-  redirect("/");
 });
 
 export async function getAccountPageData(userId: string) {

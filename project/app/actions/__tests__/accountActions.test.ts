@@ -7,11 +7,13 @@ jest.mock("@/lib/facades/userAccountFacade", () => ({
     updateProfile: jest.fn(),
     changePassword: jest.fn(),
     removeFavorite: jest.fn(),
+    deleteAccount: jest.fn(),
   },
 }));
 
 import {
   changePassword,
+  deleteAccount,
   removeFavoriteAction,
   updateProfile,
 } from "@/app/actions/accountActions";
@@ -155,6 +157,25 @@ describe("account actions", () => {
 
       expect(mockFacade.removeFavorite).toHaveBeenCalledWith("user-1", 7);
       expect(revalidatePath).toHaveBeenCalledWith("/account/favorites");
+    });
+  });
+
+  describe("deleteAccount", () => {
+    it("returns auth error when not authenticated", async () => {
+      mockAuth.mockResolvedValue(null);
+      const result = await deleteAccount();
+
+      expect(result).toEqual({ error: "Not authenticated" });
+      expect(mockFacade.deleteAccount).not.toHaveBeenCalled();
+    });
+
+    it("deletes account when authenticated", async () => {
+      mockAuth.mockResolvedValue(fakeSession);
+      mockFacade.deleteAccount.mockResolvedValue(undefined);
+
+      await deleteAccount();
+
+      expect(mockFacade.deleteAccount).toHaveBeenCalledWith("user-1");
     });
   });
 });

@@ -13,7 +13,10 @@ export default function DeleteAccountButton({
 
   function handleConfirm() {
     startTransition(async () => {
-      await action();
+      const result = await action();
+      if (typeof result === "object" && result !== null && "error" in result) {
+        return;
+      }
       await signOut({ callbackUrl: "/" });
     });
   }
