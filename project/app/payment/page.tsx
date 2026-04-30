@@ -200,7 +200,9 @@ function PaymentContent() {
     }
 
     if (!paymentInfoIsValid()) {
-      setStatusMessage("Please select a saved card or enter valid card details.");
+      setStatusMessage(
+        "Please select a saved card or enter valid card details.",
+      );
       return;
     }
 
@@ -226,15 +228,15 @@ function PaymentContent() {
           paymentMethod:
             paymentChoice === "saved"
               ? {
-                type: "saved",
-                cardId: selectedCardId,
-                cardBrand: selectedSavedCard?.cardBrand,
-                cardLastFour: selectedSavedCard?.cardLastFour,
-              }
+                  type: "saved",
+                  cardId: selectedCardId,
+                  cardBrand: selectedSavedCard?.cardBrand,
+                  cardLastFour: selectedSavedCard?.cardLastFour,
+                }
               : {
-                type: "new",
-                cardLastFour: cardNumber.replace(/\s/g, "").slice(-4),
-              },
+                  type: "new",
+                  cardLastFour: cardNumber.replace(/\s/g, "").slice(-4),
+                },
         }),
       });
 
@@ -255,7 +257,8 @@ function PaymentContent() {
               email,
               total: displayedTotal,
             }),
-          )}&originalTotal=${total}&discountAmount=${discountAmount}&promoCode=${discountAmount > 0 ? encodeURIComponent(promoCode) : ""
+          )}&originalTotal=${total}&discountAmount=${discountAmount}&promoCode=${
+            discountAmount > 0 ? encodeURIComponent(promoCode) : ""
           }`,
         );
       }, 1200);
@@ -324,7 +327,7 @@ function PaymentContent() {
               type="text"
               placeholder="Enter promo code"
               value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value)}
+              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
               className="border border-gray-300 rounded-lg px-4 py-3 text-lg flex-1 focus:outline-none"
             />
 
@@ -364,27 +367,32 @@ function PaymentContent() {
             <p className="text-gray-600">Loading saved payment methods...</p>
           )}
 
-          {savedCards.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <label className="flex items-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="paymentChoice"
-                  checked={paymentChoice === "saved"}
-                  onChange={() => setPaymentChoice("saved")}
-                />
-                <span className="font-semibold">Use saved payment method</span>
-              </label>
+          <div className="flex flex-col gap-3">
+            <label className="flex items-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 cursor-pointer">
+              <input
+                type="radio"
+                name="paymentChoice"
+                checked={paymentChoice === "saved"}
+                onChange={() => setPaymentChoice("saved")}
+              />
+              <span className="font-semibold">Use saved payment method</span>
+            </label>
 
-              {paymentChoice === "saved" && (
-                <div className="flex flex-col gap-3 pl-6">
-                  {savedCards.map((card) => (
+            {paymentChoice === "saved" && (
+              <div className="flex flex-col gap-3 pl-6">
+                {savedCards.length === 0 ? (
+                  <div className="rounded-lg border border-gray-300 bg-white p-4 text-gray-600">
+                    No cards available.
+                  </div>
+                ) : (
+                  savedCards.map((card) => (
                     <label
                       key={card.id}
-                      className={`flex items-center justify-between rounded-lg border px-4 py-3 cursor-pointer ${selectedCardId === card.id
-                        ? "border-red-700 bg-red-50"
-                        : "border-gray-300 bg-white"
-                        }`}
+                      className={`flex items-center justify-between rounded-lg border px-4 py-3 cursor-pointer ${
+                        selectedCardId === card.id
+                          ? "border-red-700 bg-red-50"
+                          : "border-gray-300 bg-white"
+                      }`}
                     >
                       <div className="flex items-center gap-3">
                         <input
@@ -404,11 +412,11 @@ function PaymentContent() {
                         </div>
                       </div>
                     </label>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                  ))
+                )}
+              </div>
+            )}
+          </div>
 
           <label className="flex items-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 cursor-pointer">
             <input
@@ -423,7 +431,9 @@ function PaymentContent() {
           {paymentChoice === "new" && (
             <div className="flex flex-col gap-6">
               <div className="flex flex-col gap-2">
-                <label className="font-medium text-gray-700">Name on Card</label>
+                <label className="font-medium text-gray-700">
+                  Name on Card
+                </label>
                 <input
                   type="text"
                   placeholder="Full name as on card"
@@ -440,7 +450,9 @@ function PaymentContent() {
                   placeholder="0000 0000 0000 0000"
                   value={cardNumber}
                   onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, "").slice(0, 16);
+                    const digits = e.target.value
+                      .replace(/\D/g, "")
+                      .slice(0, 16);
                     const formatted = digits.replace(/(.{4})/g, "$1 ").trim();
                     setCardNumber(formatted);
                   }}
@@ -458,12 +470,16 @@ function PaymentContent() {
                     placeholder="MM/YY"
                     value={expiryDate}
                     onChange={(e) => {
-                      const digits = e.target.value.replace(/\D/g, "").slice(0, 4);
+                      const digits = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 4);
 
                       if (digits.length <= 2) {
                         setExpiryDate(digits);
                       } else {
-                        setExpiryDate(`${digits.slice(0, 2)}/${digits.slice(2)}`);
+                        setExpiryDate(
+                          `${digits.slice(0, 2)}/${digits.slice(2)}`,
+                        );
                       }
                     }}
                     maxLength={5}
@@ -477,7 +493,9 @@ function PaymentContent() {
                     type="text"
                     placeholder="..."
                     value={cvv}
-                    onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    onChange={(e) =>
+                      setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))
+                    }
                     maxLength={4}
                     className="border border-gray-300 rounded-lg px-4 py-3 text-lg w-full focus:outline-none"
                   />
