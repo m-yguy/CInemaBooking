@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
 import SignOutButton from "../components/SignOutButton";
 import UpdateProfileForm from "../components/UpdateProfileForm";
-import FavoriteMovieCard from "../components/FavoriteMovieCard";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -79,19 +78,35 @@ export default async function AccountPage() {
                   </a>
                 )}
               </div>
+
               {favoriteMovies.length === 0 ? (
                 <p className="text-gray-500">No favorites yet.</p>
               ) : (
-                <div className="grid grid-cols-7 gap-4">
-                  {favoriteMovies.slice(0, 7).map((movie) => (
-                    <div key={movie.movie_id}>
-                      <FavoriteMovieCard
-                        movieId={movie.movie_id}
-                        title={movie.title}
-                        posterPath={movie.poster_path}
-                        removeAction={removeFavoriteAction}
-                      />
-                    </div>
+                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
+                  {favoriteMovies.slice(0, 4).map((movie) => (
+                    <a
+                      key={movie.movie_id}
+                      href={`/movies/${encodeURIComponent(movie.title)}`}
+                      className="group"
+                    >
+                      <div className="relative aspect-2/3 overflow-hidden rounded-lg bg-gray-200 shadow-sm transition-transform group-hover:scale-105">
+                        {movie.poster_path ? (
+                          <img
+                            src={movie.poster_path}
+                            alt={movie.title}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm text-gray-500">
+                            No Poster
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-3">
+                        <p className="line-clamp-1 font-semibold">{movie.title}</p>
+                      </div>
+                    </a>
                   ))}
                 </div>
               )}
