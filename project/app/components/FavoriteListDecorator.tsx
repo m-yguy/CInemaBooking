@@ -14,8 +14,8 @@ export default function FavoriteListDecorator({
       movieData={movieData}
       showMovieInfo={false}
       className="group w-full mb-0 hover:scale-100"
-      titleClassName="text-xs leading-tight hover:text-red-800"
-      imageClassName="transition-transform duration-200 group-hover:scale-105"
+      titleClassName="!text-[1rem] !leading-tight tracking-tight hover:text-red-800"
+      imageClassName="transition-transform duration-200 group-hover:scale-100"
       imageSizes="(max-width: 640px) 96px, 112px"
       posterOverlay={
         removeAction ? (
