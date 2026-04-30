@@ -35,7 +35,7 @@ export default async function ShowtimesPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <Navbar />
-      <main className="flex-1 max-w-4xl mx-auto px-6 py-10 w-full">
+      <main className="flex-1 max-w-6xl mx-auto px-6 py-10 w-full">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">
             Showtimes

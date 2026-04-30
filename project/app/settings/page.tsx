@@ -12,10 +12,10 @@ export default async function SettingsPage() {
   if (!session) redirect("/signin");
 
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-screen flex flex-col bg-white text-black">
       <Navbar />
 
-      <main className="mx-auto w-full max-w-4xl px-6 pt-28 pb-16">
+      <main className="flex-1 mx-auto w-full max-w-4xl px-6 pt-28 pb-16">
         <h1 className="mb-10 text-4xl font-bold flex items-center gap-4">
           <span className="w-16 h-16 flex items-center justify-center rounded-full bg-black">
             <FontAwesomeIcon icon={faGear} className="text-white w-9 h-9" />
