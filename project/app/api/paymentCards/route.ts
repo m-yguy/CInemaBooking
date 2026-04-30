@@ -4,6 +4,15 @@ import type { AddCardInput } from "@/lib/services/paymentService";
 import { withAuthRoute } from "@/lib/middleware/withAuthDecorator";
 import { addCardSchema, removeCardSchema } from "@/lib/schemas/paymentSchema";
 
+export const GET = withAuthRoute(async (session) => {
+  if (session.role !== "CUSTOMER") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const cards = await paymentService.getCards(session.id);
+  return NextResponse.json({ cards });
+});
+
 export const POST = withAuthRoute(async (session, request) => {
   if (session.role !== "CUSTOMER") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
